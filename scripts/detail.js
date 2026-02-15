@@ -146,11 +146,34 @@ function renderDetail() {
 
 function renderRelated() {
   const list = products.filter((p) => p.id !== currentProduct.id).slice(0, 4);
-  el.relatedProducts.innerHTML = list
-    .map(
-      (p) => `<article class="product-card"><div class="product-thumb">${p.emoji}</div><div class="product-meta"><h4>${p.name}</h4><p>⭐ ${p.rating} (${p.reviews})</p></div><div class="price-row"><span>${formatCurrency(p.price)}</span></div><a class="text-btn link-btn" href="detail.html?id=${p.id}">상세보기</a></article>`,
-    )
-    .join("");
+  el.relatedProducts.innerHTML = list.map((p) => renderRelatedProductCard(p)).join("");
+}
+
+function renderRelatedProductCard(p) {
+  const discountRate = Math.round((1 - p.price / p.originalPrice) * 100);
+  const reviewCount = p.reviews.toLocaleString("ko-KR");
+  return `
+    <a class="product-card product-card-link" href="detail.html?id=${p.id}" aria-label="${p.name} 상세페이지로 이동">
+      <div class="product-thumb">
+        <div class="product-badges">
+          ${(p.badges || []).slice(0, 2).map((badge) => `<span class="product-badge">${badge}</span>`).join("")}
+        </div>
+        ${p.emoji}
+      </div>
+      <div class="product-meta">
+        <h4>${p.name}</h4>
+        <p>${p.oneLine || p.description}</p>
+      </div>
+      <div class="price-stack">
+        <small class="old-price">${formatCurrency(p.originalPrice)}</small>
+        <div class="new-price-row">
+          <span class="discount-rate">${discountRate}%</span>
+          <strong class="new-price">${formatCurrency(p.price)}</strong>
+        </div>
+      </div>
+      <div class="review-count">리뷰 (${reviewCount})</div>
+    </a>
+  `;
 }
 
 function renderCart() {

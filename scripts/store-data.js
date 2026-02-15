@@ -2,6 +2,8 @@ export const products = [
   {
     id: 1,
     name: "데일리 멀티비타민 밸런스",
+    oneLine: "하루 한 정으로 균형 잡힌 비타민 케어",
+    badges: ["베스트셀러", "할인"],
     price: 28900,
     originalPrice: 36000,
     rating: 4.9,
@@ -23,6 +25,8 @@ export const products = [
   {
     id: 2,
     name: "오메가3 퓨어 알티지",
+    oneLine: "고순도 오메가3로 혈행과 눈 건강 관리",
+    badges: ["HOT", "할인"],
     price: 35900,
     originalPrice: 45000,
     rating: 4.8,
@@ -44,6 +48,8 @@ export const products = [
   {
     id: 3,
     name: "프로바이오틱스 100억",
+    oneLine: "코팅 유산균으로 편안한 장 컨디션",
+    badges: ["베스트셀러"],
     price: 24900,
     originalPrice: 32000,
     rating: 4.7,
@@ -65,6 +71,8 @@ export const products = [
   {
     id: 4,
     name: "콜라겐 글로우 샷",
+    oneLine: "저분자 콜라겐 이너뷰티 루틴",
+    badges: ["HOT"],
     price: 39900,
     originalPrice: 49000,
     rating: 4.8,
@@ -86,6 +94,8 @@ export const products = [
   {
     id: 5,
     name: "마그네슘 나이트 릴렉스",
+    oneLine: "밤 루틴에 맞춘 릴렉스 포뮬러",
+    badges: ["할인"],
     price: 21900,
     originalPrice: 28000,
     rating: 4.6,
@@ -107,6 +117,8 @@ export const products = [
   {
     id: 6,
     name: "루테인 맥스 아이케어",
+    oneLine: "디지털 피로를 위한 데일리 아이케어",
+    badges: ["할인", "HOT"],
     price: 32900,
     originalPrice: 41000,
     rating: 4.7,

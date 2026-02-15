@@ -124,31 +124,34 @@ function renderProducts() {
     return;
   }
 
-  el.productGrid.innerHTML = list
-    .map((p) => {
-      const liked = state.wishlist.includes(p.id);
-      const discountRate = Math.round((1 - p.price / p.originalPrice) * 100);
-      const lowStock = p.stock <= 30;
-      return `
-      <article class="product-card">
-        <div class="product-thumb">${p.emoji}</div>
-        <div class="product-meta">
-          <span class="badge ${lowStock ? "low-stock" : ""}">${lowStock ? `재고 ${p.stock}개` : `할인 ${discountRate}%`}</span>
-          <h4>${p.name}</h4>
-          <p>⭐ ${p.rating} (${p.reviews}) · ${p.ingredients.slice(0, 2).join("/")}</p>
+  el.productGrid.innerHTML = list.map((p) => renderProductCardForList(p, `pages/detail.html?id=${p.id}`)).join("");
+}
+
+function renderProductCardForList(p, href) {
+  const discountRate = Math.round((1 - p.price / p.originalPrice) * 100);
+  const reviewCount = p.reviews.toLocaleString("ko-KR");
+  return `
+    <a class="product-card product-card-link" href="${href}" aria-label="${p.name} 상세페이지로 이동">
+      <div class="product-thumb">
+        <div class="product-badges">
+          ${(p.badges || []).slice(0, 2).map((badge) => `<span class="product-badge">${badge}</span>`).join("")}
         </div>
-        <div class="price-row">
-          <span>${formatCurrency(p.price)}</span>
-          <small style="color:#5d7683;text-decoration:line-through">${formatCurrency(p.originalPrice)}</small>
+        ${p.emoji}
+      </div>
+      <div class="product-meta">
+        <h4>${p.name}</h4>
+        <p>${p.oneLine || p.description}</p>
+      </div>
+      <div class="price-stack">
+        <small class="old-price">${formatCurrency(p.originalPrice)}</small>
+        <div class="new-price-row">
+          <span class="discount-rate">${discountRate}%</span>
+          <strong class="new-price">${formatCurrency(p.price)}</strong>
         </div>
-        <div class="card-actions">
-          <button class="primary" data-action="addToCart" data-id="${p.id}">담기</button>
-          <button class="ghost" data-action="toggleWish" data-id="${p.id}">${liked ? "♥" : "♡"}</button>
-        </div>
-        <a class="text-btn link-btn" href="pages/detail.html?id=${p.id}">상세보기</a>
-      </article>`;
-    })
-    .join("");
+      </div>
+      <div class="review-count">리뷰 (${reviewCount})</div>
+    </a>
+  `;
 }
 
 function getFilteredReviews() {
