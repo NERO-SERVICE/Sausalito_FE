@@ -1,4 +1,12 @@
-import { products, reviews, STORAGE_KEYS, formatCurrency, paymentLabel } from "./store-data.js";
+import {
+  products,
+  reviews,
+  STORAGE_KEYS,
+  formatCurrency,
+  paymentLabel,
+  resolveProductImage,
+  resolveProductImageFallback,
+} from "./store-data.js";
 
 const productId = Number(new URLSearchParams(window.location.search).get("id"));
 const currentProduct = products.find((p) => p.id === productId) || products[0];
@@ -83,11 +91,20 @@ function renderDetail() {
     .filter((review) => review.productId === currentProduct.id)
     .sort((a, b) => b.helpful - a.helpful)
     .slice(0, 3);
+  const detailImageSrc = resolveProductImage(currentProduct.image);
+  const detailImageFallback = resolveProductImageFallback(currentProduct.image);
 
   el.detailContent.innerHTML = `
     <div class="detail-grid">
       <div>
-        <div class="product-thumb" style="height:300px;font-size:3.4rem;">${currentProduct.emoji}</div>
+        <div class="product-thumb detail-thumb">
+          <img
+            src="${detailImageSrc}"
+            data-fallback="${detailImageFallback}"
+            alt="${currentProduct.name}"
+            onerror="if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src=this.dataset.fallback;}"
+          />
+        </div>
         <div class="detail-sections">
           <article class="detail-box">
             <h4>핵심 성분</h4>
@@ -152,13 +169,21 @@ function renderRelated() {
 function renderRelatedProductCard(p) {
   const discountRate = Math.round((1 - p.price / p.originalPrice) * 100);
   const reviewCount = p.reviews.toLocaleString("ko-KR");
+  const imageSrc = resolveProductImage(p.image);
+  const imageFallback = resolveProductImageFallback(p.image);
   return `
     <a class="product-card product-card-link" href="detail.html?id=${p.id}" aria-label="${p.name} 상세페이지로 이동">
       <div class="product-thumb">
         <div class="product-badges">
           ${(p.badges || []).slice(0, 2).map((badge) => `<span class="product-badge">${badge}</span>`).join("")}
         </div>
-        ${p.emoji}
+        <img
+          src="${imageSrc}"
+          data-fallback="${imageFallback}"
+          alt="${p.name}"
+          loading="lazy"
+          onerror="if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src=this.dataset.fallback;}"
+        />
       </div>
       <div class="product-meta">
         <h4>${p.name}</h4>

@@ -4,6 +4,9 @@ export const products = [
     name: "데일리 멀티비타민 밸런스",
     oneLine: "하루 한 정으로 균형 잡힌 비타민 케어",
     badges: ["베스트셀러", "할인"],
+    image: {
+      png: "/dist/img/products/dummy1.png",
+    },
     price: 28900,
     originalPrice: 36000,
     rating: 4.9,
@@ -12,7 +15,6 @@ export const products = [
     popularScore: 98,
     releaseDate: "2026-01-26",
     description: "13종 비타민과 미네랄을 한 번에 담은 베스트 데일리 포뮬러",
-    emoji: "💊",
     intake: "1일 1회, 1정을 식후에 섭취",
     target: "활력 저하/면역 관리가 필요한 성인",
     ingredients: ["비타민B군", "비타민C", "아연", "셀렌"],
@@ -27,6 +29,7 @@ export const products = [
     name: "오메가3 퓨어 알티지",
     oneLine: "고순도 오메가3로 혈행과 눈 건강 관리",
     badges: ["HOT", "할인"],
+    image: "/dist/img/products/dummy2.png",
     price: 35900,
     originalPrice: 45000,
     rating: 4.8,
@@ -35,7 +38,6 @@ export const products = [
     popularScore: 95,
     releaseDate: "2026-02-03",
     description: "고순도 rTG 오메가3로 혈행과 눈 건강까지 동시 케어",
-    emoji: "🐟",
     intake: "1일 1회, 2캡슐을 충분한 물과 함께 섭취",
     target: "장시간 모니터 사용/혈행 관리가 필요한 분",
     ingredients: ["EPA", "DHA", "비타민E"],
@@ -50,6 +52,7 @@ export const products = [
     name: "프로바이오틱스 100억",
     oneLine: "코팅 유산균으로 편안한 장 컨디션",
     badges: ["베스트셀러"],
+    image: "/dist/img/products/p3.svg",
     price: 24900,
     originalPrice: 32000,
     rating: 4.7,
@@ -58,7 +61,6 @@ export const products = [
     popularScore: 96,
     releaseDate: "2025-12-20",
     description: "장까지 살아가는 코팅 기술을 적용한 유산균 19종 배합",
-    emoji: "🦠",
     intake: "1일 1회, 1포를 물 없이 섭취",
     target: "장 컨디션/배변 리듬 관리가 필요한 분",
     ingredients: ["프로바이오틱스 19종", "프리바이오틱스", "아연"],
@@ -73,6 +75,7 @@ export const products = [
     name: "콜라겐 글로우 샷",
     oneLine: "저분자 콜라겐 이너뷰티 루틴",
     badges: ["HOT"],
+    image: "/dist/img/products/p4.svg",
     price: 39900,
     originalPrice: 49000,
     rating: 4.8,
@@ -81,7 +84,6 @@ export const products = [
     popularScore: 92,
     releaseDate: "2026-01-11",
     description: "저분자 피쉬콜라겐과 비오틴으로 완성한 이너뷰티 루틴",
-    emoji: "✨",
     intake: "1일 1회, 1병을 냉장 보관 후 섭취",
     target: "피부 탄력/보습 관리가 필요한 분",
     ingredients: ["피쉬콜라겐", "히알루론산", "비오틴"],
@@ -96,6 +98,7 @@ export const products = [
     name: "마그네슘 나이트 릴렉스",
     oneLine: "밤 루틴에 맞춘 릴렉스 포뮬러",
     badges: ["할인"],
+    image: "/dist/img/products/p5.svg",
     price: 21900,
     originalPrice: 28000,
     rating: 4.6,
@@ -104,7 +107,6 @@ export const products = [
     popularScore: 84,
     releaseDate: "2025-10-10",
     description: "긴장 완화 루틴에 맞춘 마그네슘+테아닌 배합",
-    emoji: "🌙",
     intake: "1일 1회, 취침 1시간 전 1정을 섭취",
     target: "저녁 긴장 완화/수면 루틴이 필요한 분",
     ingredients: ["마그네슘", "L-테아닌", "비타민B6"],
@@ -119,6 +121,7 @@ export const products = [
     name: "루테인 맥스 아이케어",
     oneLine: "디지털 피로를 위한 데일리 아이케어",
     badges: ["할인", "HOT"],
+    image: "/dist/img/products/p6.svg",
     price: 32900,
     originalPrice: 41000,
     rating: 4.7,
@@ -127,7 +130,6 @@ export const products = [
     popularScore: 89,
     releaseDate: "2025-11-18",
     description: "루테인+지아잔틴으로 눈 피로 관리를 돕는 아이케어 포뮬러",
-    emoji: "👀",
     intake: "1일 1회, 1캡슐을 식후 섭취",
     target: "디지털 기기 사용량이 많은 직장인",
     ingredients: ["루테인", "지아잔틴", "비타민A"],
@@ -166,4 +168,21 @@ export function paymentLabel(method) {
   if (method === "transfer") return "계좌이체";
   if (method === "kakao") return "카카오페이";
   return method;
+}
+
+function getImagePathList(image) {
+  if (!image) return [];
+  if (typeof image === "string") return [image];
+  if (typeof image !== "object") return [];
+  return [image.png, image.jpg, image.jpeg, image.webp, image.svg].filter(Boolean);
+}
+
+export function resolveProductImage(image) {
+  const primary = getImagePathList(image)[0];
+  return primary || "";
+}
+
+export function resolveProductImageFallback(image) {
+  const [primary, secondary] = getImagePathList(image);
+  return secondary || primary || "";
 }

@@ -1,4 +1,12 @@
-import { products, reviews, STORAGE_KEYS, formatCurrency, paymentLabel } from "./store-data.js";
+import {
+  products,
+  reviews,
+  STORAGE_KEYS,
+  formatCurrency,
+  paymentLabel,
+  resolveProductImage,
+  resolveProductImageFallback,
+} from "./store-data.js";
 
 const state = {
   cart: JSON.parse(localStorage.getItem(STORAGE_KEYS.cart) || "[]"),
@@ -130,13 +138,21 @@ function renderProducts() {
 function renderProductCardForList(p, href) {
   const discountRate = Math.round((1 - p.price / p.originalPrice) * 100);
   const reviewCount = p.reviews.toLocaleString("ko-KR");
+  const imageSrc = resolveProductImage(p.image);
+  const imageFallback = resolveProductImageFallback(p.image);
   return `
     <a class="product-card product-card-link" href="${href}" aria-label="${p.name} 상세페이지로 이동">
       <div class="product-thumb">
         <div class="product-badges">
           ${(p.badges || []).slice(0, 2).map((badge) => `<span class="product-badge">${badge}</span>`).join("")}
         </div>
-        ${p.emoji}
+        <img
+          src="${imageSrc}"
+          data-fallback="${imageFallback}"
+          alt="${p.name}"
+          loading="lazy"
+          onerror="if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src=this.dataset.fallback;}"
+        />
       </div>
       <div class="product-meta">
         <h4>${p.name}</h4>
