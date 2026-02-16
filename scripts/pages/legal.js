@@ -1,13 +1,24 @@
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
-import { getUser } from "../services/auth-service.js";
+import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
 
 const headerRefs = mountSiteHeader({ showCart: true });
 mountSiteFooter();
 
-const user = getUser();
-syncSiteHeader(headerRefs, {
-  userName: user?.name || null,
-  cartCountValue: cartCount(),
-});
+async function syncHeader() {
+  const user = (await syncCurrentUser()) || getUser();
+  let count = 0;
+  try {
+    count = await cartCount();
+  } catch {
+    count = 0;
+  }
+
+  syncSiteHeader(headerRefs, {
+    userName: user?.name || null,
+    cartCountValue: count,
+  });
+}
+
+syncHeader();

@@ -1,15 +1,61 @@
 import { STORAGE_KEYS, readJson, writeJson } from "./storage.js";
+import {
+  apiFetchMe,
+  apiLogin,
+  apiLogout,
+  clearStoredTokens,
+  getStoredTokens,
+  setStoredTokens,
+} from "./api.js";
 
 export function getUser() {
   return readJson(STORAGE_KEYS.user, null);
 }
 
-export function login({ email, name }) {
-  const user = { email, name };
+export function getTokens() {
+  return getStoredTokens();
+}
+
+export function isAuthenticated() {
+  return Boolean(getTokens()?.access);
+}
+
+export async function login({ email, password }) {
+  const data = await apiLogin({ email, password });
+  const tokens = data?.tokens || null;
+  const user = data?.user || null;
+
+  setStoredTokens(tokens);
   writeJson(STORAGE_KEYS.user, user);
+
   return user;
 }
 
-export function logout() {
+export async function logout() {
+  const refresh = getTokens()?.refresh;
+  try {
+    if (refresh) {
+      await apiLogout({ refresh });
+    }
+  } catch {
+    // 로그아웃 API 실패 시에도 로컬 세션은 정리
+  }
+  clearAuth();
+}
+
+export function clearAuth() {
+  clearStoredTokens();
   writeJson(STORAGE_KEYS.user, null);
+}
+
+export async function syncCurrentUser() {
+  if (!isAuthenticated()) return null;
+  try {
+    const user = await apiFetchMe();
+    writeJson(STORAGE_KEYS.user, user);
+    return user;
+  } catch {
+    clearAuth();
+    return null;
+  }
 }

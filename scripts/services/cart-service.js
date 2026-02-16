@@ -1,47 +1,122 @@
-import { STORAGE_KEYS, readJson, writeJson } from "./storage.js";
-import { products } from "../store-data.js";
+import { apiRequest } from "./api.js";
+import { isAuthenticated } from "./auth-service.js";
 
-export function getCart() {
-  return readJson(STORAGE_KEYS.cart, []);
+function emptyCart() {
+  return {
+    id: null,
+    items: [],
+    subtotal: 0,
+    shipping: 0,
+    total: 0,
+  };
 }
 
-export function setCart(cart) {
-  writeJson(STORAGE_KEYS.cart, cart);
+function normalizeCartItem(item = {}) {
+  const product = item.product || {};
+  const option = item.option || null;
+
+  return {
+    id: item.id,
+    quantity: Number(item.quantity || 0),
+    lineTotal: Number(item.line_total || 0),
+    product: {
+      id: product.id,
+      name: product.name || "",
+      price: Number(product.price || 0),
+      image: product.image || "",
+    },
+    option: option
+      ? {
+          id: option.id,
+          name: option.name || "",
+          price: Number(option.price || 0),
+        }
+      : null,
+  };
 }
 
-export function addToCart(productId, quantity = 1) {
-  const cart = getCart();
-  const found = cart.find((item) => item.productId === productId);
-  if (found) found.quantity += quantity;
-  else cart.push({ productId, quantity });
-  setCart(cart);
+function normalizeCart(raw = {}) {
+  return {
+    id: raw.id || null,
+    items: Array.isArray(raw.items) ? raw.items.map(normalizeCartItem) : [],
+    subtotal: Number(raw.subtotal || 0),
+    shipping: Number(raw.shipping || 0),
+    total: Number(raw.total || 0),
+  };
 }
 
-export function updateCartQuantity(productId, quantity) {
-  const cart = getCart().map((item) => (item.productId === productId ? { ...item, quantity } : item));
-  setCart(cart.filter((item) => item.quantity > 0));
+export async function fetchCart() {
+  if (!isAuthenticated()) {
+    return emptyCart();
+  }
+
+  const data = await apiRequest("/cart");
+  return normalizeCart(data);
 }
 
-export function removeFromCart(productId) {
-  setCart(getCart().filter((item) => item.productId !== productId));
+export async function getCartDetailed() {
+  const cart = await fetchCart();
+  return cart.items;
 }
 
-export function getCartDetailed() {
-  return getCart()
-    .map((item) => {
-      const product = products.find((p) => p.id === item.productId);
-      return product ? { ...item, product } : null;
-    })
-    .filter(Boolean);
+export async function addToCart(productId, quantity = 1, optionId = null) {
+  if (!isAuthenticated()) {
+    throw new Error("로그인이 필요합니다.");
+  }
+
+  await apiRequest("/cart/items", {
+    method: "POST",
+    body: {
+      product_id: productId,
+      option_id: optionId,
+      quantity,
+    },
+  });
+
+  return fetchCart();
 }
 
-export function cartCount() {
-  return getCart().reduce((sum, item) => sum + item.quantity, 0);
+export async function updateCartQuantity(itemId, quantity) {
+  if (!isAuthenticated()) {
+    throw new Error("로그인이 필요합니다.");
+  }
+
+  if (quantity <= 0) {
+    await removeFromCart(itemId);
+    return fetchCart();
+  }
+
+  await apiRequest(`/cart/items/${itemId}`, {
+    method: "PATCH",
+    body: { quantity },
+  });
+
+  return fetchCart();
 }
 
-export function cartTotals() {
-  const detailed = getCartDetailed();
-  const subtotal = detailed.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const shipping = subtotal > 0 && subtotal < 30000 ? 3000 : 0;
-  return { subtotal, shipping, total: subtotal + shipping };
+export async function removeFromCart(itemId) {
+  if (!isAuthenticated()) {
+    throw new Error("로그인이 필요합니다.");
+  }
+
+  await apiRequest(`/cart/items/${itemId}`, {
+    method: "DELETE",
+  });
+
+  return fetchCart();
+}
+
+export async function cartCount() {
+  if (!isAuthenticated()) return 0;
+  const cart = await fetchCart();
+  return cart.items.reduce((sum, item) => sum + item.quantity, 0);
+}
+
+export async function cartTotals() {
+  const cart = await fetchCart();
+  return {
+    subtotal: cart.subtotal,
+    shipping: cart.shipping,
+    total: cart.total,
+  };
 }

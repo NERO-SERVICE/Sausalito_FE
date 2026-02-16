@@ -1,6 +1,6 @@
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { fetchProducts } from "../services/api.js";
-import { getUser } from "../services/auth-service.js";
+import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
 import { mountSiteFooter } from "../components/footer.js";
@@ -18,11 +18,18 @@ const el = {
   productGrid: document.getElementById("shopProductGrid"),
 };
 
-function syncHeader() {
-  const user = getUser();
+async function syncHeader() {
+  const user = (await syncCurrentUser()) || getUser();
+  let count = 0;
+  try {
+    count = await cartCount();
+  } catch {
+    count = 0;
+  }
+
   syncSiteHeader(headerRefs, {
     userName: user?.name || null,
-    cartCountValue: cartCount(),
+    cartCountValue: count,
   });
 }
 
@@ -87,10 +94,15 @@ function bind() {
 }
 
 async function init() {
-  state.products = await fetchProducts();
-  syncHeader();
-  renderProducts();
-  bind();
+  try {
+    state.products = await fetchProducts();
+    await syncHeader();
+    renderProducts();
+    bind();
+  } catch (error) {
+    console.error(error);
+    el.productGrid.innerHTML = '<p class="empty">상품 데이터를 불러오지 못했습니다.</p>';
+  }
 }
 
 init();
