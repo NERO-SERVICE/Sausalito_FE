@@ -1,3 +1,6 @@
+const MAIN_LOGO_SRC = "../dist/assets/logo/main_logo.svg";
+const MAIN_LOGO_FALLBACKS = ["/dist/assets/logo/main_logo.svg", "dist/assets/logo/main_logo.svg"];
+
 export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
   const mount = document.getElementById("siteHeaderMount");
   if (!mount) return { loginLink: null, cartCount: null };
@@ -6,10 +9,10 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
     <header class="site-header">
       <div class="site-header-top">
         <a class="brand" href="/pages/home.html">
-          <img src="/dist/assets/logo/main_logo.svg" alt="소살리토" class="brand-logo" />
+          <img src="${MAIN_LOGO_SRC}" alt="소살리토" class="brand-logo" />
           <div>
             <h1>소살리토</h1>
-            <p>트렌디 웰니스 셀렉트샵</p>
+            <p>러너를 위한 웰니스 브랜드</p>
           </div>
         </a>
         <div class="header-actions">
@@ -39,6 +42,16 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
       </div>
     </header>
   `;
+
+  const logoImage = mount.querySelector(".brand-logo");
+  if (logoImage) {
+    let fallbackIndex = 0;
+    logoImage.addEventListener("error", () => {
+      if (fallbackIndex >= MAIN_LOGO_FALLBACKS.length) return;
+      logoImage.src = MAIN_LOGO_FALLBACKS[fallbackIndex];
+      fallbackIndex += 1;
+    });
+  }
 
   return {
     loginLink: mount.querySelector("#loginLink"),

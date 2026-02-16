@@ -11,15 +11,15 @@ export function mountSiteFooter() {
           <a href="/pages/guide.html">이용안내</a>
         </nav>
         <div class="site-footer-info">
-          <p><strong>상호</strong> 소살리토웰니스 주식회사</p>
-          <p><strong>대표</strong> 홍길동</p>
+          <p><strong>상호</strong> 주식회사 네로</p>
+          <p><strong>대표</strong> 한동균, 박호연</p>
           <p><strong>사업자등록번호</strong> 123-45-67890</p>
-          <p><strong>통신판매업신고</strong> 2026-서울강남-0001</p>
-          <p><strong>주소</strong> 서울특별시 강남구 테헤란로 123, 소살리토빌딩 8층</p>
+          <p><strong>통신판매업신고</strong> 2026-서울마포-0001</p>
+          <p><strong>주소</strong> 서울특별시 중구 퇴계로36길 2</p>
           <p><strong>고객센터</strong> 1588-1234 (평일 10:00 - 18:00 / 점심 12:30 - 13:30)</p>
-          <p><strong>이메일</strong> help@sausalito.co.kr</p>
+          <p><strong>이메일</strong> cs@nero.ai.kr</p>
         </div>
-        <p class="site-footer-copy">Copyright © SAUSALITO WELLNESS Co., Ltd. All rights reserved.</p>
+        <p class="site-footer-copy">Copyright © Nero Inc. All rights reserved.</p>
       </div>
     </footer>
   `;

@@ -90,10 +90,12 @@ async function setHeader() {
 }
 
 function getImages() {
-  const base = resolveProductImage(state.product.image);
+  const base = resolveProductImage(state.product.image, { useFallback: false });
   const fromProduct = Array.isArray(state.product.images) ? state.product.images : [];
-  const extra = state.meta.detailImages || [];
-  return [...new Set([base, ...fromProduct, ...extra].filter(Boolean))];
+  const extra = Array.isArray(state.meta?.detailImages) ? state.meta.detailImages : [];
+  const uploaded = [...new Set([base, ...fromProduct, ...extra].filter((image) => typeof image === "string" && image.trim()))];
+  if (uploaded.length) return uploaded;
+  return [resolveProductImage(null)];
 }
 
 function getReviewPaged() {
@@ -130,8 +132,9 @@ function render() {
   }
 
   const images = getImages();
+  const hasMultipleImages = images.length > 1;
   state.imageIndex = Math.min(images.length - 1, Math.max(0, state.imageIndex));
-  const currentImage = images[state.imageIndex];
+  const currentImage = images[state.imageIndex] || resolveProductImage(null);
   const option = (state.meta.options && state.meta.options[0]) || { price: state.product.price };
   const total = option.price * state.quantity;
 
@@ -146,16 +149,24 @@ function render() {
       <div class="pd-media">
         <div class="pd-media-stage">
           <img src="${currentImage}" alt="${state.product.name}" />
-          <button class="pd-gallery-nav prev" data-action="prevImage">‹</button>
-          <button class="pd-gallery-nav next" data-action="nextImage">›</button>
+          ${
+            hasMultipleImages
+              ? `<button class="pd-gallery-nav prev" data-action="prevImage">‹</button>
+          <button class="pd-gallery-nav next" data-action="nextImage">›</button>`
+              : ""
+          }
         </div>
-        <div class="pd-gallery-thumbs">
+        ${
+          hasMultipleImages
+            ? `<div class="pd-gallery-thumbs" style="--pd-thumb-columns: ${Math.min(images.length, 4)};">
           ${images
             .map(
               (img, idx) => `<button class="pd-gallery-thumb ${idx === state.imageIndex ? "active" : ""}" data-action="selectImage" data-index="${idx}"><img src="${img}" alt="thumb"/></button>`,
             )
             .join("")}
-        </div>
+        </div>`
+            : ""
+        }
       </div>
       <div class="pd-info">
         <p class="pd-eyebrow">${state.product.badges?.join(" · ") || "추천"}</p>
@@ -203,13 +214,24 @@ function render() {
           list.length
             ? list
                 .map((r) => {
-                  const reviewImage = r.image || "";
+                  const reviewImages = Array.isArray(r.images) && r.images.length
+                    ? r.images.slice(0, 3)
+                    : r.image
+                      ? [r.image]
+                      : [];
                   return `<article class="pd-review-item">
-                      <div><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div>
+                      <div class="pd-review-head"><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div>
                       <p>${r.text}</p>
                       ${
-                        reviewImage
-                          ? `<img class="pd-review-thumb" src="${reviewImage}" alt="리뷰 이미지" />`
+                        reviewImages.length
+                          ? `<div class="pd-review-thumb-grid">
+                              ${reviewImages
+                                .map(
+                                  (reviewImage, index) =>
+                                    `<img class="pd-review-thumb" src="${reviewImage}" alt="리뷰 이미지 ${index + 1}" />`,
+                                )
+                                .join("")}
+                            </div>`
                           : ""
                       }
                     </article>`;
