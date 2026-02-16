@@ -7,6 +7,7 @@ import { addToCart, cartCount } from "../services/cart-service.js";
 import { getUser } from "../services/auth-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
+import { mountSiteFooter } from "../components/footer.js";
 
 const id = Number(new URLSearchParams(location.search).get("id"));
 
@@ -22,6 +23,7 @@ const state = {
 };
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
+mountSiteFooter();
 
 const el = {
   root: document.getElementById("detailRoot"),
@@ -29,6 +31,47 @@ const el = {
 
 let observer = null;
 const PER_PAGE = 10;
+let pullStartY = null;
+let pullTriggered = false;
+
+function initMobilePullBack() {
+  if (window.matchMedia("(min-width: 821px)").matches) return;
+
+  window.addEventListener(
+    "touchstart",
+    (event) => {
+      if (window.scrollY > 0) return;
+      pullStartY = event.touches[0].clientY;
+      pullTriggered = false;
+    },
+    { passive: true },
+  );
+
+  window.addEventListener(
+    "touchmove",
+    (event) => {
+      if (pullStartY === null || pullTriggered) return;
+      if (window.scrollY > 0) return;
+      const currentY = event.touches[0].clientY;
+      const diff = currentY - pullStartY;
+      if (diff > 90) {
+        pullTriggered = true;
+        if (history.length > 1) history.back();
+        else location.href = "/pages/home.html";
+      }
+    },
+    { passive: true },
+  );
+
+  window.addEventListener(
+    "touchend",
+    () => {
+      pullStartY = null;
+      pullTriggered = false;
+    },
+    { passive: true },
+  );
+}
 
 function setHeader() {
   const user = getUser();
@@ -122,7 +165,8 @@ function render() {
         <button class="pd-tab ${state.activeSection === "section-detail" ? "active" : ""}" data-action="scrollTab" data-target="section-detail">상세정보</button>
         <button class="pd-tab ${state.activeSection === "section-review" ? "active" : ""}" data-action="scrollTab" data-target="section-review">리뷰</button>
       </div>
-      <div class="pd-tab-panel active pd-section" id="section-detail">
+      <section class="pd-section-card pd-section" id="section-detail">
+        <h3 class="pd-section-label">상세정보</h3>
         <h4>제품 설명</h4><p>${state.product.description}</p>
         <h4>핵심 성분</h4><ul>${state.product.ingredients.map((i) => `<li>${i}</li>`).join("")}</ul>
         <h4>섭취 방법</h4><p>${state.product.intake}</p>
@@ -134,15 +178,16 @@ function render() {
           <button class="pd-accordion-head" data-action="toggleOpen" data-key="inquiry">상품문의 <span>${state.open.inquiry ? "−" : "+"}</span></button>
           <div class="pd-accordion-body ${state.open.inquiry ? "open" : ""}"><p>평일 10:00~18:00, 고객센터를 이용해주세요.</p></div>
         </div>
-      </div>
-      <div class="pd-tab-panel active pd-section" id="section-review">
+      </section>
+      <section class="pd-section-card pd-section" id="section-review">
+        <h3 class="pd-section-label">리뷰</h3>
         ${list.length ? list.map((r) => `<article class="pd-review-item"><div><strong>${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div><p>${r.text}</p></article>`).join("") : '<p>리뷰가 없습니다.</p>'}
         <div class="pd-review-pagination">
           <button class="ghost" data-action="prevReview" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
           <span>${state.reviewPage} / ${totalPages}</span>
           <button class="ghost" data-action="nextReview" ${state.reviewPage >= totalPages ? "disabled" : ""}>다음</button>
         </div>
-      </div>
+      </section>
     </section>
 
     <div class="pd-floating-cta">
@@ -202,6 +247,7 @@ async function init() {
   state.product = await fetchProductById(id);
   state.meta = await fetchProductDetailMeta(id);
   state.reviews = await fetchReviewsByProduct(id);
+  initMobilePullBack();
   setHeader();
   render();
 }

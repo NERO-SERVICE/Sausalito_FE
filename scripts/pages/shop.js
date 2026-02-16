@@ -3,8 +3,10 @@ import { fetchProducts } from "../services/api.js";
 import { getUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
+import { mountSiteFooter } from "../components/footer.js";
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
+mountSiteFooter();
 
 const state = {
   products: [],

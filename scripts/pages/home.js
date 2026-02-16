@@ -7,8 +7,10 @@ import { cartCount } from "../services/cart-service.js";
 import { getUser } from "../services/auth-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
+import { mountSiteFooter } from "../components/footer.js";
 
-const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
+const headerRefs = mountSiteHeader({ showCart: true, currentNav: "home" });
+mountSiteFooter();
 
 const state = {
   products: [],
@@ -26,9 +28,6 @@ const el = {
   heroNext: document.getElementById("heroNext"),
   bestProductGrid: document.getElementById("bestProductGrid"),
   bestReviewList: document.getElementById("bestReviewList"),
-  newProductGrid: document.getElementById("newProductGrid"),
-  timeDealGrid: document.getElementById("timeDealGrid"),
-  instagramGrid: document.getElementById("instagramGrid"),
 };
 
 function setHeaderState() {
@@ -128,18 +127,6 @@ function renderBestReviews() {
     .join("");
 }
 
-function renderInstagram(products) {
-  el.instagramGrid.innerHTML = products
-    .slice(0, 8)
-    .map(
-      (product) => `
-      <a class="home-instagram-item" href="/pages/detail.html?id=${product.id}">
-        <img src="${resolveProductImage(product.image)}" alt="${product.name}" />
-      </a>`,
-    )
-    .join("");
-}
-
 function bind() {
   el.heroPrev.addEventListener("click", () => {
     setHero(state.heroIndex - 1);
@@ -171,26 +158,12 @@ async function init() {
   const bestProducts = [...products]
     .sort((a, b) => b.popularScore - a.popularScore)
     .slice(0, 8);
-  const newProducts = [...products]
-    .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
-    .slice(0, 8);
-  const timeDeals = [...products]
-    .sort(
-      (a, b) =>
-        (b.originalPrice - b.price) / b.originalPrice -
-        (a.originalPrice - a.price) / a.originalPrice,
-    )
-    .slice(0, 4);
-
   setHeaderState();
   renderHero();
   setHero(0);
   startHeroAuto();
   renderProductCards(el.bestProductGrid, bestProducts);
   renderBestReviews();
-  renderProductCards(el.newProductGrid, newProducts);
-  renderProductCards(el.timeDealGrid, timeDeals);
-  renderInstagram(products);
   bind();
 }
 

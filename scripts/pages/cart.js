@@ -2,8 +2,10 @@ import { getCartDetailed, updateCartQuantity, removeFromCart, cartTotals } from 
 import { getUser } from "../services/auth-service.js";
 import { formatCurrency } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
+import { mountSiteFooter } from "../components/footer.js";
 
 const headerRefs = mountSiteHeader({ showCart: false, currentNav: "shop" });
+mountSiteFooter();
 
 const el = {
   cartList: document.getElementById("cartList"),

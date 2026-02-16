@@ -1,1 +1,0 @@
-import{m as e,g as r,s as a}from"./header-Bv8tAKev.js";import{c as t}from"./cart-service-BM7B5bfh.js";const s=e({showCart:!0,currentNav:"brand"}),n=r();a(s,{userName:n?.name||null,cartCountValue:t()});
