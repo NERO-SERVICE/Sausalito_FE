@@ -52,7 +52,7 @@ export const products = [
     name: "프로바이오틱스 100억",
     oneLine: "코팅 유산균으로 편안한 장 컨디션",
     badges: ["베스트셀러"],
-    image: "/dist/img/products/p3.svg",
+    image: "/dist/img/products/dummy3.png",
     price: 24900,
     originalPrice: 32000,
     rating: 4.7,

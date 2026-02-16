@@ -18,7 +18,35 @@ const state = {
   coupon: null,
   reviewFilter: "all",
   reviewHighOnly: false,
+  monthlyIndex: 0,
 };
+
+const monthlyItems = [
+  {
+    subtitle: "APRIL CURATION",
+    title: "이달의 아이템 #1\n데일리 멀티 루틴",
+    description: "활력 밸런스를 위한 멀티비타민 큐레이션. 매일 꾸준히 시작해보세요.",
+    promoText: "이번 달 추천\n기초 영양 루틴",
+    image: "/dist/img/products/dummy1.png",
+    detailId: 1,
+  },
+  {
+    subtitle: "APRIL CURATION",
+    title: "이달의 아이템 #2\n혈행 케어 스페셜",
+    description: "오메가3 중심으로 구성한 집중 케어. 바쁜 일상 속 건강 관리에 적합합니다.",
+    promoText: "지금 가장 인기 있는\n혈행 집중 솔루션",
+    image: "/dist/img/products/dummy2.png",
+    detailId: 2,
+  },
+  {
+    subtitle: "APRIL CURATION",
+    title: "이달의 아이템 #3\n장 컨디션 리셋 팩",
+    description: "장 건강 루틴을 위한 베스트 조합. 아침 루틴으로 시작하기 좋습니다.",
+    promoText: "편안한 하루를 위한\n장 건강 제안",
+    image: "/dist/img/products/dummy3.png",
+    detailId: 3,
+  },
+];
 
 const couponMap = {
   WELCOME20: { type: "percent", value: 20, label: "신규회원 20%" },
@@ -35,6 +63,10 @@ const reviewFilters = [
 const el = {
   body: document.body,
   promoClose: document.getElementById("promoClose"),
+  monthlyTrack: document.getElementById("monthlyTrack"),
+  monthlyDots: document.getElementById("monthlyDots"),
+  monthlyPrev: document.getElementById("monthlyPrev"),
+  monthlyNext: document.getElementById("monthlyNext"),
   productGrid: document.getElementById("productGrid"),
   searchInput: document.getElementById("searchInput"),
   priceFilter: document.getElementById("priceFilter"),
@@ -59,6 +91,55 @@ const el = {
   checkoutForm: document.getElementById("checkoutForm"),
   ordersList: document.getElementById("ordersList"),
 };
+
+let monthlyTimer = null;
+
+function setMonthlyActive(index) {
+  state.monthlyIndex = index;
+  const slides = [...document.querySelectorAll(".monthly-slide")];
+  const dots = [...document.querySelectorAll(".monthly-dot")];
+  slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+  dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+}
+
+function moveMonthly(step) {
+  const next = (state.monthlyIndex + step + monthlyItems.length) % monthlyItems.length;
+  setMonthlyActive(next);
+}
+
+function renderMonthlyItems() {
+  if (!el.monthlyTrack || !el.monthlyDots) return;
+
+  el.monthlyTrack.innerHTML = monthlyItems
+    .map(
+      (item, idx) => `
+      <article class="monthly-slide ${idx === 0 ? "active" : ""}">
+        <p class="monthly-promo-text">${item.promoText.replace(/\n/g, "<br />")}</p>
+        <div class="monthly-image-wrap">
+          <img src="${item.image}" alt="${item.title}" loading="eager" />
+        </div>
+        <div class="monthly-content">
+          <p class="monthly-subtitle">${item.subtitle}</p>
+          <h2 class="monthly-title">${item.title.replace(/\n/g, "<br />")}</h2>
+          <p class="monthly-desc">${item.description}</p>
+          <a class="primary link-btn" href="pages/detail.html?id=${item.detailId}">자세히보기</a>
+        </div>
+      </article>`,
+    )
+    .join("");
+
+  el.monthlyDots.innerHTML = monthlyItems
+    .map((_, idx) => `<button class="monthly-dot ${idx === 0 ? "active" : ""}" data-monthly-dot="${idx}" aria-label="${idx + 1}번 배너"></button>`)
+    .join("");
+}
+
+function startMonthlyAutoSlide() {
+  if (monthlyTimer) clearInterval(monthlyTimer);
+  monthlyTimer = setInterval(() => {
+    const next = (state.monthlyIndex + 1) % monthlyItems.length;
+    setMonthlyActive(next);
+  }, 4000);
+}
 
 function saveState() {
   localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(state.cart));
@@ -345,6 +426,36 @@ function bindEvents() {
     i.addEventListener("change", renderProducts);
   });
 
+  if (el.monthlyDots) {
+    el.monthlyDots.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-monthly-dot]");
+      if (!btn) return;
+      setMonthlyActive(Number(btn.dataset.monthlyDot));
+      startMonthlyAutoSlide();
+    });
+  }
+
+  if (el.monthlyPrev) {
+    el.monthlyPrev.addEventListener("click", () => {
+      moveMonthly(-1);
+      startMonthlyAutoSlide();
+    });
+  }
+
+  if (el.monthlyNext) {
+    el.monthlyNext.addEventListener("click", () => {
+      moveMonthly(1);
+      startMonthlyAutoSlide();
+    });
+  }
+
+  if (el.monthlyTrack) {
+    el.monthlyTrack.addEventListener("mouseenter", () => {
+      if (monthlyTimer) clearInterval(monthlyTimer);
+    });
+    el.monthlyTrack.addEventListener("mouseleave", startMonthlyAutoSlide);
+  }
+
   el.reviewFilterRow.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-review-filter]");
     if (!btn) return;
@@ -403,13 +514,6 @@ function bindEvents() {
     if (t.id === "ordersBtn") {
       renderOrders();
       openModal("ordersModal");
-    }
-    if (t.id === "heroShopNow" || t.id === "heroBestSeller") {
-      if (t.id === "heroBestSeller") {
-        el.sortFilter.value = "popular";
-        renderProducts();
-      }
-      document.getElementById("productSection").scrollIntoView({ behavior: "smooth" });
     }
     if (t.id === "authBtn") {
       if (state.user && confirm("로그아웃 하시겠습니까?")) {
@@ -502,6 +606,9 @@ function bindEvents() {
 
 function init() {
   if (state.promoHidden) el.body.classList.add("promo-hidden");
+  renderMonthlyItems();
+  setMonthlyActive(0);
+  startMonthlyAutoSlide();
   renderProducts();
   renderReviewSummary();
   renderReviewFilters();
