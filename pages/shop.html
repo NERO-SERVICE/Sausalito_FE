@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소살리토 | 쇼핑</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="shop-main">
+      <section class="shop-head">
+        <h2>쇼핑</h2>
+        <p>소살리토의 전체 상품</p>
+      </section>
+
+      <section class="shop-toolbar">
+        <input type="search" id="shopSearchInput" placeholder="상품명으로 검색" />
+        <select id="shopSortSelect">
+          <option value="popular">인기순</option>
+          <option value="review">리뷰많은순</option>
+          <option value="priceAsc">낮은가격순</option>
+          <option value="priceDesc">높은가격순</option>
+          <option value="newest">신상품순</option>
+        </select>
+      </section>
+
+      <section class="shop-grid" id="shopProductGrid"></section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+
+    <script type="module" src="../scripts/pages/shop.js"></script>
+  </body>
+</html>

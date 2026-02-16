@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소살리토 | 로그인</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="container">
+      <section class="card auth-card">
+        <h2>로그인</h2>
+        <form id="loginForm" class="form-grid">
+          <input type="email" name="email" placeholder="이메일" required />
+          <input type="password" name="password" placeholder="비밀번호" required />
+          <input type="text" name="name" placeholder="이름" required />
+          <button class="primary" type="submit">로그인</button>
+        </form>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+
+    <script type="module" src="../scripts/pages/login.js"></script>
+  </body>
+</html>
