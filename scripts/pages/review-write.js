@@ -11,7 +11,12 @@ const form = document.getElementById("reviewWriteForm");
 const productSelect = document.getElementById("reviewProductSelect");
 const imageInput = document.getElementById("reviewImagesInput");
 const preview = document.getElementById("reviewImagePreview");
+const imageCount = document.getElementById("reviewImageCount");
 const presetProductId = Number(new URLSearchParams(location.search).get("productId"));
+const MAX_IMAGE_COUNT = 3;
+
+let selectedImages = [];
+let previewUrls = [];
 
 async function syncHeader() {
   const user = (await syncCurrentUser()) || getUser();
@@ -28,26 +33,110 @@ async function syncHeader() {
   });
 }
 
-function renderPreview(files) {
-  preview.innerHTML = files
-    .map((file) => {
+function releasePreviewUrls() {
+  previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  previewUrls = [];
+}
+
+function updateImageCount() {
+  if (!imageCount) return;
+  imageCount.textContent = `${selectedImages.length}/${MAX_IMAGE_COUNT}`;
+}
+
+function syncInputFiles() {
+  if (typeof DataTransfer === "undefined") return;
+
+  const dataTransfer = new DataTransfer();
+  selectedImages.forEach((file) => dataTransfer.items.add(file));
+  try {
+    imageInput.files = dataTransfer.files;
+  } catch {
+    // 일부 브라우저에서 files 할당이 제한될 수 있어 무시합니다.
+  }
+}
+
+function renderPreview() {
+  releasePreviewUrls();
+  updateImageCount();
+
+  if (!selectedImages.length) {
+    preview.innerHTML = '<p class="review-image-empty">선택된 이미지가 없습니다.</p>';
+    return;
+  }
+
+  preview.innerHTML = selectedImages
+    .map((file, index) => {
       const src = URL.createObjectURL(file);
-      return `<img src="${src}" alt="리뷰 이미지 미리보기" />`;
+      previewUrls.push(src);
+      return `
+        <figure class="review-image-item">
+          <img src="${src}" alt="리뷰 이미지 ${index + 1}" />
+          <button type="button" class="review-image-remove" data-action="removeImage" data-index="${index}" aria-label="이미지 삭제">×</button>
+        </figure>
+      `;
     })
     .join("");
 }
 
-imageInput.addEventListener("change", () => {
-  const files = [...imageInput.files].slice(0, 3);
-  if (imageInput.files.length > 3) {
-    alert("이미지는 최대 3장까지 첨부할 수 있습니다.");
+function getFileKey(file) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
+
+function addSelectedImages(files) {
+  if (!files.length) return;
+
+  const existingKeys = new Set(selectedImages.map(getFileKey));
+  let duplicateCount = 0;
+  let overflowCount = 0;
+
+  files.forEach((file) => {
+    const key = getFileKey(file);
+    if (existingKeys.has(key)) {
+      duplicateCount += 1;
+      return;
+    }
+    if (selectedImages.length >= MAX_IMAGE_COUNT) {
+      overflowCount += 1;
+      return;
+    }
+    selectedImages.push(file);
+    existingKeys.add(key);
+  });
+
+  const messages = [];
+  if (overflowCount > 0) {
+    messages.push(`이미지는 최대 ${MAX_IMAGE_COUNT}장까지 첨부할 수 있습니다.`);
+  }
+  if (duplicateCount > 0) {
+    messages.push("동일한 이미지는 한 번만 첨부됩니다.");
+  }
+  if (messages.length) {
+    alert(messages.join("\n"));
   }
 
-  const dataTransfer = new DataTransfer();
-  files.forEach((file) => dataTransfer.items.add(file));
-  imageInput.files = dataTransfer.files;
-  renderPreview(files);
+  syncInputFiles();
+  renderPreview();
+}
+
+imageInput.addEventListener("change", () => {
+  addSelectedImages([...imageInput.files]);
+  imageInput.value = "";
 });
+
+preview.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-action='removeImage']");
+  if (!button) return;
+
+  const index = Number(button.dataset.index);
+  if (Number.isNaN(index)) return;
+  if (index < 0 || index >= selectedImages.length) return;
+
+  selectedImages.splice(index, 1);
+  syncInputFiles();
+  renderPreview();
+});
+
+window.addEventListener("beforeunload", releasePreviewUrls);
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -60,7 +149,7 @@ form.addEventListener("submit", async (event) => {
   }
 
   const data = Object.fromEntries(new FormData(form).entries());
-  const files = [...imageInput.files].slice(0, 3);
+  const files = [...selectedImages];
 
   try {
     await createReview({
@@ -101,6 +190,7 @@ form.addEventListener("submit", async (event) => {
       )
       .join("");
 
+    renderPreview();
     await syncHeader();
   } catch (error) {
     console.error(error);

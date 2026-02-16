@@ -12,7 +12,7 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
           <img src="${MAIN_LOGO_SRC}" alt="소살리토" class="brand-logo" />
           <div>
             <h1>소살리토</h1>
-            <p>트렌디 웰니스 셀렉트샵</p>
+            <p>러너를 위한 웰니스 브랜드</p>
           </div>
         </a>
         <div class="header-actions">

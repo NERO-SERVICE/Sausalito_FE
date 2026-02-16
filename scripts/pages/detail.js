@@ -214,13 +214,24 @@ function render() {
           list.length
             ? list
                 .map((r) => {
-                  const reviewImage = r.image || "";
+                  const reviewImages = Array.isArray(r.images) && r.images.length
+                    ? r.images.slice(0, 3)
+                    : r.image
+                      ? [r.image]
+                      : [];
                   return `<article class="pd-review-item">
-                      <div><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div>
+                      <div class="pd-review-head"><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div>
                       <p>${r.text}</p>
                       ${
-                        reviewImage
-                          ? `<img class="pd-review-thumb" src="${reviewImage}" alt="리뷰 이미지" />`
+                        reviewImages.length
+                          ? `<div class="pd-review-thumb-grid">
+                              ${reviewImages
+                                .map(
+                                  (reviewImage, index) =>
+                                    `<img class="pd-review-thumb" src="${reviewImage}" alt="리뷰 이미지 ${index + 1}" />`,
+                                )
+                                .join("")}
+                            </div>`
                           : ""
                       }
                     </article>`;

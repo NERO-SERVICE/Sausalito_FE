@@ -262,6 +262,17 @@ function normalizeDetailMeta(raw) {
 }
 
 function normalizeReview(raw = {}) {
+  const images = Array.isArray(raw.images)
+    ? raw.images
+        .map((item) => {
+          if (typeof item === "string") return item;
+          if (item && typeof item === "object") return item.url || "";
+          return "";
+        })
+        .filter(Boolean)
+    : [];
+  const primaryImage = raw.image || images[0] || "";
+
   return {
     id: raw.id,
     productId: Number(raw.productId ?? raw.product_id ?? raw.product?.id ?? 0),
@@ -270,7 +281,8 @@ function normalizeReview(raw = {}) {
     text: raw.text || raw.content || "",
     date: raw.date || formatDate(raw.created_at),
     helpful: Number(raw.helpful ?? raw.helpful_count ?? 0),
-    image: raw.image || raw.images?.[0]?.url || "",
+    image: primaryImage,
+    images,
     createdAt: raw.created_at || null,
   };
 }

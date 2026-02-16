@@ -10,10 +10,10 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/reviewWrite-Cn35dcNA.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/footer-D65fayHX.js">
-    <link rel="modulepreload" crossorigin href="/assets/cart-service-BIgm5nvz.js">
-    <link rel="stylesheet" crossorigin href="/assets/footer-BSp3wiio.css">
+    <script type="module" crossorigin src="/assets/reviewWrite-cmBdzbWR.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-CuxST7fX.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-BQgjICxU.js">
+    <link rel="stylesheet" crossorigin href="/assets/footer-Dj4eQxhw.css">
   </head>
   <body>
     <div id="siteHeaderMount"></div>
@@ -50,12 +50,16 @@
             <textarea name="content" rows="6" required maxlength="1000" placeholder="상품 사용 경험을 자세히 작성해주세요"></textarea>
           </label>
 
-          <label>
-            <span>이미지 첨부 (최대 3장)</span>
+          <section class="review-image-field" aria-label="리뷰 이미지 업로드">
+            <div class="review-image-head">
+              <span>이미지 첨부 (최대 3장)</span>
+              <strong id="reviewImageCount">0/3</strong>
+            </div>
+            <p class="review-image-guide">이미지를 여러 번 선택해도 최대 3장까지 누적 첨부됩니다.</p>
+            <label class="review-image-picker" for="reviewImagesInput">사진 선택</label>
             <input id="reviewImagesInput" name="images" type="file" accept="image/*" multiple />
-          </label>
-
-          <div class="review-image-preview" id="reviewImagePreview"></div>
+            <div class="review-image-preview" id="reviewImagePreview"></div>
+          </section>
 
           <div class="review-write-actions">
             <a class="ghost" href="/pages/reviews.html">취소</a>

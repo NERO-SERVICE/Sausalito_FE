@@ -38,6 +38,7 @@ async function syncHeader() {
 }
 
 function getReviewImage(review) {
+  if (Array.isArray(review.images) && review.images[0]) return review.images[0];
   if (review.image) return review.image;
   const product = state.products.find((item) => item.id === review.productId);
   return resolveProductImage(product?.image);
