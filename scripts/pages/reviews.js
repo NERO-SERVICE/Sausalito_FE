@@ -1,6 +1,6 @@
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { fetchAllReviews, fetchProducts } from "../services/api.js";
-import { getUser } from "../services/auth-service.js";
+import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
 import { resolveProductImage } from "../store-data.js";
 import { mountSiteFooter } from "../components/footer.js";
@@ -22,11 +22,18 @@ const el = {
   pagination: document.getElementById("reviewPagination"),
 };
 
-function syncHeader() {
-  const user = getUser();
+async function syncHeader() {
+  const user = (await syncCurrentUser()) || getUser();
+  let count = 0;
+  try {
+    count = await cartCount();
+  } catch {
+    count = 0;
+  }
+
   syncSiteHeader(headerRefs, {
     userName: user?.name || null,
-    cartCountValue: cartCount(),
+    cartCountValue: count,
   });
 }
 
@@ -130,14 +137,19 @@ function bind() {
 }
 
 async function init() {
-  const [products, reviews] = await Promise.all([fetchProducts(), fetchAllReviews()]);
-  state.products = products;
-  state.reviews = reviews;
+  try {
+    const [products, reviews] = await Promise.all([fetchProducts(), fetchAllReviews()]);
+    state.products = products;
+    state.reviews = reviews;
 
-  syncHeader();
-  renderProductFilter();
-  renderReviewGrid();
-  bind();
+    await syncHeader();
+    renderProductFilter();
+    renderReviewGrid();
+    bind();
+  } catch (error) {
+    console.error(error);
+    el.reviewGrid.innerHTML = '<p class="empty">리뷰 데이터를 불러오지 못했습니다.</p>';
+  }
 }
 
 init();

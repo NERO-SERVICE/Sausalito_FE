@@ -4,7 +4,7 @@ import {
   fetchReviewsByProduct,
 } from "../services/api.js";
 import { addToCart, cartCount } from "../services/cart-service.js";
-import { getUser } from "../services/auth-service.js";
+import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
@@ -74,18 +74,26 @@ function initMobilePullBack() {
   );
 }
 
-function setHeader() {
-  const user = getUser();
+async function setHeader() {
+  const user = (await syncCurrentUser()) || getUser();
+  let count = 0;
+  try {
+    count = await cartCount();
+  } catch {
+    count = 0;
+  }
+
   syncSiteHeader(headerRefs, {
     userName: user?.name || null,
-    cartCountValue: cartCount(),
+    cartCountValue: count,
   });
 }
 
 function getImages() {
   const base = resolveProductImage(state.product.image);
+  const fromProduct = Array.isArray(state.product.images) ? state.product.images : [];
   const extra = state.meta.detailImages || [];
-  return [...new Set([base, ...extra].filter(Boolean))];
+  return [...new Set([base, ...fromProduct, ...extra].filter(Boolean))];
 }
 
 function getReviewPaged() {
@@ -130,7 +138,7 @@ function render() {
   const discountRate = Math.round((1 - state.product.price / state.product.originalPrice) * 100);
   const reviewAvg = state.reviews.length
     ? (state.reviews.reduce((s, r) => s + r.score, 0) / state.reviews.length).toFixed(1)
-    : state.product.rating.toFixed(1);
+    : Number(state.product.rating || 0).toFixed(1);
   const { list, totalPages } = getReviewPaged();
 
   el.root.innerHTML = `
@@ -207,7 +215,7 @@ function render() {
                     </article>`;
                 })
                 .join("")
-            : '<p>리뷰가 없습니다.</p>'
+            : "<p>리뷰가 없습니다.</p>"
         }
         <div class="pd-review-pagination">
           <button class="ghost" data-action="prevReview" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
@@ -240,7 +248,7 @@ function render() {
   initSpy();
 }
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
@@ -268,14 +276,33 @@ document.addEventListener("click", (e) => {
   if (action === "closePolicy") state.policyOpen = false;
 
   if (action === "addCart") {
-    addToCart(state.product.id, state.quantity);
-    alert("장바구니에 담았습니다.");
-    setHeader();
+    try {
+      await addToCart(state.product.id, state.quantity);
+      alert("장바구니에 담았습니다.");
+      await setHeader();
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "장바구니 담기에 실패했습니다.");
+      if (error.status === 401 || error.message.includes("로그인")) {
+        location.href = "/pages/login.html";
+        return;
+      }
+    }
   }
 
   if (action === "buyNow") {
-    addToCart(state.product.id, state.quantity);
-    location.href = "/pages/cart.html";
+    try {
+      await addToCart(state.product.id, state.quantity);
+      location.href = "/pages/cart.html";
+      return;
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "장바구니 담기에 실패했습니다.");
+      if (error.status === 401 || error.message.includes("로그인")) {
+        location.href = "/pages/login.html";
+        return;
+      }
+    }
   }
 
   if (action === "toggleWish") {
@@ -286,12 +313,17 @@ document.addEventListener("click", (e) => {
 });
 
 async function init() {
-  state.product = await fetchProductById(id);
-  state.meta = await fetchProductDetailMeta(id);
-  state.reviews = await fetchReviewsByProduct(id);
-  initMobilePullBack();
-  setHeader();
-  render();
+  try {
+    state.product = await fetchProductById(id);
+    state.meta = await fetchProductDetailMeta(id);
+    state.reviews = await fetchReviewsByProduct(id);
+    initMobilePullBack();
+    await setHeader();
+    render();
+  } catch (error) {
+    console.error(error);
+    el.root.innerHTML = '<p class="empty">상품 데이터를 불러오지 못했습니다.</p>';
+  }
 }
 
 init();

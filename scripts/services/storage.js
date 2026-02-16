@@ -2,6 +2,7 @@ export const STORAGE_KEYS = {
   cart: "sausalito_cart",
   wishlist: "sausalito_wishlist",
   user: "sausalito_user",
+  tokens: "sausalito_tokens",
 };
 
 export function readJson(key, fallback) {

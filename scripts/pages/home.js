@@ -4,7 +4,7 @@ import {
   fetchFeaturedReviews,
 } from "../services/api.js";
 import { cartCount } from "../services/cart-service.js";
-import { getUser } from "../services/auth-service.js";
+import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
@@ -30,15 +30,23 @@ const el = {
   bestReviewList: document.getElementById("bestReviewList"),
 };
 
-function setHeaderState() {
-  const user = getUser();
+async function setHeaderState() {
+  const user = (await syncCurrentUser()) || getUser();
+  let count = 0;
+  try {
+    count = await cartCount();
+  } catch {
+    count = 0;
+  }
+
   syncSiteHeader(headerRefs, {
     userName: user?.name || null,
-    cartCountValue: cartCount(),
+    cartCountValue: count,
   });
 }
 
 function setHero(index) {
+  if (!state.banners.length) return;
   state.heroIndex = (index + state.banners.length) % state.banners.length;
   document
     .querySelectorAll(".home-hero-slide")
@@ -53,11 +61,18 @@ function setHero(index) {
 }
 
 function startHeroAuto() {
+  if (!state.banners.length) return;
   if (heroTimer) clearInterval(heroTimer);
   heroTimer = setInterval(() => setHero(state.heroIndex + 1), 4000);
 }
 
 function renderHero() {
+  if (!state.banners.length) {
+    el.heroTrack.innerHTML = "";
+    el.heroDots.innerHTML = "";
+    return;
+  }
+
   el.heroTrack.innerHTML = state.banners
     .map(
       (banner, index) => `
@@ -128,6 +143,7 @@ function renderBestReviews() {
 }
 
 function bind() {
+  if (!state.banners.length) return;
   el.heroPrev.addEventListener("click", () => {
     setHero(state.heroIndex - 1);
     startHeroAuto();
@@ -145,26 +161,32 @@ function bind() {
 }
 
 async function init() {
-  const [products, banners, reviews] = await Promise.all([
-    fetchProducts(),
-    fetchHomeBanners(),
-    fetchFeaturedReviews(6),
-  ]);
+  try {
+    const [products, banners, reviews] = await Promise.all([
+      fetchProducts(),
+      fetchHomeBanners(),
+      fetchFeaturedReviews(6),
+    ]);
 
-  state.products = products;
-  state.banners = banners;
-  state.reviews = reviews;
+    state.products = products;
+    state.banners = banners;
+    state.reviews = reviews;
 
-  const bestProducts = [...products]
-    .sort((a, b) => b.popularScore - a.popularScore)
-    .slice(0, 8);
-  setHeaderState();
-  renderHero();
-  setHero(0);
-  startHeroAuto();
-  renderProductCards(el.bestProductGrid, bestProducts);
-  renderBestReviews();
-  bind();
+    const bestProducts = [...products]
+      .sort((a, b) => b.popularScore - a.popularScore)
+      .slice(0, 8);
+
+    await setHeaderState();
+    renderHero();
+    setHero(0);
+    startHeroAuto();
+    renderProductCards(el.bestProductGrid, bestProducts);
+    renderBestReviews();
+    bind();
+  } catch (error) {
+    console.error(error);
+    alert("홈 데이터를 불러오지 못했습니다. 백엔드 서버 상태를 확인해주세요.");
+  }
 }
 
 init();
