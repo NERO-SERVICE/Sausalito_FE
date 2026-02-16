@@ -3,28 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>소살리토 | 상세</title>
+    <title>소살리토 | 로그인</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/detail-DxMcnDEP.js"></script>
+    <script type="module" crossorigin src="/assets/login-jEnFqz2B.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/header-DS7QUZWh.js">
-    <link rel="modulepreload" crossorigin href="/assets/cart-service-D4_pbSDg.js">
-    <link rel="modulepreload" crossorigin href="/assets/api-Dtw6jH7d.js">
     <link rel="stylesheet" crossorigin href="/assets/header-4vl6Ki_Z.css">
   </head>
   <body>
     <div id="siteHeaderMount"></div>
 
     <main class="container">
-      <section class="filters">
-        <a class="text-btn link-btn" href="/pages/home.html">← 목록으로 돌아가기</a>
+      <section class="card auth-card">
+        <h2>로그인</h2>
+        <form id="loginForm" class="form-grid">
+          <input type="email" name="email" placeholder="이메일" required />
+          <input type="password" name="password" placeholder="비밀번호" required />
+          <input type="text" name="name" placeholder="이름" required />
+          <button class="primary" type="submit">로그인</button>
+        </form>
       </section>
-
-      <section class="pd-wrapper pd-bottom-safe" id="detailRoot"></section>
     </main>
 
   </body>

@@ -4,11 +4,14 @@ import { resolve } from "path";
 export default defineConfig({
   build: {
     outDir: "build",
-    emptyOutDir: false,
+    emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
+        index: resolve(__dirname, "index.html"),
+        home: resolve(__dirname, "pages/home.html"),
         detail: resolve(__dirname, "pages/detail.html"),
+        login: resolve(__dirname, "pages/login.html"),
+        cart: resolve(__dirname, "pages/cart.html"),
       },
     },
   },

@@ -141,7 +141,7 @@ export const products = [
   },
 ];
 
-export const reviews = [
+const seedReviews = [
   { id: 101, productId: 1, user: "김**", score: 5, text: "한 달째 먹고 있는데 오전 집중력이 좋아졌어요.", date: "2026.02.10", helpful: 31, option: "30정" },
   { id: 102, productId: 2, user: "이**", score: 5, text: "비린맛이 거의 없어서 꾸준히 먹기 편해요.", date: "2026.02.08", helpful: 19, option: "60캡슐" },
   { id: 103, productId: 3, user: "박**", score: 4, text: "아침 공복에 먹고 장 컨디션이 안정적입니다.", date: "2026.02.07", helpful: 22, option: "2개월분" },
@@ -149,6 +149,47 @@ export const reviews = [
   { id: 105, productId: 5, user: "최**", score: 4, text: "잠들기 전에 먹으면 루틴이 안정적으로 잡히는 느낌이에요.", date: "2026.02.03", helpful: 9, option: "30정" },
   { id: 106, productId: 6, user: "윤**", score: 5, text: "장시간 모니터 볼 때 눈 피로가 덜한 것 같아요.", date: "2026.01.29", helpful: 17, option: "60캡슐" },
   { id: 107, productId: 1, user: "한**", score: 3, text: "효과는 더 지켜보려구요. 포장은 깔끔해서 좋았습니다.", date: "2026.01.26", helpful: 6, option: "30정" },
+];
+
+const reviewUsers = ["김**", "이**", "박**", "정**", "최**", "윤**", "장**", "한**", "서**", "문**"];
+const reviewTexts = [
+  "재구매 의사 있어요. 루틴으로 먹기 편합니다.",
+  "패키지가 깔끔해서 선물용으로도 괜찮아요.",
+  "맛과 향이 부담 없어서 꾸준히 먹고 있어요.",
+  "한 달 정도 복용했는데 만족도가 높습니다.",
+  "배송이 빨랐고 포장 상태도 좋았습니다.",
+  "가격대비 구성 좋아서 가족과 같이 먹어요.",
+];
+
+function formatReviewDate(offset) {
+  const date = new Date(Date.UTC(2026, 1, 16));
+  date.setUTCDate(date.getUTCDate() - offset);
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}.${m}.${d}`;
+}
+
+function createProductReviews(product, index) {
+  const option = `${product.name} 기본 구성`;
+  return Array.from({ length: 50 }, (_, reviewIndex) => {
+    const score = [5, 5, 4, 5, 4][reviewIndex % 5];
+    return {
+      id: 1000 + product.id * 100 + reviewIndex,
+      productId: product.id,
+      user: reviewUsers[(reviewIndex + index) % reviewUsers.length],
+      score,
+      text: `${reviewTexts[(reviewIndex + product.id) % reviewTexts.length]} (${product.name})`,
+      date: formatReviewDate(reviewIndex + index * 4),
+      helpful: 3 + ((reviewIndex * 7 + product.id) % 42),
+      option,
+    };
+  });
+}
+
+export const reviews = [
+  ...seedReviews,
+  ...products.flatMap((product, index) => createProductReviews(product, index)),
 ];
 
 export const productDetailMeta = {
