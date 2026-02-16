@@ -1,6 +1,7 @@
 import {
   products,
   reviews,
+  productDetailMeta,
   STORAGE_KEYS,
   formatCurrency,
   paymentLabel,
@@ -11,6 +12,9 @@ import {
 const productId = Number(new URLSearchParams(window.location.search).get("id"));
 const currentProduct = products.find((p) => p.id === productId) || products[0];
 
+const REVIEWS_PER_PAGE = 10;
+let sectionObserver = null;
+
 const state = {
   cart: JSON.parse(localStorage.getItem(STORAGE_KEYS.cart) || "[]"),
   wishlist: JSON.parse(localStorage.getItem(STORAGE_KEYS.wishlist) || "[]"),
@@ -19,6 +23,19 @@ const state = {
   promoHidden: JSON.parse(localStorage.getItem(STORAGE_KEYS.promoHidden) || "false"),
   authMode: "login",
   coupon: null,
+  activeSection: "section-detail",
+  reviewPage: 1,
+  sectionsOpen: {
+    shipping: false,
+    inquiry: false,
+  },
+  detail: {
+    purchaseType: 0,
+    optionId: null,
+    addOnIds: new Set(),
+    quantity: 1,
+    imageIndex: 0,
+  },
 };
 
 const couponMap = {
@@ -30,7 +47,6 @@ const el = {
   body: document.body,
   promoClose: document.getElementById("promoClose"),
   detailContent: document.getElementById("detailContent"),
-  relatedProducts: document.getElementById("relatedProducts"),
   cartCount: document.getElementById("cartCount"),
   wishlistCount: document.getElementById("wishlistCount"),
   cartItems: document.getElementById("cartItems"),
@@ -54,6 +70,44 @@ function saveState() {
   localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(state.orders));
   localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(state.user));
   localStorage.setItem(STORAGE_KEYS.promoHidden, JSON.stringify(state.promoHidden));
+}
+
+function getDetailMeta() {
+  const raw = productDetailMeta[currentProduct.id] || productDetailMeta.default;
+  const fallbackOptions = [
+    { id: `${currentProduct.id}-base`, name: "기본 구성", price: currentProduct.price },
+    { id: `${currentProduct.id}-double`, name: "더블 구성", price: Math.round(currentProduct.price * 1.9) },
+  ];
+
+  return {
+    ...productDetailMeta.default,
+    ...raw,
+    options: raw.options?.length ? raw.options : fallbackOptions,
+    detailImages: raw.detailImages?.length
+      ? raw.detailImages
+      : [resolveProductImage(currentProduct.image), "/dist/img/products/p4.svg", "/dist/img/products/p5.svg"],
+  };
+}
+
+function getSelectedOption(meta) {
+  if (!state.detail.optionId) state.detail.optionId = meta.options[0].id;
+  return meta.options.find((option) => option.id === state.detail.optionId) || meta.options[0];
+}
+
+function getDetailPrice(meta) {
+  const selectedOption = getSelectedOption(meta);
+  const addOnTotal = meta.addOns
+    .filter((addOn) => state.detail.addOnIds.has(addOn.id))
+    .reduce((sum, addOn) => sum + addOn.price, 0);
+  const itemTotal = (selectedOption.price + addOnTotal) * state.detail.quantity;
+  const shipping = itemTotal >= meta.freeShippingThreshold ? 0 : meta.shippingFee;
+  return {
+    selectedOption,
+    addOnTotal,
+    itemTotal,
+    shipping,
+    paymentTotal: itemTotal + shipping,
+  };
 }
 
 function getCartDetailedItems() {
@@ -86,119 +140,236 @@ function calculateTotals() {
   return { subtotal, shipping, discount, total: Math.max(0, subtotal + shipping - discount), discountText };
 }
 
+function getPagedReviews(productReviews) {
+  const totalPages = Math.max(1, Math.ceil(productReviews.length / REVIEWS_PER_PAGE));
+  state.reviewPage = Math.min(totalPages, Math.max(1, state.reviewPage));
+  const start = (state.reviewPage - 1) * REVIEWS_PER_PAGE;
+  const list = productReviews.slice(start, start + REVIEWS_PER_PAGE);
+  return { list, totalPages };
+}
+
+function setActiveSection(sectionId) {
+  state.activeSection = sectionId;
+  document.querySelectorAll(".pd-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.target === sectionId);
+  });
+}
+
+function initScrollSpy() {
+  if (sectionObserver) sectionObserver.disconnect();
+  const sections = [...document.querySelectorAll(".pd-section")];
+  if (!sections.length) return;
+
+  sectionObserver = new IntersectionObserver(
+    (entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visible?.target?.id) setActiveSection(visible.target.id);
+    },
+    {
+      threshold: [0.35, 0.55],
+      rootMargin: "-20% 0px -45% 0px",
+    },
+  );
+
+  sections.forEach((section) => sectionObserver.observe(section));
+  setActiveSection(state.activeSection || "section-detail");
+}
+
 function renderDetail() {
-  const relatedReviews = reviews
-    .filter((review) => review.productId === currentProduct.id)
-    .sort((a, b) => b.helpful - a.helpful)
-    .slice(0, 3);
-  const detailImageSrc = resolveProductImage(currentProduct.image);
-  const detailImageFallback = resolveProductImageFallback(currentProduct.image);
+  const meta = getDetailMeta();
+  const { selectedOption, addOnTotal, itemTotal, shipping, paymentTotal } = getDetailPrice(meta);
+
+  const productReviews = reviews.filter((review) => review.productId === currentProduct.id);
+  const reviewAverage = productReviews.length
+    ? (productReviews.reduce((sum, review) => sum + review.score, 0) / productReviews.length).toFixed(1)
+    : currentProduct.rating.toFixed(1);
+  const { list: reviewPageList, totalPages } = getPagedReviews(productReviews);
+
+  const gallery = meta.detailImages;
+  state.detail.imageIndex = Math.min(Math.max(0, state.detail.imageIndex), gallery.length - 1);
+  const imageSrc = gallery[state.detail.imageIndex] || resolveProductImage(currentProduct.image);
+  const imageFallback = resolveProductImageFallback(currentProduct.image);
+
+  const discountRate = Math.round((1 - currentProduct.price / currentProduct.originalPrice) * 100);
 
   el.detailContent.innerHTML = `
-    <div class="detail-grid">
-      <div>
-        <div class="product-thumb detail-thumb">
+    <section class="pd-top">
+      <div class="pd-media">
+        <div class="pd-media-stage">
           <img
-            src="${detailImageSrc}"
-            data-fallback="${detailImageFallback}"
+            src="${imageSrc}"
+            data-fallback="${imageFallback}"
             alt="${currentProduct.name}"
             onerror="if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src=this.dataset.fallback;}"
           />
+          <button class="pd-gallery-nav prev" data-action="prevImage" aria-label="이전 이미지">‹</button>
+          <button class="pd-gallery-nav next" data-action="nextImage" aria-label="다음 이미지">›</button>
         </div>
-        <div class="detail-sections">
-          <article class="detail-box">
-            <h4>핵심 성분</h4>
-            <ul>${currentProduct.ingredients.map((ingredient) => `<li>${ingredient}</li>`).join("")}</ul>
-          </article>
-          <article class="detail-box">
-            <h4>섭취 방법</h4>
-            <p>${currentProduct.intake}</p>
-          </article>
-          <article class="detail-box">
-            <h4>추천 대상</h4>
-            <p>${currentProduct.target}</p>
-          </article>
+        <div class="pd-gallery-thumbs">
+          ${gallery
+            .map(
+              (img, idx) => `
+                <button class="pd-gallery-thumb ${idx === state.detail.imageIndex ? "active" : ""}" data-action="selectDetailImage" data-image-index="${idx}">
+                  <img src="${img}" alt="${currentProduct.name} ${idx + 1}" />
+                </button>`,
+            )
+            .join("")}
         </div>
       </div>
-      <div>
-        <span class="badge">BEST PICK</span>
-        <h2 style="margin-top:8px;">${currentProduct.name}</h2>
-        <p style="color:#5d7683;line-height:1.55;">${currentProduct.description}</p>
-        <p>리뷰 ${currentProduct.reviews}개 · 평점 ${currentProduct.rating} / 5</p>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
-          <strong style="font-size:1.4rem;">${formatCurrency(currentProduct.price)}</strong>
-          <small style="text-decoration:line-through;color:#5d7683;">${formatCurrency(currentProduct.originalPrice)}</small>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="primary" data-action="addToCart" data-id="${currentProduct.id}">장바구니 담기</button>
-          <button class="ghost" data-action="toggleWish" data-id="${currentProduct.id}">${
-            state.wishlist.includes(currentProduct.id) ? "찜 해제" : "찜하기"
-          }</button>
+
+      <div class="pd-info">
+        <p class="pd-eyebrow">${currentProduct.badges?.join(" · ") || "추천 아이템"}</p>
+        <h2>${currentProduct.name}</h2>
+        <p class="pd-one-line">${currentProduct.oneLine || currentProduct.description}</p>
+
+        <div class="pd-rating">★ ${reviewAverage} (${currentProduct.reviews.toLocaleString("ko-KR")})</div>
+
+        <div class="pd-price">
+          <small>${formatCurrency(currentProduct.originalPrice)}</small>
+          <div><span>${discountRate}%</span><strong>${formatCurrency(currentProduct.price)}</strong></div>
         </div>
 
-        <div class="detail-sections">
-          <article class="detail-box">
-            <h4>주의사항</h4>
-            <ul>${currentProduct.cautions.map((caution) => `<li>${caution}</li>`).join("")}</ul>
-          </article>
-          <article class="detail-box">
-            <h4>자주 묻는 질문</h4>
-            <ul>${currentProduct.faq.map((item) => `<li><strong>Q.</strong> ${item.q}<br/><strong>A.</strong> ${item.a}</li>`).join("")}</ul>
-          </article>
-          <article class="detail-box">
-            <h4>실구매 리뷰</h4>
-            <ul>${
-              relatedReviews.length
-                ? relatedReviews
-                    .map((review) => `<li><strong>${"★".repeat(review.score)}</strong> ${review.text} <small>(${review.user})</small></li>`)
-                    .join("")
-                : "<li>아직 등록된 리뷰가 없습니다.</li>"
-            }</ul>
-          </article>
+        <div class="pd-meta-lines">
+          <p><strong>배송비</strong><span>${formatCurrency(meta.shippingFee)} ( ${formatCurrency(meta.freeShippingThreshold)} 이상 무료 )</span></p>
+          <p><strong>쿠폰</strong><span>${meta.couponText}</span></p>
+          <p><strong>혜택</strong><span>${meta.interestFreeText}</span></p>
+          <p><strong>배송안내</strong><span>${meta.todayShipText}</span></p>
+        </div>
+
+        <div class="pd-select-wrap">
+          <h4>구매방식</h4>
+          <div class="pd-chip-row">
+            ${meta.purchaseTypes
+              .map(
+                (type, idx) =>
+                  `<button class="pd-chip ${state.detail.purchaseType === idx ? "active" : ""}" data-action="selectPurchaseType" data-index="${idx}">${type}</button>`,
+              )
+              .join("")}
+          </div>
+          <p class="pd-sub-benefit">${meta.subscriptionBenefit}</p>
+        </div>
+
+        <div class="pd-select-wrap">
+          <h4>${meta.optionsLabel}</h4>
+          <div class="pd-option-list">
+            ${meta.options
+              .map(
+                (option) => `
+                <button class="pd-option ${selectedOption.id === option.id ? "active" : ""}" data-action="selectOption" data-option-id="${option.id}">
+                  <span>${option.name}</span>
+                  <strong>${formatCurrency(option.price)}</strong>
+                </button>`,
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <div class="pd-select-wrap">
+          <h4>추가구성</h4>
+          <div class="pd-addon-list">
+            ${meta.addOns
+              .map(
+                (addOn) => `
+                <button class="pd-addon ${state.detail.addOnIds.has(addOn.id) ? "active" : ""}" data-action="toggleAddon" data-addon-id="${addOn.id}">
+                  <span>${addOn.name}</span>
+                  <strong>+${formatCurrency(addOn.price)}</strong>
+                </button>`,
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <div class="pd-qty-row">
+          <h4>수량</h4>
+          <div class="qty-controls">
+            <button data-action="decreaseDetailQty">-</button>
+            <span>${state.detail.quantity}</span>
+            <button data-action="increaseDetailQty">+</button>
+          </div>
+        </div>
+
+        <div class="pd-total-box">
+          <p>상품금액 <strong>${formatCurrency(itemTotal)}</strong></p>
+          <p>옵션추가금액 <strong>${formatCurrency(addOnTotal * state.detail.quantity)}</strong></p>
+          <p>배송비 <strong>${formatCurrency(shipping)}</strong></p>
+          <p class="final">총 결제예상금액 <strong>${formatCurrency(paymentTotal)}</strong></p>
         </div>
       </div>
+    </section>
+
+    <section class="pd-tabs">
+      <div class="pd-tab-head">
+        <button class="pd-tab ${state.activeSection === "section-detail" ? "active" : ""}" data-action="scrollTab" data-target="section-detail">상세정보</button>
+        <button class="pd-tab ${state.activeSection === "section-review" ? "active" : ""}" data-action="scrollTab" data-target="section-review">리뷰 (${currentProduct.reviews})</button>
+      </div>
+
+      <div class="pd-tab-panel active pd-section" id="section-detail">
+        <h4>제품 설명</h4>
+        <p>${currentProduct.description}</p>
+        <h4>핵심 성분</h4>
+        <ul>${currentProduct.ingredients.map((ingredient) => `<li>${ingredient}</li>`).join("")}</ul>
+        <h4>섭취 방법</h4>
+        <p>${currentProduct.intake}</p>
+        <h4>추천 대상</h4>
+        <p>${currentProduct.target}</p>
+
+        <div class="pd-accordion">
+          <button class="pd-accordion-head" data-action="toggleSectionOpen" data-section="shipping">
+            배송/교환 안내 <span>${state.sectionsOpen.shipping ? "−" : "+"}</span>
+          </button>
+          <div class="pd-accordion-body ${state.sectionsOpen.shipping ? "open" : ""}">
+            <p>주문/결제 완료 후 평균 1~2일 내 출고됩니다. (주말/공휴일 제외)</p>
+            <p>상품 수령 후 7일 이내 교환/반품 접수가 가능합니다.</p>
+            <p>단순 변심 반품 시 왕복 배송비는 고객 부담입니다.</p>
+          </div>
+        </div>
+
+        <div class="pd-accordion">
+          <button class="pd-accordion-head" data-action="toggleSectionOpen" data-section="inquiry">
+            상품문의 안내 <span>${state.sectionsOpen.inquiry ? "−" : "+"}</span>
+          </button>
+          <div class="pd-accordion-body ${state.sectionsOpen.inquiry ? "open" : ""}">
+            <p>상품 문의는 고객센터 또는 1:1 문의를 이용해주세요.</p>
+            <p>고객센터 운영시간: 평일 10:00 ~ 18:00</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pd-tab-panel active pd-section" id="section-review">
+        ${
+          reviewPageList.length
+            ? reviewPageList
+                .map(
+                  (review) => `
+                    <article class="pd-review-item">
+                      <div><strong>${"★".repeat(review.score)}${"☆".repeat(5 - review.score)}</strong><span>${review.user} · ${review.date}</span></div>
+                      <p>${review.text}</p>
+                    </article>`,
+                )
+                .join("")
+            : "<p>아직 등록된 리뷰가 없습니다.</p>"
+        }
+
+        <div class="pd-review-pagination">
+          <button class="ghost" data-action="reviewPagePrev" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
+          <span>${state.reviewPage} / ${totalPages}</span>
+          <button class="ghost" data-action="reviewPageNext" ${state.reviewPage >= totalPages ? "disabled" : ""}>다음</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="pd-floating-cta">
+      <button class="ghost" data-action="toggleWish" data-id="${currentProduct.id}">${
+        state.wishlist.includes(currentProduct.id) ? "찜해제" : "찜하기"
+      }</button>
+      <button class="ghost" data-action="addDetailToCart">장바구니담기</button>
+      <button class="primary" data-action="buyNow">바로구매</button>
     </div>
   `;
-}
 
-function renderRelated() {
-  const list = products.filter((p) => p.id !== currentProduct.id).slice(0, 4);
-  el.relatedProducts.innerHTML = list.map((p) => renderRelatedProductCard(p)).join("");
-}
-
-function renderRelatedProductCard(p) {
-  const discountRate = Math.round((1 - p.price / p.originalPrice) * 100);
-  const reviewCount = p.reviews.toLocaleString("ko-KR");
-  const imageSrc = resolveProductImage(p.image);
-  const imageFallback = resolveProductImageFallback(p.image);
-  return `
-    <a class="product-card product-card-link" href="detail.html?id=${p.id}" aria-label="${p.name} 상세페이지로 이동">
-      <div class="product-thumb">
-        <div class="product-badges">
-          ${(p.badges || []).slice(0, 2).map((badge) => `<span class="product-badge">${badge}</span>`).join("")}
-        </div>
-        <img
-          src="${imageSrc}"
-          data-fallback="${imageFallback}"
-          alt="${p.name}"
-          loading="lazy"
-          onerror="if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src=this.dataset.fallback;}"
-        />
-      </div>
-      <div class="product-meta">
-        <h4>${p.name}</h4>
-        <p>${p.oneLine || p.description}</p>
-      </div>
-      <div class="price-stack">
-        <small class="old-price">${formatCurrency(p.originalPrice)}</small>
-        <div class="new-price-row">
-          <span class="discount-rate">${discountRate}%</span>
-          <strong class="new-price">${formatCurrency(p.price)}</strong>
-        </div>
-      </div>
-      <div class="review-count">리뷰 (${reviewCount})</div>
-    </a>
-  `;
+  initScrollSpy();
 }
 
 function renderCart() {
@@ -235,6 +406,7 @@ function renderOrders() {
     el.ordersList.innerHTML = `<p class="empty">아직 주문 내역이 없습니다.</p>`;
     return;
   }
+
   el.ordersList.innerHTML = state.orders
     .slice()
     .reverse()
@@ -294,17 +466,103 @@ function bindEvents() {
     const t = e.target;
     const action = t.dataset.action;
 
+    if (action === "selectPurchaseType") {
+      state.detail.purchaseType = Number(t.dataset.index);
+      renderDetail();
+    }
+
+    if (action === "selectOption") {
+      state.detail.optionId = t.dataset.optionId;
+      renderDetail();
+    }
+
+    if (action === "toggleAddon") {
+      const addOnId = t.dataset.addonId;
+      if (state.detail.addOnIds.has(addOnId)) state.detail.addOnIds.delete(addOnId);
+      else state.detail.addOnIds.add(addOnId);
+      renderDetail();
+    }
+
+    if (action === "increaseDetailQty") {
+      state.detail.quantity = Math.min(99, state.detail.quantity + 1);
+      renderDetail();
+    }
+
+    if (action === "decreaseDetailQty") {
+      state.detail.quantity = Math.max(1, state.detail.quantity - 1);
+      renderDetail();
+    }
+
+    if (action === "prevImage") {
+      const meta = getDetailMeta();
+      state.detail.imageIndex = (state.detail.imageIndex - 1 + meta.detailImages.length) % meta.detailImages.length;
+      renderDetail();
+    }
+
+    if (action === "nextImage") {
+      const meta = getDetailMeta();
+      state.detail.imageIndex = (state.detail.imageIndex + 1) % meta.detailImages.length;
+      renderDetail();
+    }
+
+    if (action === "selectDetailImage") {
+      state.detail.imageIndex = Number(t.dataset.imageIndex || 0);
+      renderDetail();
+    }
+
+    if (action === "scrollTab") {
+      const sectionId = t.dataset.target;
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+      state.activeSection = sectionId;
+      setActiveSection(sectionId);
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    if (action === "toggleSectionOpen") {
+      const section = t.dataset.section;
+      state.sectionsOpen[section] = !state.sectionsOpen[section];
+      renderDetail();
+    }
+
+    if (action === "reviewPagePrev") {
+      state.reviewPage = Math.max(1, state.reviewPage - 1);
+      renderDetail();
+    }
+
+    if (action === "reviewPageNext") {
+      const total = Math.ceil(reviews.filter((r) => r.productId === currentProduct.id).length / REVIEWS_PER_PAGE) || 1;
+      state.reviewPage = Math.min(total, state.reviewPage + 1);
+      renderDetail();
+    }
+
+    if (action === "addDetailToCart") {
+      upsertCart(currentProduct.id, state.detail.quantity);
+      openDrawer("cartDrawer");
+    }
+
+    if (action === "buyNow") {
+      upsertCart(currentProduct.id, state.detail.quantity);
+      if (!getCartDetailedItems().length) return;
+      if (!ensureLogin()) return;
+      openModal("checkoutModal");
+    }
+
     if (action === "addToCart") {
       upsertCart(Number(t.dataset.id), 1);
       openDrawer("cartDrawer");
     }
-    if (action === "toggleWish") toggleWishlist(Number(t.dataset.id));
+
+    if (action === "toggleWish") toggleWishlist(Number(t.dataset.id || currentProduct.id));
+
     if (action === "removeFromCart") {
       state.cart = state.cart.filter((i) => i.productId !== Number(t.dataset.id));
       renderCart();
       saveState();
     }
+
     if (action === "increaseQty") upsertCart(Number(t.dataset.id), 1);
+
     if (action === "decreaseQty") {
       const item = state.cart.find((i) => i.productId === Number(t.dataset.id));
       if (!item) return;
@@ -429,7 +687,6 @@ function bindEvents() {
 function init() {
   if (state.promoHidden) el.body.classList.add("promo-hidden");
   renderDetail();
-  renderRelated();
   renderCart();
   renderWishlist();
   renderOrders();

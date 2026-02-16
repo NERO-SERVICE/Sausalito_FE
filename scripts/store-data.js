@@ -151,6 +151,78 @@ export const reviews = [
   { id: 107, productId: 1, user: "한**", score: 3, text: "효과는 더 지켜보려구요. 포장은 깔끔해서 좋았습니다.", date: "2026.01.26", helpful: 6, option: "30정" },
 ];
 
+export const productDetailMeta = {
+  1: {
+    couponText: "10% 추가 할인쿠폰",
+    shippingFee: 3000,
+    freeShippingThreshold: 50000,
+    interestFreeText: "무이자 할부 혜택 제공",
+    purchaseTypes: ["1회구매", "정기배송 할인"],
+    subscriptionBenefit: "정기배송 선택 시 5% 추가 할인",
+    optionsLabel: "상품구성",
+    options: [
+      { id: "1-30", name: "30일팩 (3병) 샷잔 미포함", price: 25900 },
+      { id: "1-60", name: "60일팩 (6병) 샷잔 포함", price: 48900 },
+      { id: "1-90", name: "90일팩 (9병) 샷잔 포함", price: 69900 },
+      { id: "1-starter", name: "스타터키트 (1병+샷잔)", price: 12900 },
+    ],
+    addOns: [
+      { id: "gift-card", name: "복 메시지 카드", price: 1000 },
+      { id: "shopping-bag", name: "쇼핑백", price: 2000 },
+      { id: "shot-glass", name: "굿모닝 샷잔", price: 3000 },
+      { id: "message-charm", name: "메시지 참", price: 1000 },
+    ],
+    todayShipText: "오늘출발 상품 · 오후 2시 이전 결제 시 당일 발송",
+    inquiryCount: 561,
+    detailImages: [
+      "/dist/img/products/dummy1.png",
+      "/dist/img/products/dummy2.png",
+      "/dist/img/products/dummy3.png",
+      "/dist/img/products/p4.svg",
+    ],
+  },
+  2: {
+    couponText: "5% 추가 할인쿠폰",
+    shippingFee: 3000,
+    freeShippingThreshold: 50000,
+    interestFreeText: "카드사별 무이자 할부 안내",
+    purchaseTypes: ["1회구매", "정기배송 할인"],
+    subscriptionBenefit: "정기배송 선택 시 3% 할인",
+    optionsLabel: "상품구성",
+    options: [
+      { id: "2-1", name: "1개월분 (60캡슐)", price: 35900 },
+      { id: "2-2", name: "2개월분 (120캡슐)", price: 67900 },
+      { id: "2-3", name: "3개월분 (180캡슐)", price: 95900 },
+    ],
+    addOns: [
+      { id: "gift-card", name: "복 메시지 카드", price: 1000 },
+      { id: "shopping-bag", name: "쇼핑백", price: 2000 },
+    ],
+    todayShipText: "오늘출발 상품 · 오후 3시 이전 결제 시 당일 발송",
+    inquiryCount: 128,
+    detailImages: [
+      "/dist/img/products/dummy2.png",
+      "/dist/img/products/p6.svg",
+      "/dist/img/products/p5.svg",
+      "/dist/img/products/dummy1.png",
+    ],
+  },
+  default: {
+    couponText: "신규회원 쿠폰 적용 가능",
+    shippingFee: 3000,
+    freeShippingThreshold: 50000,
+    interestFreeText: "카드 무이자 할부 안내",
+    purchaseTypes: ["1회구매", "정기배송 할인"],
+    subscriptionBenefit: "정기배송 선택 시 3% 할인",
+    optionsLabel: "상품구성",
+    options: [],
+    addOns: [{ id: "gift-card", name: "메시지 카드", price: 1000 }],
+    todayShipText: "오늘출발 상품 · 마감 시간 전 주문 시 당일 발송",
+    inquiryCount: 24,
+    detailImages: [],
+  },
+};
+
 export const STORAGE_KEYS = {
   cart: "sausalito_cart",
   wishlist: "sausalito_wishlist",
