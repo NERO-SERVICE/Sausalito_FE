@@ -5,7 +5,7 @@ import {
 } from "../services/api.js";
 import { cartCount } from "../services/cart-service.js";
 import { getUser, syncCurrentUser } from "../services/auth-service.js";
-import { formatCurrency, resolveProductImage } from "../store-data.js";
+import { formatCurrency, resolveBannerImage, resolveProductImage } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
 
@@ -77,7 +77,7 @@ function renderHero() {
     .map(
       (banner, index) => `
       <article class="home-hero-slide ${index === 0 ? "active" : ""}">
-        <img src="${banner.image}" alt="${banner.title}" />
+        <img src="${resolveBannerImage(banner.image)}" alt="${banner.title}" />
         <div class="home-hero-overlay">
           <div class="home-hero-copy">
             <p>${banner.subtitle}</p>

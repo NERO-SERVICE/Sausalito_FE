@@ -1,1 +1,0 @@
-import{m as o,a as m,g as n,l as r}from"./footer-5xJtchcy.js";const t=document.getElementById("loginForm");o({showCart:!1});m();n()&&(location.href="/pages/home.html");t.addEventListener("submit",a=>{a.preventDefault();const e=Object.fromEntries(new FormData(t).entries());r({email:e.email,name:e.name}),location.href="/pages/home.html"});

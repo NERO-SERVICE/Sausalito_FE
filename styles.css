@@ -416,16 +416,16 @@ button,input,select,textarea { font: inherit; }
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-.brand-story-card.reverse img {
+.brand-story-card.reverse .brand-story-media {
   order: 2;
 }
 
-.brand-story-card img {
+.brand-story-media {
   width: 100%;
   height: 100%;
   min-height: 280px;
-  object-fit: cover;
   display: block;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
 }
 
 .brand-story-card div {
@@ -520,6 +520,13 @@ button,input,select,textarea { font: inherit; }
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
+  display: block;
+}
+
+.review-thumb-empty {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
   display: block;
 }
 
@@ -767,7 +774,7 @@ button,input,select,textarea { font: inherit; }
 .pd-gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: none; border-radius: 999px; background: rgba(15,23,42,0.55); color: #fff; cursor: pointer; }
 .pd-gallery-nav.prev { left: 8px; }
 .pd-gallery-nav.next { right: 8px; }
-.pd-gallery-thumbs { margin-top: 8px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+.pd-gallery-thumbs { margin-top: 8px; display: grid; grid-template-columns: repeat(var(--pd-thumb-columns, 4), minmax(0,1fr)); gap: 6px; }
 .pd-gallery-thumb { border: 1px solid var(--line); background: #fff; padding: 0; border-radius: 6px; overflow: hidden; cursor: pointer; }
 .pd-gallery-thumb.active { border-color: var(--primary); }
 .pd-gallery-thumb img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
@@ -913,7 +920,7 @@ button,input,select,textarea { font: inherit; }
   .home-hero-slide img { min-height: 360px; height: 360px; }
   .home-hero-overlay { padding: 24px 16px; }
   .brand-story-card { grid-template-columns: 1fr; }
-  .brand-story-card.reverse img { order: 0; }
+  .brand-story-card.reverse .brand-story-media { order: 0; }
   .brand-values { grid-template-columns: 1fr; }
   .shop-toolbar,
   .review-toolbar { grid-template-columns: 1fr; }

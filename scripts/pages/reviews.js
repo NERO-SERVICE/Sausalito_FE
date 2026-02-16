@@ -37,11 +37,10 @@ async function syncHeader() {
   });
 }
 
-function getReviewImage(review, index) {
+function getReviewImage(review) {
   if (review.image) return review.image;
   const product = state.products.find((item) => item.id === review.productId);
-  if (!product || index % 3 === 0) return "/dist/img/reviews/empty_review.svg";
-  return resolveProductImage(product.image) || "/dist/img/reviews/empty_review.svg";
+  return resolveProductImage(product?.image);
 }
 
 function getFilteredReviews() {
@@ -82,13 +81,14 @@ function renderReviewGrid() {
   }
 
   el.reviewGrid.innerHTML = visible
-    .map((review, index) => {
+    .map((review) => {
       const product = state.products.find((item) => item.id === review.productId);
-      const image = getReviewImage(review, index + start);
+      const image = getReviewImage(review);
+      const thumb = `<img src="${image}" alt="리뷰 이미지" />`;
       return `
         <a class="review-card" href="/pages/detail.html?id=${review.productId}">
           <div class="review-thumb">
-            <img src="${image}" alt="리뷰 이미지" />
+            ${thumb}
           </div>
           <div class="review-body">
             <p class="review-product">${product?.name || "상품"}</p>
