@@ -8,7 +8,7 @@ import { getUser } from "../services/auth-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 
-const headerRefs = mountSiteHeader({ showCart: true });
+const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
 
 const state = {
   products: [],

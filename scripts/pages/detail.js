@@ -21,7 +21,7 @@ const state = {
   open: { shipping: false, inquiry: false },
 };
 
-const headerRefs = mountSiteHeader({ showCart: true });
+const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
 
 const el = {
   root: document.getElementById("detailRoot"),

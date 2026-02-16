@@ -24,3 +24,7 @@ export async function fetchHomeBanners() {
 export async function fetchFeaturedReviews(limit = 6) {
   return [...reviews].sort((a, b) => b.helpful - a.helpful).slice(0, limit);
 }
+
+export async function fetchAllReviews() {
+  return [...reviews];
+}
