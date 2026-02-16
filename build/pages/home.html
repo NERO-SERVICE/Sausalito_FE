@@ -10,42 +10,92 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/home-CHafabt1.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/header-DS7QUZWh.js">
-    <link rel="modulepreload" crossorigin href="/assets/cart-service-D4_pbSDg.js">
-    <link rel="modulepreload" crossorigin href="/assets/api-Dtw6jH7d.js">
-    <link rel="stylesheet" crossorigin href="/assets/header-4vl6Ki_Z.css">
+    <script type="module" crossorigin src="/assets/home-BkRbxuGG.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/header-DLoS0fe4.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-D5m3_gdm.js">
+    <link rel="modulepreload" crossorigin href="/assets/api-D55WLMj5.js">
+    <link rel="stylesheet" crossorigin href="/assets/header-jJi8XPHZ.css">
   </head>
   <body>
     <div id="siteHeaderMount"></div>
 
-    <section class="home-banner" id="homeBanner">
-      <div class="home-banner-track" id="homeBannerTrack"></div>
-      <button class="banner-nav prev" id="bannerPrev" aria-label="이전">‹</button>
-      <button class="banner-nav next" id="bannerNext" aria-label="다음">›</button>
-      <div class="home-banner-dots" id="homeBannerDots"></div>
+    <section class="home-utility">
+      <div class="home-inner">
+        <a href="#">주문조회</a>
+        <a href="/pages/login.html">로그인</a>
+        <a href="#">회원가입</a>
+      </div>
     </section>
 
-    <main class="container">
-      <section class="filters" id="productSection">
-        <div class="filter-row">
-          <input type="search" id="searchInput" placeholder="상품명 검색" />
-          <select id="priceFilter">
-            <option value="all">전체 가격</option>
-            <option value="0-20000">2만원 이하</option>
-            <option value="20000-40000">2만원~4만원</option>
-            <option value="40000-999999">4만원 이상</option>
-          </select>
-          <select id="sortFilter">
-            <option value="popular">인기순</option>
-            <option value="newest">신상품순</option>
-            <option value="priceAsc">낮은 가격순</option>
-            <option value="priceDesc">높은 가격순</option>
-          </select>
+    <nav class="home-nav">
+      <div class="home-inner">
+        <a href="#">브랜드</a>
+        <a href="#">쇼핑</a>
+        <a href="#">정기구독</a>
+        <a href="#bestReview">리뷰</a>
+        <a href="#">소식</a>
+      </div>
+    </nav>
+
+    <section class="home-hero" id="homeHero">
+      <div class="home-hero-track" id="homeHeroTrack"></div>
+      <button class="home-hero-nav prev" id="heroPrev" aria-label="이전">‹</button>
+      <button class="home-hero-nav next" id="heroNext" aria-label="다음">›</button>
+      <div class="home-hero-dots" id="homeHeroDots"></div>
+    </section>
+
+    <main class="home-main">
+      <section class="home-section">
+        <div class="home-section-head with-link">
+          <div>
+            <h2>베스트 상품</h2>
+            <p>소살리토의 베스트 아이템을 소개합니다.</p>
+          </div>
+          <a href="#">상품 더보기</a>
         </div>
+        <div class="home-product-grid" id="bestProductGrid"></div>
       </section>
 
-      <section class="product-grid" id="productGrid"></section>
+      <section class="home-section" id="bestReview">
+        <div class="home-section-head with-link">
+          <div>
+            <h2>베스트 리뷰</h2>
+            <p>고객님들의 솔직한 구매 후기</p>
+          </div>
+          <a href="#">리뷰 더보기</a>
+        </div>
+        <div class="home-review-list" id="bestReviewList"></div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head with-link">
+          <div>
+            <h2>신제품</h2>
+            <p>새롭게 선보이는 제품들</p>
+          </div>
+          <a href="#">상품 더보기</a>
+        </div>
+        <div class="home-product-grid" id="newProductGrid"></div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head with-link">
+          <div>
+            <h2>타임세일</h2>
+            <p>득템은 타이밍, 기회는 지금뿐!</p>
+          </div>
+          <a href="#">할인상품 더보기</a>
+        </div>
+        <div class="home-product-grid" id="timeDealGrid"></div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2>Instagram</h2>
+          <p>@sausalito_official</p>
+        </div>
+        <div class="home-instagram-grid" id="instagramGrid"></div>
+      </section>
     </main>
 
   </body>

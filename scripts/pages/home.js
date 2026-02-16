@@ -1,53 +1,34 @@
-import { fetchProducts } from "../services/api.js";
+import {
+  fetchProducts,
+  fetchHomeBanners,
+  fetchFeaturedReviews,
+} from "../services/api.js";
 import { cartCount } from "../services/cart-service.js";
 import { getUser } from "../services/auth-service.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 
-const banners = [
-  {
-    subtitle: "APRIL CURATION",
-    title: "이달의 아이템 01",
-    description: "매일의 웰니스 루틴을 위한 핵심 구성",
-    promo: "매일 아침,\n건강한 시작",
-    image: "/dist/img/products/dummy1.png",
-  },
-  {
-    subtitle: "APRIL CURATION",
-    title: "이달의 아이템 02",
-    description: "한 달 집중 케어를 위한 추천 셀렉션",
-    promo: "지금 가장\n인기있는 구성",
-    image: "/dist/img/products/dummy2.png",
-  },
-  {
-    subtitle: "APRIL CURATION",
-    title: "이달의 아이템 03",
-    description: "컨디션 회복을 위한 데일리 루틴",
-    promo: "간편하지만\n확실한 루틴",
-    image: "/dist/img/products/dummy3.png",
-  },
-  {
-    subtitle: "APRIL CURATION",
-    title: "이달의 아이템 04",
-    description: "장기 섭취 고객을 위한 가치 패키지",
-    promo: "정기 케어\n추천 패키지",
-    image: "/dist/img/products/p4.svg",
-  },
-];
-
-const state = { bannerIndex: 0, products: [] };
-let timer = null;
 const headerRefs = mountSiteHeader({ showCart: true });
 
+const state = {
+  products: [],
+  banners: [],
+  reviews: [],
+  heroIndex: 0,
+};
+
+let heroTimer = null;
+
 const el = {
-  bannerTrack: document.getElementById("homeBannerTrack"),
-  bannerDots: document.getElementById("homeBannerDots"),
-  bannerPrev: document.getElementById("bannerPrev"),
-  bannerNext: document.getElementById("bannerNext"),
-  productGrid: document.getElementById("productGrid"),
-  searchInput: document.getElementById("searchInput"),
-  priceFilter: document.getElementById("priceFilter"),
-  sortFilter: document.getElementById("sortFilter"),
+  heroTrack: document.getElementById("homeHeroTrack"),
+  heroDots: document.getElementById("homeHeroDots"),
+  heroPrev: document.getElementById("heroPrev"),
+  heroNext: document.getElementById("heroNext"),
+  bestProductGrid: document.getElementById("bestProductGrid"),
+  bestReviewList: document.getElementById("bestReviewList"),
+  newProductGrid: document.getElementById("newProductGrid"),
+  timeDealGrid: document.getElementById("timeDealGrid"),
+  instagramGrid: document.getElementById("instagramGrid"),
 };
 
 function setHeaderState() {
@@ -58,116 +39,158 @@ function setHeaderState() {
   });
 }
 
-function setBanner(index) {
-  state.bannerIndex = (index + banners.length) % banners.length;
-  document.querySelectorAll(".home-banner-slide").forEach((slide, i) => slide.classList.toggle("active", i === state.bannerIndex));
-  document.querySelectorAll(".home-banner-dot").forEach((dot, i) => dot.classList.toggle("active", i === state.bannerIndex));
+function setHero(index) {
+  state.heroIndex = (index + state.banners.length) % state.banners.length;
+  document
+    .querySelectorAll(".home-hero-slide")
+    .forEach((slide, slideIndex) =>
+      slide.classList.toggle("active", slideIndex === state.heroIndex),
+    );
+  document
+    .querySelectorAll(".home-hero-dot")
+    .forEach((dot, dotIndex) =>
+      dot.classList.toggle("active", dotIndex === state.heroIndex),
+    );
 }
 
-function startAuto() {
-  if (timer) clearInterval(timer);
-  timer = setInterval(() => setBanner(state.bannerIndex + 1), 4000);
+function startHeroAuto() {
+  if (heroTimer) clearInterval(heroTimer);
+  heroTimer = setInterval(() => setHero(state.heroIndex + 1), 4000);
 }
 
-function renderBanner() {
-  el.bannerTrack.innerHTML = banners
+function renderHero() {
+  el.heroTrack.innerHTML = state.banners
     .map(
-      (item, i) => `
-      <article class="home-banner-slide ${i === 0 ? "active" : ""}">
-        <img src="${item.image}" alt="${item.title}" />
-        <div class="home-banner-overlay">
-          <p class="home-banner-promo">${item.promo.replace(/\n/g, "<br />")}</p>
-          <div class="home-banner-copy">
-            <p>${item.subtitle}</p>
-            <h2>${item.title}</h2>
-            <p>${item.description}</p>
+      (banner, index) => `
+      <article class="home-hero-slide ${index === 0 ? "active" : ""}">
+        <img src="${banner.image}" alt="${banner.title}" />
+        <div class="home-hero-overlay">
+          <div class="home-hero-copy">
+            <p>${banner.subtitle}</p>
+            <h2>${banner.title}</h2>
+            <p>${banner.description}</p>
+            <a class="home-hero-link" href="${banner.link}">${banner.cta}</a>
           </div>
         </div>
       </article>`,
     )
     .join("");
 
-  el.bannerDots.innerHTML = banners
-    .map((_, i) => `<button class="home-banner-dot ${i === 0 ? "active" : ""}" data-dot="${i}" aria-label="${i + 1}번 배너"></button>`)
+  el.heroDots.innerHTML = state.banners
+    .map(
+      (_, index) =>
+        `<button class="home-hero-dot ${index === 0 ? "active" : ""}" data-dot="${index}" aria-label="${index + 1}번 배너"></button>`,
+    )
     .join("");
 }
 
-function getFilteredProducts() {
-  const keyword = el.searchInput.value.trim().toLowerCase();
-  const range = el.priceFilter.value;
-  const sort = el.sortFilter.value;
-  let list = [...state.products];
-
-  if (keyword) list = list.filter((p) => p.name.toLowerCase().includes(keyword) || p.description.toLowerCase().includes(keyword));
-  if (range !== "all") {
-    const [min, max] = range.split("-").map(Number);
-    list = list.filter((p) => p.price >= min && p.price <= max);
-  }
-
-  if (sort === "popular") list.sort((a, b) => b.popularScore - a.popularScore);
-  if (sort === "newest") list.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
-  if (sort === "priceAsc") list.sort((a, b) => a.price - b.price);
-  if (sort === "priceDesc") list.sort((a, b) => b.price - a.price);
-
-  return list;
-}
-
-function renderProducts() {
-  const list = getFilteredProducts();
-  if (!list.length) {
-    el.productGrid.innerHTML = '<p class="empty">조건에 맞는 상품이 없습니다.</p>';
-    return;
-  }
-
-  el.productGrid.innerHTML = list
-    .map((p) => {
-      const discountRate = Math.round((1 - p.price / p.originalPrice) * 100);
+function renderProductCards(targetEl, products) {
+  targetEl.innerHTML = products
+    .map((product) => {
+      const discountRate = Math.round(
+        (1 - product.price / product.originalPrice) * 100,
+      );
       return `
-        <a class="product-card product-card-link" href="/pages/detail.html?id=${p.id}">
-          <div class="product-thumb"><img src="${resolveProductImage(p.image)}" alt="${p.name}" /></div>
-          <div class="product-meta">
-            <h4>${p.name}</h4>
-            <p>${p.oneLine || p.description}</p>
+        <a class="home-product-card" href="/pages/detail.html?id=${product.id}">
+          <div class="home-product-thumb">
+            <img src="${resolveProductImage(product.image)}" alt="${product.name}" />
           </div>
-          <div class="price-stack">
-            <small class="old-price">${formatCurrency(p.originalPrice)}</small>
-            <div class="new-price-row"><span class="discount-rate">${discountRate}%</span><strong class="new-price">${formatCurrency(p.price)}</strong></div>
+          <div class="home-product-meta">
+            <strong>${product.name}</strong>
+            <p>${product.oneLine || product.description}</p>
+            <div class="home-product-price">
+              <small>${formatCurrency(product.originalPrice)}</small>
+              <div><span>${discountRate}%</span><b>${formatCurrency(product.price)}</b></div>
+            </div>
           </div>
-          <div class="review-count">리뷰 (${p.reviews.toLocaleString("ko-KR")})</div>
         </a>`;
     })
     .join("");
 }
 
-function bind() {
-  el.bannerPrev.addEventListener("click", () => {
-    setBanner(state.bannerIndex - 1);
-    startAuto();
-  });
-  el.bannerNext.addEventListener("click", () => {
-    setBanner(state.bannerIndex + 1);
-    startAuto();
-  });
-  el.bannerDots.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-dot]");
-    if (!btn) return;
-    setBanner(Number(btn.dataset.dot));
-    startAuto();
-  });
+function renderBestReviews() {
+  el.bestReviewList.innerHTML = state.reviews
+    .map((review) => {
+      const product = state.products.find((item) => item.id === review.productId);
+      return `
+        <a class="home-review-card" href="/pages/detail.html?id=${review.productId}">
+          <div class="home-review-head">
+            <strong>${product?.name || "상품"}</strong>
+            <span>${review.user} · ${review.date}</span>
+          </div>
+          <p>${review.text}</p>
+          <div class="home-review-foot">
+            <b>${"★".repeat(review.score)}${"☆".repeat(5 - review.score)}</b>
+            <span>도움돼요 ${review.helpful}</span>
+          </div>
+        </a>`;
+    })
+    .join("");
+}
 
-  [el.searchInput, el.priceFilter, el.sortFilter].forEach((node) => {
-    node.addEventListener("input", renderProducts);
-    node.addEventListener("change", renderProducts);
+function renderInstagram(products) {
+  el.instagramGrid.innerHTML = products
+    .slice(0, 8)
+    .map(
+      (product) => `
+      <a class="home-instagram-item" href="/pages/detail.html?id=${product.id}">
+        <img src="${resolveProductImage(product.image)}" alt="${product.name}" />
+      </a>`,
+    )
+    .join("");
+}
+
+function bind() {
+  el.heroPrev.addEventListener("click", () => {
+    setHero(state.heroIndex - 1);
+    startHeroAuto();
+  });
+  el.heroNext.addEventListener("click", () => {
+    setHero(state.heroIndex + 1);
+    startHeroAuto();
+  });
+  el.heroDots.addEventListener("click", (event) => {
+    const dotButton = event.target.closest("[data-dot]");
+    if (!dotButton) return;
+    setHero(Number(dotButton.dataset.dot));
+    startHeroAuto();
   });
 }
 
 async function init() {
-  state.products = await fetchProducts();
+  const [products, banners, reviews] = await Promise.all([
+    fetchProducts(),
+    fetchHomeBanners(),
+    fetchFeaturedReviews(6),
+  ]);
+
+  state.products = products;
+  state.banners = banners;
+  state.reviews = reviews;
+
+  const bestProducts = [...products]
+    .sort((a, b) => b.popularScore - a.popularScore)
+    .slice(0, 8);
+  const newProducts = [...products]
+    .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
+    .slice(0, 8);
+  const timeDeals = [...products]
+    .sort(
+      (a, b) =>
+        (b.originalPrice - b.price) / b.originalPrice -
+        (a.originalPrice - a.price) / a.originalPrice,
+    )
+    .slice(0, 4);
+
   setHeaderState();
-  renderBanner();
-  setBanner(0);
-  startAuto();
-  renderProducts();
+  renderHero();
+  setHero(0);
+  startHeroAuto();
+  renderProductCards(el.bestProductGrid, bestProducts);
+  renderBestReviews();
+  renderProductCards(el.newProductGrid, newProducts);
+  renderProductCards(el.timeDealGrid, timeDeals);
+  renderInstagram(products);
   bind();
 }
 

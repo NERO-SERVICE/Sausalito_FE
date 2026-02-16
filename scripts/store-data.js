@@ -264,6 +264,45 @@ export const productDetailMeta = {
   },
 };
 
+export const homeBanners = [
+  {
+    id: "hb-1",
+    subtitle: "SAUSALITO WELLNESS",
+    title: "하루 루틴의 시작",
+    description: "매일 가볍게 시작하는 소살리토 데일리 밸런스 셀렉션",
+    cta: "자세히 보기",
+    link: "/pages/detail.html?id=1",
+    image: "/dist/img/products/dummy1.png",
+  },
+  {
+    id: "hb-2",
+    subtitle: "TRENDING ITEM",
+    title: "오메가3 집중 케어",
+    description: "바쁜 일상 속 혈행과 눈 건강을 동시에 챙겨보세요",
+    cta: "상품 보러가기",
+    link: "/pages/detail.html?id=2",
+    image: "/dist/img/products/dummy2.png",
+  },
+  {
+    id: "hb-3",
+    subtitle: "BEST REVIEWED",
+    title: "베스트 리뷰 제품",
+    description: "재구매가 많은 시그니처 제품들을 지금 만나보세요",
+    cta: "베스트 보기",
+    link: "#bestReview",
+    image: "/dist/img/products/dummy3.png",
+  },
+  {
+    id: "hb-4",
+    subtitle: "NEW ARRIVAL",
+    title: "새롭게 선보이는 루틴",
+    description: "신제품으로 나에게 맞는 웰니스 루틴을 업데이트하세요",
+    cta: "신제품 보러가기",
+    link: "/pages/detail.html?id=4",
+    image: "/dist/img/products/p4.svg",
+  },
+];
+
 export const STORAGE_KEYS = {
   cart: "sausalito_cart",
   wishlist: "sausalito_wishlist",

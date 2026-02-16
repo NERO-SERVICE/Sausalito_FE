@@ -1,1 +1,0 @@
-import{m,g as o,l as n}from"./header-DS7QUZWh.js";const t=document.getElementById("loginForm");m({showCart:!1});o()&&(location.href="/pages/home.html");t.addEventListener("submit",a=>{a.preventDefault();const e=Object.fromEntries(new FormData(t).entries());n({email:e.email,name:e.name}),location.href="/pages/home.html"});
