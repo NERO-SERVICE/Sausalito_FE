@@ -20,6 +20,7 @@ const state = {
   reviewPage: 1,
   activeSection: "section-detail",
   open: { shipping: false, inquiry: false },
+  policyOpen: false,
 };
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
@@ -157,6 +158,11 @@ function render() {
 
         <div class="pd-qty-row"><h4>수량</h4><div class="qty-controls"><button data-action="decreaseQty">-</button><span>${state.quantity}</span><button data-action="increaseQty">+</button></div></div>
         <div class="pd-total-box"><p class="final">총 결제예상금액 <strong>${formatCurrency(total)}</strong></p></div>
+        <div class="pd-static-cta">
+          <button class="ghost" data-action="toggleWish">찜하기</button>
+          <button class="ghost" data-action="addCart">장바구니담기</button>
+          <button class="primary" data-action="buyNow">바로구매</button>
+        </div>
       </div>
     </section>
 
@@ -181,7 +187,28 @@ function render() {
       </section>
       <section class="pd-section-card pd-section" id="section-review">
         <h3 class="pd-section-label">리뷰</h3>
-        ${list.length ? list.map((r) => `<article class="pd-review-item"><div><strong>${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div><p>${r.text}</p></article>`).join("") : '<p>리뷰가 없습니다.</p>'}
+        <div class="pd-review-links">
+          <button class="text-btn pd-policy-link" data-action="openPolicy">운영정책</button>
+          <a class="text-btn pd-write-link" href="/pages/review-write.html?productId=${state.product.id}">리뷰작성</a>
+        </div>
+        ${
+          list.length
+            ? list
+                .map((r) => {
+                  const reviewImage = r.image || "";
+                  return `<article class="pd-review-item">
+                      <div><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div>
+                      <p>${r.text}</p>
+                      ${
+                        reviewImage
+                          ? `<img class="pd-review-thumb" src="${reviewImage}" alt="리뷰 이미지" />`
+                          : ""
+                      }
+                    </article>`;
+                })
+                .join("")
+            : '<p>리뷰가 없습니다.</p>'
+        }
         <div class="pd-review-pagination">
           <button class="ghost" data-action="prevReview" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
           <span>${state.reviewPage} / ${totalPages}</span>
@@ -189,6 +216,19 @@ function render() {
         </div>
       </section>
     </section>
+
+    <div class="pd-policy-modal ${state.policyOpen ? "open" : ""}">
+      <div class="pd-policy-backdrop" data-action="closePolicy"></div>
+      <section class="pd-policy-dialog" role="dialog" aria-modal="true" aria-label="리뷰 운영정책">
+        <h4>리뷰 운영정책</h4>
+        <ul>
+          <li>타인을 비방하거나 허위 사실이 포함된 리뷰는 비노출 처리될 수 있습니다.</li>
+          <li>개인정보, 연락처, URL 등 부적절한 정보가 포함된 리뷰는 삭제될 수 있습니다.</li>
+          <li>상품과 무관한 내용, 반복/도배성 게시물은 운영정책에 따라 제한됩니다.</li>
+        </ul>
+        <button class="primary" data-action="closePolicy">확인</button>
+      </section>
+    </div>
 
     <div class="pd-floating-cta">
       <button class="ghost" data-action="toggleWish">찜하기</button>
@@ -224,6 +264,8 @@ document.addEventListener("click", (e) => {
 
   if (action === "prevReview") state.reviewPage = Math.max(1, state.reviewPage - 1);
   if (action === "nextReview") state.reviewPage += 1;
+  if (action === "openPolicy") state.policyOpen = true;
+  if (action === "closePolicy") state.policyOpen = false;
 
   if (action === "addCart") {
     addToCart(state.product.id, state.quantity);

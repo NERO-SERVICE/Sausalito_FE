@@ -12,6 +12,7 @@ export default defineConfig({
         brand: resolve(__dirname, "pages/brand.html"),
         shop: resolve(__dirname, "pages/shop.html"),
         reviews: resolve(__dirname, "pages/reviews.html"),
+        reviewWrite: resolve(__dirname, "pages/review-write.html"),
         privacy: resolve(__dirname, "pages/privacy.html"),
         terms: resolve(__dirname, "pages/terms.html"),
         guide: resolve(__dirname, "pages/guide.html"),

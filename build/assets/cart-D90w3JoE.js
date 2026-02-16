@@ -1,4 +1,4 @@
-import{m as l,a as p,g,s as y}from"./footer-45QzvbMW.js";import{g as d,u as i,e as f,f as o,i as v}from"./cart-service-BkS5W-VD.js";const b=l({showCart:!1,currentNav:"shop"});p();const c={cartList:document.getElementById("cartList"),cartSummary:document.getElementById("cartSummary")};function u(){const r=d();r.length?c.cartList.innerHTML=r.map(t=>`
+import{m as l,a as p,g,s as y}from"./footer-5xJtchcy.js";import{g as d,u as i,e as f,f as o,i as v}from"./cart-service-C6sXeXRB.js";const b=l({showCart:!1,currentNav:"shop"});p();const c={cartList:document.getElementById("cartList"),cartSummary:document.getElementById("cartSummary")};function u(){const r=d();r.length?c.cartList.innerHTML=r.map(t=>`
         <article class="cart-item">
           <strong>${t.product.name}</strong>
           <p>${o(t.product.price)} x ${t.quantity}</p>

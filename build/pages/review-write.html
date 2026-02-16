@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소살리토 | 리뷰작성</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/reviewWrite-BuLDS8d-.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-5xJtchcy.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-C6sXeXRB.js">
+    <link rel="modulepreload" crossorigin href="/assets/api-lDZN3vsg.js">
+    <link rel="stylesheet" crossorigin href="/assets/footer-ClKaDcDq.css">
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="review-write-main">
+      <section class="review-write-card">
+        <h2>리뷰 작성</h2>
+        <p>구매하신 상품에 대한 솔직한 후기를 남겨주세요.</p>
+
+        <form id="reviewWriteForm" class="review-write-form">
+          <label>
+            <span>상품 선택</span>
+            <select name="productId" id="reviewProductSelect" required></select>
+          </label>
+
+          <label>
+            <span>별점</span>
+            <select name="score" required>
+              <option value="5">5점</option>
+              <option value="4">4점</option>
+              <option value="3">3점</option>
+              <option value="2">2점</option>
+              <option value="1">1점</option>
+            </select>
+          </label>
+
+          <label>
+            <span>리뷰 제목</span>
+            <input name="title" type="text" required maxlength="80" placeholder="제목을 입력해주세요" />
+          </label>
+
+          <label>
+            <span>리뷰 내용</span>
+            <textarea name="content" rows="6" required maxlength="1000" placeholder="상품 사용 경험을 자세히 작성해주세요"></textarea>
+          </label>
+
+          <label>
+            <span>이미지 첨부 (최대 3장)</span>
+            <input id="reviewImagesInput" name="images" type="file" accept="image/*" multiple />
+          </label>
+
+          <div class="review-image-preview" id="reviewImagePreview"></div>
+
+          <div class="review-write-actions">
+            <a class="ghost" href="/pages/reviews.html">취소</a>
+            <button class="primary" type="submit">리뷰 등록</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+  </body>
+</html>

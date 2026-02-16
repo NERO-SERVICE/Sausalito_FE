@@ -174,6 +174,7 @@ function createProductReviews(product, index) {
   const option = `${product.name} 기본 구성`;
   return Array.from({ length: 50 }, (_, reviewIndex) => {
     const score = [5, 5, 4, 5, 4][reviewIndex % 5];
+    const reviewImage = reviewIndex % 4 === 0 ? resolveProductImage(product.image) : "";
     return {
       id: 1000 + product.id * 100 + reviewIndex,
       productId: product.id,
@@ -183,6 +184,7 @@ function createProductReviews(product, index) {
       date: formatReviewDate(reviewIndex + index * 4),
       helpful: 3 + ((reviewIndex * 7 + product.id) % 42),
       option,
+      ...(reviewImage ? { image: reviewImage } : {}),
     };
   });
 }
