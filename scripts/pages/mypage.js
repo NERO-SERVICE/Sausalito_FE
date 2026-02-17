@@ -1,282 +1,377 @@
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
-import { getUser, logout, syncCurrentUser } from "../services/auth-service.js";
+import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
-import {
-  changeMyPassword,
-  createMyInquiry,
-  fetchMyPageDashboard,
-  removeWishlistItem,
-  updateMyProfile,
-} from "../services/api.js";
-import { formatCurrency, resolveProductImage } from "../store-data.js";
+import { fetchMyOrders, fetchMyPageDashboard } from "../services/api.js";
+import { formatCurrency } from "../store-data.js";
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "" });
 mountSiteFooter();
 
+const SECTION_META = {
+  dashboard: {
+    title: "마이쇼핑 홈",
+    description: "총 주문/혜택/진행현황을 한눈에 확인하세요.",
+  },
+  orders: {
+    title: "주문내역조회",
+    description: "기간별 주문내역과 처리 상태를 조회할 수 있습니다.",
+  },
+  claims: {
+    title: "취소/반품/교환내역",
+    description: "취소/반품/교환 관련 주문 이력을 확인합니다.",
+  },
+  coupons: {
+    title: "쿠폰내역",
+    description: "보유 쿠폰의 할인 정보와 사용 가능 기간을 확인하세요.",
+  },
+};
+
 const state = {
   user: null,
   dashboard: null,
-  inquiryFormOpen: false,
+  orders: [],
+  activeSection: "dashboard",
 };
 
 const el = {
-  greeting: document.getElementById("mypageGreeting"),
-  summary: document.getElementById("mypageSummary"),
-  orders: document.getElementById("mypageOrders"),
-  pointHistory: document.getElementById("mypagePointHistory"),
-  depositHistory: document.getElementById("mypageDepositHistory"),
-  couponHistory: document.getElementById("mypageCouponHistory"),
-  recentProducts: document.getElementById("mypageRecentProducts"),
-  wishlistProducts: document.getElementById("mypageWishlistProducts"),
-  myReviews: document.getElementById("mypageMyReviews"),
-  profileForm: document.getElementById("mypageProfileForm"),
-  passwordForm: document.getElementById("mypagePasswordForm"),
-  inquiryForm: document.getElementById("mypageInquiryForm"),
-  inquiryHistory: document.getElementById("mypageInquiryHistory"),
-  email: document.getElementById("mypageEmail"),
-  name: document.getElementById("mypageName"),
-  phone: document.getElementById("mypagePhone"),
-  oldPassword: document.getElementById("mypageOldPassword"),
-  newPassword: document.getElementById("mypageNewPassword"),
-  newPasswordConfirm: document.getElementById("mypageNewPasswordConfirm"),
-  inquiryTitle: document.getElementById("inquiryTitle"),
-  inquiryContent: document.getElementById("inquiryContent"),
-  openInquiryBtn: document.getElementById("openInquiryBtn"),
-  cancelInquiryBtn: document.getElementById("cancelInquiryBtn"),
-  logoutBtn: document.getElementById("mypageLogoutBtn"),
+  sidebarGreeting: document.getElementById("myshopSidebarGreeting"),
+  sectionTitle: document.getElementById("myshopSectionTitle"),
+  sectionDescription: document.getElementById("myshopSectionDescription"),
+  navLinks: Array.from(document.querySelectorAll("[data-section-link]")),
+  sections: Array.from(document.querySelectorAll("[data-section]")),
+  kpi: document.getElementById("myshopKpi"),
+  orderStage: document.getElementById("myshopOrderStage"),
+  orderStatusFilter: document.getElementById("myshopOrderStatusFilter"),
+  orderRangeFilter: document.getElementById("myshopOrderRangeFilter"),
+  orderTable: document.getElementById("myshopOrderTable"),
+  claimStatusFilter: document.getElementById("myshopClaimStatusFilter"),
+  claimRangeFilter: document.getElementById("myshopClaimRangeFilter"),
+  claimTable: document.getElementById("myshopClaimTable"),
+  couponTable: document.getElementById("myshopCouponTable"),
 };
 
-function formatDateTime(value) {
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatDate(value) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}.${mm}.${dd}`;
 }
 
-function renderListBlock(target, listHtml, emptyText) {
-  if (!target) return;
-  if (!listHtml) {
-    target.innerHTML = `<p class="empty">${emptyText}</p>`;
-    return;
+function getRangeDate(range) {
+  const now = new Date();
+  if (range === "today") {
+    now.setHours(0, 0, 0, 0);
+    return now;
   }
-  target.innerHTML = listHtml;
+  if (range === "1m") {
+    now.setMonth(now.getMonth() - 1);
+    return now;
+  }
+  if (range === "3m") {
+    now.setMonth(now.getMonth() - 3);
+    return now;
+  }
+  now.setMonth(now.getMonth() - 6);
+  return now;
 }
 
-function renderSummary() {
+function isWithinRange(dateValue, range) {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return false;
+  const boundary = getRangeDate(range);
+  return date >= boundary;
+}
+
+function deriveOrderProgressStatus(order) {
+  if (order.status === "CANCELED") return "주문취소";
+  if (order.status === "REFUNDED" || order.status === "PARTIAL_REFUNDED") return "환불완료";
+  if (order.paymentStatus === "UNPAID" || order.paymentStatus === "READY") return "입금전";
+  if (order.shippingStatus === "SHIPPED") return "배송중";
+  if (order.shippingStatus === "DELIVERED") return "배송완료";
+  if (order.shippingStatus === "READY" || order.shippingStatus === "PREPARING") return "배송준비중";
+  if (order.status === "FAILED" || order.paymentStatus === "FAILED") return "결제실패";
+  if (order.paymentStatus === "APPROVED") return "결제완료";
+  return "주문접수";
+}
+
+function getOrderStatusLabel(order) {
+  const progress = deriveOrderProgressStatus(order);
+  if (progress === "입금전" || progress === "배송준비중" || progress === "배송중" || progress === "배송완료") {
+    return progress;
+  }
+  if (order.status === "FAILED" || order.paymentStatus === "FAILED") return "결제실패";
+  if (order.status === "PAID") return "결제완료";
+  if (order.status === "CANCELED") return "주문취소";
+  if (order.status === "REFUNDED" || order.status === "PARTIAL_REFUNDED") return "환불완료";
+  if (order.status === "PENDING") return "주문접수";
+  return order.status || "-";
+}
+
+function matchesOrderStatusFilter(order, filter) {
+  if (filter === "ALL") return true;
+  if (filter === "PREPARING") {
+    return deriveOrderProgressStatus(order) === "배송준비중";
+  }
+  if (filter === "SHIPPED") {
+    return deriveOrderProgressStatus(order) === "배송중";
+  }
+  if (filter === "DELIVERED") {
+    return deriveOrderProgressStatus(order) === "배송완료";
+  }
+  if (filter === "PENDING") {
+    return deriveOrderProgressStatus(order) === "입금전";
+  }
+  if (filter === "REFUNDED") {
+    return order.status === "REFUNDED" || order.status === "PARTIAL_REFUNDED";
+  }
+  return order.status === filter || order.paymentStatus === filter;
+}
+
+function mapClaimType(order) {
+  if (order.status === "CANCELED") return "CANCEL";
+  if (order.status === "REFUNDED" || order.status === "PARTIAL_REFUNDED") return "RETURN";
+  return "";
+}
+
+function mapClaimLabel(type) {
+  if (type === "CANCEL") return "취소";
+  if (type === "RETURN") return "반품/환불";
+  return "교환";
+}
+
+function renderSectionVisibility() {
+  el.navLinks.forEach((link) => {
+    const section = link.dataset.sectionLink;
+    link.classList.toggle("is-active", section === state.activeSection);
+  });
+  el.sections.forEach((section) => {
+    const visible = section.dataset.section === state.activeSection;
+    section.hidden = !visible;
+  });
+
+  const meta = SECTION_META[state.activeSection] || SECTION_META.dashboard;
+  el.sectionTitle.textContent = meta.title;
+  el.sectionDescription.textContent = meta.description;
+}
+
+function setActiveSection(section, syncUrl = true) {
+  if (!SECTION_META[section]) return;
+  state.activeSection = section;
+  renderSectionVisibility();
+  if (syncUrl) {
+    const url = new URL(location.href);
+    url.searchParams.set("tab", section);
+    history.replaceState({}, "", url.toString());
+  }
+}
+
+function renderKpi() {
   const summary = state.dashboard?.shopping?.summary || {
-    orderCount: 0,
     pointBalance: 0,
-    depositBalance: 0,
     couponCount: 0,
+    orderCount: 0,
   };
-  el.summary.innerHTML = `
+  el.kpi.innerHTML = `
     <article>
-      <p>주문내역</p>
-      <strong>${summary.orderCount}건</strong>
-    </article>
-    <article>
-      <p>적립금</p>
+      <p>총 적립금</p>
       <strong>${formatCurrency(summary.pointBalance)}</strong>
     </article>
     <article>
-      <p>예치금</p>
-      <strong>${formatCurrency(summary.depositBalance)}</strong>
+      <p>쿠폰(개수)</p>
+      <strong>${summary.couponCount}장</strong>
     </article>
     <article>
-      <p>사용 가능 쿠폰</p>
-      <strong>${summary.couponCount}장</strong>
+      <p>총주문(횟수)</p>
+      <strong>${summary.orderCount}회</strong>
     </article>
   `;
 }
 
-function renderOrders() {
-  const orders = state.dashboard?.shopping?.orders || [];
-  const html = orders
-    .map((order) => {
-      return `
-        <article class="mypage-order-row">
-          <div>
-            <strong>${order.orderNo}</strong>
-            <p>${formatDateTime(order.createdAt)} · ${order.itemCount}개 상품</p>
-          </div>
-          <div>
-            <span>${order.status}</span>
-            <b>${formatCurrency(order.totalAmount)}</b>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-  renderListBlock(el.orders, html, "주문내역이 없습니다.");
+function renderOrderStage() {
+  const counts = {
+    beforePayment: 0,
+    preparing: 0,
+    shipping: 0,
+    delivered: 0,
+  };
+  state.orders.forEach((order) => {
+    const status = deriveOrderProgressStatus(order);
+    if (status === "입금전") counts.beforePayment += 1;
+    if (status === "배송준비중") counts.preparing += 1;
+    if (status === "배송중") counts.shipping += 1;
+    if (status === "배송완료") counts.delivered += 1;
+  });
+
+  el.orderStage.innerHTML = `
+    <article><p>입금전</p><strong>${counts.beforePayment}</strong></article>
+    <article><p>배송준비중</p><strong>${counts.preparing}</strong></article>
+    <article><p>배송중</p><strong>${counts.shipping}</strong></article>
+    <article><p>배송완료</p><strong>${counts.delivered}</strong></article>
+  `;
 }
 
-function renderMoneyHistory() {
-  const points = state.dashboard?.shopping?.pointHistory || [];
-  const deposits = state.dashboard?.shopping?.depositHistory || [];
+function renderOrderTable() {
+  const statusFilter = el.orderStatusFilter.value;
+  const rangeFilter = el.orderRangeFilter.value;
+  const rows = state.orders
+    .filter((order) => isWithinRange(order.createdAt, rangeFilter))
+    .filter((order) => matchesOrderStatusFilter(order, statusFilter));
 
-  const pointHtml = points
-    .map(
-      (row) => `
-      <article class="mypage-money-row">
-        <div>
-          <strong>${row.description || "적립금 변동"}</strong>
-          <p>${formatDateTime(row.createdAt)}</p>
-        </div>
-        <div>
-          <b class="${row.amount >= 0 ? "up" : "down"}">${row.amount >= 0 ? "+" : ""}${formatCurrency(row.amount)}</b>
-          <small>잔액 ${formatCurrency(row.balanceAfter)}</small>
-        </div>
-      </article>
-    `,
-    )
-    .join("");
-  renderListBlock(el.pointHistory, pointHtml, "적립금 내역이 없습니다.");
+  if (!rows.length) {
+    el.orderTable.innerHTML = '<p class="empty">조회 조건에 맞는 주문내역이 없습니다.</p>';
+    return;
+  }
 
-  const depositHtml = deposits
-    .map(
-      (row) => `
-      <article class="mypage-money-row">
-        <div>
-          <strong>${row.description || "예치금 변동"}</strong>
-          <p>${formatDateTime(row.createdAt)}</p>
-        </div>
-        <div>
-          <b class="${row.amount >= 0 ? "up" : "down"}">${row.amount >= 0 ? "+" : ""}${formatCurrency(row.amount)}</b>
-          <small>잔액 ${formatCurrency(row.balanceAfter)}</small>
-        </div>
-      </article>
-    `,
-    )
-    .join("");
-  renderListBlock(el.depositHistory, depositHtml, "예치금 내역이 없습니다.");
+  el.orderTable.innerHTML = `
+    <div class="myshop-table-wrap">
+      <table class="myshop-table">
+        <thead>
+          <tr>
+            <th>주문일자</th>
+            <th>주문번호</th>
+            <th>상품수</th>
+            <th>주문금액</th>
+            <th>주문처리상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              (order) => `
+            <tr>
+              <td>${formatDate(order.createdAt)}</td>
+              <td><a href="/pages/mypage.html?tab=orders">${escapeHtml(order.orderNo)}</a></td>
+              <td>${order.itemCount}개</td>
+              <td>${formatCurrency(order.totalAmount)}</td>
+              <td>${escapeHtml(getOrderStatusLabel(order))}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
-function renderCoupons() {
+function renderClaimTable() {
+  const statusFilter = el.claimStatusFilter.value;
+  const rangeFilter = el.claimRangeFilter.value;
+  const rows = state.orders
+    .filter((order) => isWithinRange(order.createdAt, rangeFilter))
+    .map((order) => ({
+      order,
+      claimType: mapClaimType(order),
+    }))
+    .filter((row) => row.claimType);
+
+  const filtered = rows.filter((row) => {
+    if (statusFilter === "ALL") return true;
+    if (statusFilter === "EXCHANGE") return false;
+    return row.claimType === statusFilter;
+  });
+
+  if (!filtered.length) {
+    el.claimTable.innerHTML = '<p class="empty">조회 조건에 맞는 취소/반품/교환내역이 없습니다.</p>';
+    return;
+  }
+
+  el.claimTable.innerHTML = `
+    <div class="myshop-table-wrap">
+      <table class="myshop-table">
+        <thead>
+          <tr>
+            <th>접수일자</th>
+            <th>주문번호</th>
+            <th>구분</th>
+            <th>처리상태</th>
+            <th>금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered
+            .map(
+              ({ order, claimType }) => `
+            <tr>
+              <td>${formatDate(order.createdAt)}</td>
+              <td>${escapeHtml(order.orderNo)}</td>
+              <td>${mapClaimLabel(claimType)}</td>
+              <td>${escapeHtml(getOrderStatusLabel(order))}</td>
+              <td>${formatCurrency(order.totalAmount)}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderCouponTable() {
   const coupons = state.dashboard?.shopping?.couponHistory || [];
-  const html = coupons
-    .map(
-      (coupon) => `
-      <article class="mypage-coupon-row">
-        <div>
-          <strong>${coupon.name}</strong>
-          <p>${coupon.code} · ${coupon.minOrderAmount ? `${formatCurrency(coupon.minOrderAmount)} 이상` : "최소 금액 제한 없음"}</p>
-        </div>
-        <div>
-          <b>${formatCurrency(coupon.discountAmount)}</b>
-          <small>${coupon.isUsed ? "사용완료" : coupon.isExpired ? "만료" : "사용가능"}</small>
-        </div>
-      </article>
-    `,
-    )
-    .join("");
-  renderListBlock(el.couponHistory, html, "보유 쿠폰이 없습니다.");
+  if (!coupons.length) {
+    el.couponTable.innerHTML = '<p class="empty">보유한 쿠폰이 없습니다.</p>';
+    return;
+  }
+
+  el.couponTable.innerHTML = `
+    <div class="myshop-table-wrap">
+      <table class="myshop-table">
+        <thead>
+          <tr>
+            <th>쿠폰명</th>
+            <th>할인금액/비율</th>
+            <th>사용가능 기간</th>
+            <th>쿠폰적용상품</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${coupons
+            .map(
+              (coupon) => `
+            <tr>
+              <td>${escapeHtml(coupon.name)}</td>
+              <td>${formatCurrency(coupon.discountAmount)} / -</td>
+              <td>${formatDate(coupon.createdAt)} ~ ${coupon.expiresAt ? formatDate(coupon.expiresAt) : "무기한"}</td>
+              <td>전상품</td>
+              <td>${coupon.isUsed ? "사용완료" : coupon.isExpired ? "만료" : "사용가능"}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
-function renderProductGrid(target, products, emptyText, showRemove = false) {
-  const html = products
-    .map(
-      (product) => `
-      <article class="mypage-product-card">
-        <a href="/pages/detail.html?id=${product.id}">
-          <img src="${resolveProductImage(product.image)}" alt="${product.name}" />
-        </a>
-        <div>
-          <a class="mypage-product-name" href="/pages/detail.html?id=${product.id}">${product.name}</a>
-          <p>${formatCurrency(product.price)}</p>
-          ${
-            showRemove
-              ? `<button class="ghost mypage-wish-remove" data-action="removeWishlist" data-id="${product.id}">삭제</button>`
-              : ""
-          }
-        </div>
-      </article>
-    `,
-    )
-    .join("");
-  renderListBlock(target, html, emptyText);
-}
-
-function renderReviews() {
-  const reviews = state.dashboard?.activity?.myReviews || [];
-  const html = reviews
-    .map(
-      (review) => `
-      <article class="mypage-review-row">
-        <div>
-          <b>${"★".repeat(review.score)}${"☆".repeat(5 - review.score)}</b>
-          <span>${review.date}</span>
-        </div>
-        <p>${review.text}</p>
-        <a href="/pages/detail.html?id=${review.productId}">상품 보러가기</a>
-      </article>
-    `,
-    )
-    .join("");
-  renderListBlock(el.myReviews, html, "작성한 리뷰가 없습니다.");
-}
-
-function renderInquiries() {
-  const inquiries = state.dashboard?.inquiries || [];
-  const html = inquiries
-    .map(
-      (inquiry) => `
-      <article class="mypage-inquiry-row">
-        <div>
-          <strong>${inquiry.title}</strong>
-          <span>${inquiry.status}</span>
-        </div>
-        <p>${inquiry.content}</p>
-        <small>${formatDateTime(inquiry.created_at || inquiry.createdAt)}</small>
-      </article>
-    `,
-    )
-    .join("");
-  renderListBlock(el.inquiryHistory, html, "등록된 문의가 없습니다.");
-}
-
-function renderProfile() {
+function renderAll() {
   const profile = state.dashboard?.profile || {};
-  el.email.value = profile.email || "";
-  el.name.value = profile.name || "";
-  el.phone.value = profile.phone || "";
-}
-
-function renderInquiryForm() {
-  if (!el.inquiryForm) return;
-  el.inquiryForm.classList.toggle("hidden", !state.inquiryFormOpen);
-}
-
-function render() {
-  const profile = state.dashboard?.profile || {};
-  el.greeting.textContent = `${profile.name || profile.email || "회원"}님, 쇼핑/활동 내역을 확인하세요.`;
-  renderSummary();
-  renderOrders();
-  renderMoneyHistory();
-  renderCoupons();
-  renderProductGrid(
-    el.recentProducts,
-    state.dashboard?.activity?.recentProducts || [],
-    "최근 본 상품이 없습니다.",
-  );
-  renderProductGrid(
-    el.wishlistProducts,
-    state.dashboard?.activity?.wishlistProducts || [],
-    "위시리스트가 비어 있습니다.",
-    true,
-  );
-  renderReviews();
-  renderProfile();
-  renderInquiries();
-  renderInquiryForm();
+  el.sidebarGreeting.textContent = `${profile.name || profile.email || "회원"}님의 쇼핑 정보를 확인하세요.`;
+  renderKpi();
+  renderOrderStage();
+  renderOrderTable();
+  renderClaimTable();
+  renderCouponTable();
+  renderSectionVisibility();
 }
 
 async function syncHeader() {
-  const user = (await syncCurrentUser()) || getUser();
   let count = 0;
   try {
     count = await cartCount();
@@ -284,100 +379,27 @@ async function syncHeader() {
     count = 0;
   }
   syncSiteHeader(headerRefs, {
-    userName: user?.name || user?.email || null,
-    isAdmin: Boolean(user?.is_staff ?? user?.isStaff),
+    userName: state.user?.name || state.user?.email || null,
+    isAdmin: Boolean(state.user?.is_staff ?? state.user?.isStaff),
     cartCountValue: count,
   });
 }
 
-async function loadDashboard() {
-  state.dashboard = await fetchMyPageDashboard();
-  render();
-}
-
-el.profileForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    await updateMyProfile({
-      name: el.name.value.trim(),
-      phone: el.phone.value.trim(),
-    });
-    await loadDashboard();
-    await syncHeader();
-    alert("회원 정보가 저장되었습니다.");
-  } catch (error) {
-    console.error(error);
-    alert(error.message || "회원 정보 저장에 실패했습니다.");
-  }
+el.navLinks.forEach((link) => {
+  link.addEventListener("click", (event) => {
+    const section = link.dataset.sectionLink;
+    if (!section) return;
+    event.preventDefault();
+    setActiveSection(section);
+  });
 });
 
-el.passwordForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    await changeMyPassword({
-      oldPassword: el.oldPassword.value,
-      newPassword: el.newPassword.value,
-      newPasswordConfirm: el.newPasswordConfirm.value,
-    });
-    el.oldPassword.value = "";
-    el.newPassword.value = "";
-    el.newPasswordConfirm.value = "";
-    alert("비밀번호가 변경되었습니다. 다시 로그인해주세요.");
-    await logout();
-    location.href = "/pages/login.html";
-  } catch (error) {
-    console.error(error);
-    alert(error.message || "비밀번호 변경에 실패했습니다.");
-  }
+[el.orderStatusFilter, el.orderRangeFilter].forEach((target) => {
+  target?.addEventListener("change", renderOrderTable);
 });
 
-el.openInquiryBtn?.addEventListener("click", () => {
-  state.inquiryFormOpen = true;
-  renderInquiryForm();
-});
-
-el.cancelInquiryBtn?.addEventListener("click", () => {
-  state.inquiryFormOpen = false;
-  renderInquiryForm();
-});
-
-el.inquiryForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    await createMyInquiry({
-      title: el.inquiryTitle.value.trim(),
-      content: el.inquiryContent.value.trim(),
-    });
-    el.inquiryTitle.value = "";
-    el.inquiryContent.value = "";
-    state.inquiryFormOpen = false;
-    await loadDashboard();
-    alert("문의가 접수되었습니다.");
-  } catch (error) {
-    console.error(error);
-    alert(error.message || "문의 등록에 실패했습니다.");
-  }
-});
-
-el.wishlistProducts?.addEventListener("click", async (event) => {
-  const button = event.target.closest("[data-action='removeWishlist']");
-  if (!button) return;
-
-  const productId = Number(button.dataset.id);
-  if (!productId) return;
-
-  try {
-    await removeWishlistItem(productId);
-    await loadDashboard();
-  } catch (error) {
-    console.error(error);
-    alert(error.message || "위시리스트 삭제에 실패했습니다.");
-  }
-});
-
-el.logoutBtn?.addEventListener("click", async () => {
-  await logout();
-  location.href = "/pages/home.html";
+[el.claimStatusFilter, el.claimRangeFilter].forEach((target) => {
+  target?.addEventListener("change", renderClaimTable);
 });
 
 (async function init() {
@@ -389,8 +411,16 @@ el.logoutBtn?.addEventListener("click", async () => {
   }
   state.user = user;
 
+  const tab = new URLSearchParams(location.search).get("tab");
+  if (tab && SECTION_META[tab]) {
+    state.activeSection = tab;
+  }
+
   try {
-    await loadDashboard();
+    const [dashboard, orders] = await Promise.all([fetchMyPageDashboard(), fetchMyOrders()]);
+    state.dashboard = dashboard;
+    state.orders = orders;
+    renderAll();
     await syncHeader();
   } catch (error) {
     console.error(error);

@@ -63,7 +63,11 @@ function render() {
   const checkout = document.getElementById("checkoutBtn");
   if (checkout) {
     checkout.addEventListener("click", () => {
-      alert("주문/결제 API는 준비되어 있습니다. 현재 화면은 주문서 입력 UI가 없어 결제 연결 전 단계입니다.");
+      if (!state.cart.items.length) {
+        alert("장바구니가 비어 있습니다.");
+        return;
+      }
+      location.href = "/pages/checkout.html";
     });
   }
 }

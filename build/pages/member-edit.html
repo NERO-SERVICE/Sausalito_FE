@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소살리토 | 회원정보수정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/memberEdit-CxSpoC_w.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-CX_4Vxnh.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-BJL0NQK-.js">
+    <link rel="stylesheet" crossorigin href="/assets/footer-0hP-vZoW.css">
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="myshop-shell member-edit-shell">
+      <aside class="myshop-sidebar">
+        <h2>마이쇼핑</h2>
+        <nav class="myshop-nav">
+          <a href="/pages/mypage.html?tab=dashboard">마이쇼핑 홈</a>
+          <a href="/pages/mypage.html?tab=orders">주문내역조회</a>
+          <a href="/pages/mypage.html?tab=claims">취소/반품/교환내역</a>
+          <a href="/pages/mypage.html?tab=coupons">쿠폰내역</a>
+          <a href="/pages/member-edit.html" class="is-active">회원정보수정</a>
+        </nav>
+      </aside>
+
+      <section class="myshop-content">
+        <header class="myshop-content-head">
+          <div>
+            <h3>회원정보수정</h3>
+            <p>회원정보 변경, 비밀번호 변경, 회원 탈퇴를 이 화면에서 관리할 수 있습니다.</p>
+          </div>
+        </header>
+
+        <section class="myshop-panel">
+          <h4>기본 정보 수정</h4>
+          <form id="memberProfileForm" class="member-edit-form">
+            <label>
+              <span>이메일</span>
+              <input type="email" id="memberEditEmail" readonly />
+            </label>
+            <label>
+              <span>이름</span>
+              <input type="text" id="memberEditName" required maxlength="100" />
+            </label>
+            <label>
+              <span>연락처</span>
+              <input type="text" id="memberEditPhone" maxlength="20" placeholder="01012345678" />
+            </label>
+            <div class="member-edit-submit">
+              <button class="primary" type="submit">정보 저장</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="myshop-panel">
+          <h4>비밀번호 변경</h4>
+          <form id="memberPasswordForm" class="member-edit-form">
+            <label>
+              <span>현재 비밀번호</span>
+              <input type="password" id="memberOldPassword" required />
+            </label>
+            <label>
+              <span>새 비밀번호</span>
+              <input type="password" id="memberNewPassword" required />
+            </label>
+            <label>
+              <span>새 비밀번호 확인</span>
+              <input type="password" id="memberNewPasswordConfirm" required />
+            </label>
+            <div class="member-edit-submit">
+              <button class="primary" type="submit">비밀번호 변경</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="myshop-panel member-withdraw-panel">
+          <h4>회원 탈퇴</h4>
+          <p class="member-withdraw-copy">
+            탈퇴 시 계정은 비활성화되며, 동일한 이메일로 즉시 재가입이 불가할 수 있습니다.
+          </p>
+          <form id="memberWithdrawForm" class="member-edit-form">
+            <label>
+              <span>비밀번호 확인</span>
+              <input type="password" id="memberWithdrawPassword" required />
+            </label>
+            <label>
+              <span>탈퇴 사유 (선택)</span>
+              <textarea id="memberWithdrawReason" rows="4" maxlength="500"></textarea>
+            </label>
+            <label class="member-withdraw-check">
+              <input type="checkbox" id="memberWithdrawConfirm" />
+              <span>안내사항을 확인했고, 회원 탈퇴에 동의합니다.</span>
+            </label>
+            <div class="member-edit-submit">
+              <button class="danger" type="submit">회원 탈퇴</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+  </body>
+</html>

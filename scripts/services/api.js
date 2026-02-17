@@ -48,6 +48,14 @@ async function parseJson(response) {
   }
 }
 
+function createIdempotencyKey(prefix = "fe") {
+  const randomPart =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().replace(/-/g, "")
+      : `${Date.now()}${Math.random().toString(16).slice(2)}`;
+  return `${prefix}_${randomPart}`.slice(0, 64);
+}
+
 function toApiError(status, payload) {
   const errorPayload = payload?.error || {};
   const message =
@@ -378,11 +386,38 @@ function normalizeOrderSummary(raw = {}) {
     orderNo: raw.order_no || raw.orderNo || "",
     status: raw.status || "",
     paymentStatus: raw.payment_status || raw.paymentStatus || "",
+    shippingStatus: raw.shipping_status || raw.shippingStatus || "",
     totalAmount: Number(raw.total_amount ?? raw.totalAmount ?? 0),
     createdAt: raw.created_at || raw.createdAt || null,
     recipient: raw.recipient || "",
     itemCount: Array.isArray(raw.items) ? raw.items.length : 0,
     items: Array.isArray(raw.items) ? raw.items : [],
+  };
+}
+
+function normalizeBankTransferRequest(raw = {}) {
+  const accountInfo = raw.account_info || raw.accountInfo || {};
+  return {
+    id: raw.id || "",
+    orderNo: raw.order_no || raw.orderNo || "",
+    status: raw.status || "",
+    orderStatus: raw.order_status || raw.orderStatus || "",
+    orderPaymentStatus: raw.order_payment_status || raw.orderPaymentStatus || "",
+    transferAmount: Number(raw.transfer_amount ?? raw.transferAmount ?? 0),
+    bankName: raw.bank_name || raw.bankName || accountInfo.bank_name || accountInfo.bankName || "",
+    bankAccountNo:
+      raw.bank_account_no || raw.bankAccountNo || accountInfo.bank_account_no || accountInfo.bankAccountNo || "",
+    accountHolder:
+      raw.account_holder || raw.accountHolder || accountInfo.account_holder || accountInfo.accountHolder || "",
+    depositorName: raw.depositor_name || raw.depositorName || "",
+    depositorPhone: raw.depositor_phone || raw.depositorPhone || "",
+    transferNote: raw.transfer_note || raw.transferNote || "",
+    rejectionReason: raw.rejection_reason || raw.rejectionReason || "",
+    adminMemo: raw.admin_memo || raw.adminMemo || "",
+    approvedAt: raw.approved_at || raw.approvedAt || null,
+    rejectedAt: raw.rejected_at || raw.rejectedAt || null,
+    createdAt: raw.created_at || raw.createdAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
   };
 }
 
@@ -767,6 +802,11 @@ export async function fetchMyPageDashboard() {
   return normalizeMyPageDashboard(data);
 }
 
+export async function fetchMyOrders() {
+  const data = await apiRequest("/orders");
+  return Array.isArray(data) ? data.map(normalizeOrderSummary) : [];
+}
+
 export async function updateMyProfile({ name, phone }) {
   return apiRequest("/users/me", {
     method: "PATCH",
@@ -781,6 +821,16 @@ export async function changeMyPassword({ oldPassword, newPassword, newPasswordCo
       old_password: oldPassword,
       new_password: newPassword,
       new_password_confirm: newPasswordConfirm,
+    },
+  });
+}
+
+export async function withdrawMyAccount({ password, reason = "" }) {
+  return apiRequest("/users/me/withdraw", {
+    method: "POST",
+    body: {
+      password,
+      reason,
     },
   });
 }
@@ -809,6 +859,73 @@ export async function trackRecentProduct(productId) {
     method: "POST",
     body: { product_id: productId },
   });
+}
+
+export async function createOrder({
+  recipient,
+  phone,
+  postalCode,
+  roadAddress,
+  jibunAddress = "",
+  detailAddress = "",
+  buyNowProductId,
+  buyNowOptionId,
+  buyNowQuantity,
+} = {}) {
+  const body = {
+    recipient,
+    phone,
+    postal_code: postalCode,
+    road_address: roadAddress,
+    jibun_address: jibunAddress,
+    detail_address: detailAddress,
+  };
+  if (buyNowProductId !== undefined && buyNowProductId !== null) {
+    body.buy_now_product_id = Number(buyNowProductId);
+  }
+  if (buyNowOptionId !== undefined && buyNowOptionId !== null) {
+    body.buy_now_option_id = Number(buyNowOptionId);
+  }
+  if (buyNowQuantity !== undefined && buyNowQuantity !== null) {
+    body.buy_now_quantity = Number(buyNowQuantity);
+  }
+
+  const data = await apiRequest("/orders", {
+    method: "POST",
+    body,
+  });
+  return normalizeOrderSummary(data || {});
+}
+
+export async function fetchBankTransferAccountInfo() {
+  return apiRequest("/payments/bank-transfer/account-info", {
+    auth: false,
+    retryOnAuth: false,
+  });
+}
+
+export async function createBankTransferRequest({
+  orderNo,
+  depositorName,
+  depositorPhone = "",
+  transferNote = "",
+} = {}) {
+  const data = await apiRequest("/payments/bank-transfer/requests", {
+    method: "POST",
+    body: {
+      order_no: orderNo,
+      depositor_name: depositorName,
+      depositor_phone: depositorPhone,
+      transfer_note: transferNote,
+      idempotency_key: createIdempotencyKey("bank"),
+    },
+  });
+  return normalizeBankTransferRequest(data || {});
+}
+
+export async function fetchMyBankTransferRequests() {
+  const data = await apiRequest("/payments/bank-transfer/requests");
+  return Array.isArray(data) ? data.map(normalizeBankTransferRequest) : [];
 }
 
 export async function createMyInquiry({ title, content }) {

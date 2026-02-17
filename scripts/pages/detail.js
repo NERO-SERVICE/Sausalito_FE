@@ -26,6 +26,7 @@ const state = {
   open: { shipping: false, inquiry: false },
   policyOpen: false,
   wished: false,
+  currentUser: null,
 };
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
@@ -509,18 +510,24 @@ document.addEventListener("click", async (e) => {
   }
 
   if (action === "buyNow") {
-    try {
-      await addToCart(state.product.id, state.quantity);
-      location.href = "/pages/cart.html";
+    const user = state.currentUser || (await syncCurrentUser()) || getUser();
+    if (!user) {
+      alert("로그인 후 바로구매가 가능합니다.");
+      location.href = "/pages/login.html";
       return;
-    } catch (error) {
-      console.error(error);
-      alert(error.message || "장바구니 담기에 실패했습니다.");
-      if (error.status === 401 || error.message.includes("로그인")) {
-        location.href = "/pages/login.html";
-        return;
-      }
     }
+    state.currentUser = user;
+    const option = (state.meta?.options && state.meta.options[0]) || null;
+    const checkoutParams = new URLSearchParams({
+      buyNow: "1",
+      productId: String(state.product.id),
+      quantity: String(state.quantity),
+    });
+    if (option?.id) {
+      checkoutParams.set("optionId", String(option.id));
+    }
+    location.href = `/pages/checkout.html?${checkoutParams.toString()}`;
+    return;
   }
 
   if (action === "toggleWish") {
@@ -556,6 +563,7 @@ async function init() {
     state.reviews = await fetchReviewsByProduct(id);
 
     const currentUser = (await syncCurrentUser()) || getUser();
+    state.currentUser = currentUser || null;
     if (currentUser) {
       try {
         await trackRecentProduct(id);

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소살리토 | 주문/결제</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="checkout-main">
+      <section class="checkout-head">
+        <h2>주문/결제</h2>
+        <p>배송 정보와 결제수단을 확인 후 결제를 완료하세요.</p>
+      </section>
+
+      <section class="checkout-layout">
+        <article class="checkout-card">
+          <div class="checkout-card-head">
+            <h3>배송지 정보</h3>
+          </div>
+          <form id="checkoutForm" class="checkout-form">
+            <div class="checkout-grid">
+              <label>
+                <span>받는 분</span>
+                <input type="text" id="checkoutRecipient" required maxlength="100" />
+              </label>
+              <label>
+                <span>연락처</span>
+                <input type="text" id="checkoutPhone" required maxlength="20" placeholder="01012345678" />
+              </label>
+              <label>
+                <span>우편번호</span>
+                <input type="text" id="checkoutPostalCode" required maxlength="10" />
+              </label>
+              <label class="checkout-col-2">
+                <span>도로명 주소</span>
+                <input type="text" id="checkoutRoadAddress" required maxlength="255" />
+              </label>
+              <label class="checkout-col-2">
+                <span>지번 주소</span>
+                <input type="text" id="checkoutJibunAddress" maxlength="255" />
+              </label>
+              <label class="checkout-col-2">
+                <span>상세 주소</span>
+                <input type="text" id="checkoutDetailAddress" maxlength="255" />
+              </label>
+            </div>
+
+            <section class="checkout-method-section">
+              <h4>결제 수단</h4>
+              <div class="checkout-method-tabs">
+                <button type="button" data-method="NAVERPAY" class="checkout-method-btn is-active">네이버페이 간편결제</button>
+                <button type="button" data-method="TRANSFER" class="checkout-method-btn">계좌이체</button>
+                <button type="button" data-method="BANK_TRANSFER" class="checkout-method-btn">무통장입금</button>
+              </div>
+
+              <div class="checkout-method-panel is-active" data-method-panel="NAVERPAY">
+                <p class="checkout-method-title">네이버페이 간편결제</p>
+                <p class="checkout-method-desc">원클릭 간편결제 연동 화면입니다. 현재는 시뮬레이션 UI만 제공됩니다.</p>
+              </div>
+
+              <div class="checkout-method-panel" data-method-panel="TRANSFER" hidden>
+                <p class="checkout-method-title">계좌이체</p>
+                <p class="checkout-method-desc">
+                  은행계좌를 통한 즉시이체 결제 방식입니다. 현재는 시뮬레이션 UI만 제공됩니다.
+                </p>
+              </div>
+
+              <div class="checkout-method-panel" data-method-panel="BANK_TRANSFER" hidden>
+                <p class="checkout-method-title">무통장입금</p>
+                <p class="checkout-method-desc">입금 후 관리자가 확인하면 결제완료로 처리됩니다.</p>
+                <div class="checkout-bank-account" id="checkoutBankAccount"></div>
+                <div class="checkout-grid">
+                  <label>
+                    <span>입금자명</span>
+                    <input type="text" id="checkoutDepositorName" maxlength="100" />
+                  </label>
+                  <label>
+                    <span>입금자 연락처</span>
+                    <input type="text" id="checkoutDepositorPhone" maxlength="20" />
+                  </label>
+                  <label class="checkout-col-2">
+                    <span>입금 메모</span>
+                    <input type="text" id="checkoutTransferNote" maxlength="500" />
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <div class="checkout-submit-row">
+              <button class="primary" type="submit" id="checkoutSubmitBtn">결제하기</button>
+            </div>
+          </form>
+        </article>
+
+        <aside class="checkout-summary" id="checkoutSummary"></aside>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+    <script type="module" src="../scripts/pages/checkout.js"></script>
+  </body>
+</html>

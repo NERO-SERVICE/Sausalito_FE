@@ -15,116 +15,97 @@
   <body>
     <div id="siteHeaderMount"></div>
 
-    <main class="mypage-main">
-      <section class="mypage-head">
-        <h2>마이페이지</h2>
-        <p id="mypageGreeting">회원님의 쇼핑/활동/계정 정보를 한 번에 관리하세요.</p>
-      </section>
+    <main class="myshop-shell">
+      <aside class="myshop-sidebar">
+        <h2>마이쇼핑</h2>
+        <p id="myshopSidebarGreeting">고객님의 쇼핑 활동을 확인하세요.</p>
+        <nav class="myshop-nav" id="myshopNav">
+          <a href="/pages/mypage.html?tab=dashboard" data-section-link="dashboard" class="is-active">마이쇼핑 홈</a>
+          <a href="/pages/mypage.html?tab=orders" data-section-link="orders">주문내역조회</a>
+          <a href="/pages/mypage.html?tab=claims" data-section-link="claims">취소/반품/교환내역</a>
+          <a href="/pages/mypage.html?tab=coupons" data-section-link="coupons">쿠폰내역</a>
+          <a href="/pages/member-edit.html">회원정보수정</a>
+        </nav>
+      </aside>
 
-      <section class="mypage-summary-grid" id="mypageSummary"></section>
-
-      <section class="mypage-card">
-        <div class="mypage-card-head">
-          <h3>쇼핑정보</h3>
-        </div>
-        <div class="mypage-board" id="mypageOrders"></div>
-        <div class="mypage-columns-2">
-          <article class="mypage-subcard">
-            <h4>적립금 내역</h4>
-            <div id="mypagePointHistory"></div>
-          </article>
-          <article class="mypage-subcard">
-            <h4>예치금 내역</h4>
-            <div id="mypageDepositHistory"></div>
-          </article>
-        </div>
-        <article class="mypage-subcard">
-          <h4>쿠폰 내역</h4>
-          <div id="mypageCouponHistory"></div>
-        </article>
-      </section>
-
-      <section class="mypage-card">
-        <div class="mypage-card-head">
-          <h3>활동정보</h3>
-        </div>
-        <article class="mypage-subcard">
-          <h4>최근 본 상품</h4>
-          <div class="mypage-product-grid" id="mypageRecentProducts"></div>
-        </article>
-        <article class="mypage-subcard">
-          <h4>나의 위시리스트</h4>
-          <div class="mypage-product-grid" id="mypageWishlistProducts"></div>
-        </article>
-        <article class="mypage-subcard">
-          <h4>나의 리뷰</h4>
-          <div id="mypageMyReviews"></div>
-        </article>
-      </section>
-
-      <section class="mypage-card">
-        <div class="mypage-card-head">
-          <h3>나의 정보</h3>
-        </div>
-        <form class="mypage-form" id="mypageProfileForm">
-          <h4>회원 정보 수정</h4>
-          <label>
-            <span>이메일</span>
-            <input type="email" id="mypageEmail" readonly />
-          </label>
-          <label>
-            <span>이름</span>
-            <input type="text" id="mypageName" required maxlength="100" />
-          </label>
-          <label>
-            <span>연락처</span>
-            <input type="text" id="mypagePhone" maxlength="20" placeholder="010-0000-0000" />
-          </label>
-          <button class="primary" type="submit">정보 저장</button>
-        </form>
-
-        <form class="mypage-form" id="mypagePasswordForm">
-          <h4>비밀번호 변경</h4>
-          <label>
-            <span>현재 비밀번호</span>
-            <input type="password" id="mypageOldPassword" required />
-          </label>
-          <label>
-            <span>새 비밀번호</span>
-            <input type="password" id="mypageNewPassword" required />
-          </label>
-          <label>
-            <span>새 비밀번호 확인</span>
-            <input type="password" id="mypageNewPasswordConfirm" required />
-          </label>
-          <button class="primary" type="submit">비밀번호 변경</button>
-        </form>
-
-        <div class="mypage-logout-row">
-          <button class="ghost" type="button" id="mypageLogoutBtn">로그아웃</button>
-        </div>
-      </section>
-
-      <section class="mypage-card">
-        <div class="mypage-card-head">
-          <h3>1대1 문의하기</h3>
-          <button class="primary" type="button" id="openInquiryBtn">문의하기</button>
-        </div>
-        <form class="mypage-form mypage-inquiry-form hidden" id="mypageInquiryForm">
-          <label>
-            <span>문의 제목</span>
-            <input type="text" id="inquiryTitle" required maxlength="200" />
-          </label>
-          <label>
-            <span>문의 내용</span>
-            <textarea id="inquiryContent" rows="4" required maxlength="2000"></textarea>
-          </label>
-          <div class="mypage-inline-actions">
-            <button class="ghost" type="button" id="cancelInquiryBtn">취소</button>
-            <button class="primary" type="submit">문의 등록</button>
+      <section class="myshop-content">
+        <header class="myshop-content-head">
+          <div>
+            <h3 id="myshopSectionTitle">마이쇼핑 홈</h3>
+            <p id="myshopSectionDescription">회원님의 주문/혜택 정보를 확인하세요.</p>
           </div>
-        </form>
-        <div id="mypageInquiryHistory"></div>
+          <a class="ghost" href="/pages/member-edit.html">회원정보수정</a>
+        </header>
+
+        <section class="myshop-section" data-section="dashboard">
+          <div class="myshop-kpi-grid" id="myshopKpi"></div>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>나의 주문처리현황</h4>
+            </div>
+            <div class="myshop-order-stage" id="myshopOrderStage"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-section="orders" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>주문내역조회</h4>
+              <div class="myshop-filter-row">
+                <select id="myshopOrderStatusFilter">
+                  <option value="ALL">주문처리상태 전체</option>
+                  <option value="PENDING">입금전</option>
+                  <option value="PAID">결제완료</option>
+                  <option value="PREPARING">배송준비중</option>
+                  <option value="SHIPPED">배송중</option>
+                  <option value="DELIVERED">배송완료</option>
+                  <option value="FAILED">결제실패</option>
+                  <option value="CANCELED">주문취소</option>
+                  <option value="REFUNDED">환불완료</option>
+                </select>
+                <select id="myshopOrderRangeFilter">
+                  <option value="today">오늘</option>
+                  <option value="1m">1개월</option>
+                  <option value="3m">3개월</option>
+                  <option value="6m" selected>6개월</option>
+                </select>
+              </div>
+            </div>
+            <div id="myshopOrderTable"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-section="claims" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>취소/반품/교환내역</h4>
+              <div class="myshop-filter-row">
+                <select id="myshopClaimStatusFilter">
+                  <option value="ALL">주문처리상태 전체</option>
+                  <option value="CANCEL">취소</option>
+                  <option value="RETURN">반품/환불</option>
+                  <option value="EXCHANGE">교환</option>
+                </select>
+                <select id="myshopClaimRangeFilter">
+                  <option value="today">오늘</option>
+                  <option value="1m">1개월</option>
+                  <option value="3m">3개월</option>
+                  <option value="6m" selected>6개월</option>
+                </select>
+              </div>
+            </div>
+            <div id="myshopClaimTable"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-section="coupons" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>쿠폰내역</h4>
+            </div>
+            <div id="myshopCouponTable"></div>
+          </article>
+        </section>
       </section>
     </main>
 
