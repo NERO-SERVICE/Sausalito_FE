@@ -5,7 +5,7 @@ const MAIN_LOGO_FALLBACKS = ["/dist/assets/logo/main_logo.svg", "dist/assets/log
 
 export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
   const mount = document.getElementById("siteHeaderMount");
-  if (!mount) return { accountLink: null, adminLink: null, logoutBtn: null, cartCount: null };
+  if (!mount) return { accountLink: null, logoutBtn: null, cartCount: null };
 
   mount.innerHTML = `
     <header class="site-header">
@@ -20,7 +20,6 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
         <div class="header-actions">
           <div class="header-account">
             <a class="text-btn" href="/pages/login.html" id="accountLink">로그인</a>
-            <a class="text-btn" href="/pages/admin.html" id="adminLink" hidden>관리자</a>
             <button class="icon-btn header-logout-btn" id="logoutBtn" type="button" hidden>로그아웃</button>
           </div>
           ${
@@ -74,13 +73,13 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
 
   return {
     accountLink: mount.querySelector("#accountLink"),
-    adminLink: mount.querySelector("#adminLink"),
     logoutBtn,
     cartCount: mount.querySelector("#cartCount"),
   };
 }
 
 export function syncSiteHeader(refs, { userName = null, isAdmin = false, cartCountValue = null } = {}) {
+  void isAdmin;
   if (refs.accountLink) {
     if (userName) {
       refs.accountLink.textContent = "마이페이지";
@@ -90,7 +89,6 @@ export function syncSiteHeader(refs, { userName = null, isAdmin = false, cartCou
       refs.accountLink.href = "/pages/login.html";
     }
   }
-  if (refs.adminLink) refs.adminLink.hidden = !userName || !isAdmin;
   if (refs.logoutBtn) refs.logoutBtn.hidden = !userName;
   if (refs.cartCount && typeof cartCountValue === "number") refs.cartCount.textContent = cartCountValue;
 }
