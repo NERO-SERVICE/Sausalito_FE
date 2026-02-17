@@ -382,6 +382,9 @@ function normalizeAdminOrder(raw = {}) {
     totalAmount: Number(raw.total_amount ?? raw.totalAmount ?? 0),
     recipient: raw.recipient || "",
     phone: raw.phone || "",
+    postalCode: raw.postal_code || raw.postalCode || "",
+    roadAddress: raw.road_address || raw.roadAddress || "",
+    detailAddress: raw.detail_address || raw.detailAddress || "",
     courierName: raw.courier_name || raw.courierName || "",
     trackingNo: raw.tracking_no || raw.trackingNo || "",
     invoiceIssuedAt: raw.invoice_issued_at || raw.invoiceIssuedAt || null,
@@ -389,6 +392,9 @@ function normalizeAdminOrder(raw = {}) {
     deliveredAt: raw.delivered_at || raw.deliveredAt || null,
     createdAt: raw.created_at || raw.createdAt || null,
     itemCount: Number(raw.item_count ?? raw.itemCount ?? 0),
+    returnRequestCount: Number(raw.return_request_count ?? raw.returnRequestCount ?? 0),
+    hasOpenReturn: Boolean(raw.has_open_return ?? raw.hasOpenReturn),
+    settlementStatus: raw.settlement_status || raw.settlementStatus || "",
   };
 }
 
@@ -399,9 +405,19 @@ function normalizeAdminInquiry(raw = {}) {
     userName: raw.user_name || raw.userName || "",
     title: raw.title || "",
     content: raw.content || "",
+    category: raw.category || "ETC",
+    priority: raw.priority || "NORMAL",
     status: raw.status || "",
+    channel: raw.channel || "WEB",
+    assignedAdminId: Number(raw.assigned_admin_id ?? raw.assignedAdminId ?? 0) || null,
+    assignedAdminEmail: raw.assigned_admin_email || raw.assignedAdminEmail || "",
+    internalNote: raw.internal_note || raw.internalNote || "",
     answer: raw.answer || "",
+    firstResponseAt: raw.first_response_at || raw.firstResponseAt || null,
     answeredAt: raw.answered_at || raw.answeredAt || null,
+    resolvedAt: raw.resolved_at || raw.resolvedAt || null,
+    slaDueAt: raw.sla_due_at || raw.slaDueAt || null,
+    isSlaOverdue: Boolean(raw.is_sla_overdue ?? raw.isSlaOverdue),
     createdAt: raw.created_at || raw.createdAt || null,
     updatedAt: raw.updated_at || raw.updatedAt || null,
   };
@@ -421,6 +437,103 @@ function normalizeAdminReview(raw = {}) {
     helpfulCount: Number(raw.helpful_count ?? raw.helpfulCount ?? 0),
     createdAt: raw.created_at || raw.createdAt || null,
     images: Array.isArray(raw.images) ? raw.images.filter(Boolean) : [],
+  };
+}
+
+function normalizeAdminReturnRequest(raw = {}) {
+  return {
+    id: raw.id,
+    orderNo: raw.order_no || raw.orderNo || "",
+    userEmail: raw.user_email || raw.userEmail || "",
+    status: raw.status || "",
+    reasonTitle: raw.reason_title || raw.reasonTitle || "",
+    reasonDetail: raw.reason_detail || raw.reasonDetail || "",
+    requestedAmount: Number(raw.requested_amount ?? raw.requestedAmount ?? 0),
+    approvedAmount: Number(raw.approved_amount ?? raw.approvedAmount ?? 0),
+    rejectedReason: raw.rejected_reason || raw.rejectedReason || "",
+    pickupCourierName: raw.pickup_courier_name || raw.pickupCourierName || "",
+    pickupTrackingNo: raw.pickup_tracking_no || raw.pickupTrackingNo || "",
+    adminNote: raw.admin_note || raw.adminNote || "",
+    requestedAt: raw.requested_at || raw.requestedAt || null,
+    approvedAt: raw.approved_at || raw.approvedAt || null,
+    receivedAt: raw.received_at || raw.receivedAt || null,
+    refundedAt: raw.refunded_at || raw.refundedAt || null,
+    closedAt: raw.closed_at || raw.closedAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
+function normalizeAdminSettlement(raw = {}) {
+  return {
+    id: raw.id,
+    orderNo: raw.order_no || raw.orderNo || "",
+    userEmail: raw.user_email || raw.userEmail || "",
+    status: raw.status || "",
+    grossAmount: Number(raw.gross_amount ?? raw.grossAmount ?? 0),
+    discountAmount: Number(raw.discount_amount ?? raw.discountAmount ?? 0),
+    shippingFee: Number(raw.shipping_fee ?? raw.shippingFee ?? 0),
+    pgFee: Number(raw.pg_fee ?? raw.pgFee ?? 0),
+    platformFee: Number(raw.platform_fee ?? raw.platformFee ?? 0),
+    returnDeduction: Number(raw.return_deduction ?? raw.returnDeduction ?? 0),
+    settlementAmount: Number(raw.settlement_amount ?? raw.settlementAmount ?? 0),
+    expectedPayoutDate: raw.expected_payout_date || raw.expectedPayoutDate || null,
+    paidAt: raw.paid_at || raw.paidAt || null,
+    memo: raw.memo || "",
+    orderCreatedAt: raw.order_created_at || raw.orderCreatedAt || null,
+    orderPaymentStatus: raw.order_payment_status || raw.orderPaymentStatus || "",
+    orderShippingStatus: raw.order_shipping_status || raw.orderShippingStatus || "",
+    createdAt: raw.created_at || raw.createdAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
+function normalizeAdminBanner(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    subtitle: raw.subtitle || "",
+    title: raw.title || "",
+    description: raw.description || "",
+    ctaText: raw.cta_text || raw.ctaText || "",
+    linkUrl: raw.link_url || raw.linkUrl || "",
+    sortOrder: Number(raw.sort_order ?? raw.sortOrder ?? 0),
+    isActive: Boolean(raw.is_active ?? raw.isActive),
+    imageUrl: raw.image_url || raw.imageUrl || "",
+    createdAt: raw.created_at || raw.createdAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
+function normalizeAdminManagedProduct(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    name: raw.name || "",
+    oneLine: raw.one_line || raw.oneLine || "",
+    description: raw.description || "",
+    price: Number(raw.price ?? 0),
+    originalPrice: Number(raw.original_price ?? raw.originalPrice ?? 0),
+    stock: Number(raw.stock ?? 0),
+    isActive: Boolean(raw.is_active ?? raw.isActive),
+    categoryName: raw.category_name || raw.categoryName || "",
+    badgeTypes: Array.isArray(raw.badge_types) ? raw.badge_types : [],
+    thumbnailUrl: raw.thumbnail_url || raw.thumbnailUrl || "",
+    createdAt: raw.created_at || raw.createdAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
+function normalizeAdminManagedUser(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    email: raw.email || "",
+    name: raw.name || "",
+    phone: raw.phone || "",
+    isActive: Boolean(raw.is_active ?? raw.isActive),
+    isStaff: Boolean(raw.is_staff ?? raw.isStaff),
+    orderCount: Number(raw.order_count ?? raw.orderCount ?? 0),
+    reviewCount: Number(raw.review_count ?? raw.reviewCount ?? 0),
+    inquiryCount: Number(raw.inquiry_count ?? raw.inquiryCount ?? 0),
+    createdAt: raw.created_at || raw.createdAt || null,
+    lastLogin: raw.last_login || raw.lastLogin || null,
   };
 }
 
@@ -612,23 +725,33 @@ export async function fetchAdminDashboard() {
       shippingShippedCount: Number(summary.shipping_shipped_count ?? summary.shippingShippedCount ?? 0),
       shippingDeliveredCount: Number(summary.shipping_delivered_count ?? summary.shippingDeliveredCount ?? 0),
       openInquiryCount: Number(summary.open_inquiry_count ?? summary.openInquiryCount ?? 0),
+      overdueInquiryCount: Number(summary.overdue_inquiry_count ?? summary.overdueInquiryCount ?? 0),
       hiddenReviewCount: Number(summary.hidden_review_count ?? summary.hiddenReviewCount ?? 0),
+      openReturnCount: Number(summary.open_return_count ?? summary.openReturnCount ?? 0),
+      completedReturnCount: Number(summary.completed_return_count ?? summary.completedReturnCount ?? 0),
+      pendingSettlementAmount: Number(summary.pending_settlement_amount ?? summary.pendingSettlementAmount ?? 0),
+      paidSettlementAmount: Number(summary.paid_settlement_amount ?? summary.paidSettlementAmount ?? 0),
     },
     recentOrders: Array.isArray(data?.recent_orders) ? data.recent_orders.map(normalizeAdminOrder) : [],
     recentInquiries: Array.isArray(data?.recent_inquiries)
       ? data.recent_inquiries.map(normalizeAdminInquiry)
       : [],
     recentReviews: Array.isArray(data?.recent_reviews) ? data.recent_reviews.map(normalizeAdminReview) : [],
+    recentReturns: Array.isArray(data?.recent_returns) ? data.recent_returns.map(normalizeAdminReturnRequest) : [],
+    recentSettlements: Array.isArray(data?.recent_settlements)
+      ? data.recent_settlements.map(normalizeAdminSettlement)
+      : [],
   };
 }
 
-export async function fetchAdminOrders({ q, status, paymentStatus, shippingStatus, limit = 80 } = {}) {
+export async function fetchAdminOrders({ q, status, paymentStatus, shippingStatus, hasOpenReturn, limit = 80 } = {}) {
   const data = await apiRequest("/admin/orders", {
     query: {
       q,
       status,
       payment_status: paymentStatus,
       shipping_status: shippingStatus,
+      has_open_return: typeof hasOpenReturn === "boolean" ? String(hasOpenReturn) : undefined,
       limit,
     },
   });
@@ -652,29 +775,68 @@ export async function updateAdminOrder(orderNo, payload = {}) {
   return normalizeAdminOrder(data || {});
 }
 
-export async function fetchAdminInquiries({ status } = {}) {
+export async function fetchAdminInquiries({ q, status, category, priority, assignedAdminId, overdue, limit } = {}) {
   const data = await apiRequest("/admin/inquiries", {
-    query: { status },
+    query: {
+      q,
+      status,
+      category,
+      priority,
+      assigned_admin_id: assignedAdminId,
+      overdue: typeof overdue === "boolean" ? String(overdue) : undefined,
+      limit,
+    },
   });
   return Array.isArray(data) ? data.map(normalizeAdminInquiry) : [];
 }
 
-export async function answerAdminInquiry(inquiryId, { answer, status } = {}) {
+export async function answerAdminInquiry(
+  inquiryId,
+  { answer, status, category, priority, assignedAdminId, internalNote, slaDueAt, deleteAnswer } = {},
+) {
   const data = await apiRequest(`/admin/inquiries/${inquiryId}/answer`, {
     method: "PATCH",
-    body: { answer, status },
+    body: {
+      answer,
+      delete_answer: deleteAnswer,
+      status,
+      category,
+      priority,
+      assigned_admin_id: assignedAdminId,
+      internal_note: internalNote,
+      sla_due_at: slaDueAt,
+    },
   });
   return normalizeAdminInquiry(data || {});
 }
 
-export async function fetchAdminReviews({ status, productId } = {}) {
+export async function fetchAdminReviews({ status, productId, sort = "latest", page = 1, pageSize = 10, q } = {}) {
   const data = await apiRequest("/admin/reviews", {
     query: {
       status,
       product_id: productId,
+      sort,
+      page,
+      page_size: pageSize,
+      q,
     },
   });
-  return Array.isArray(data) ? data.map(normalizeAdminReview) : [];
+
+  const items = extractResults(data).map(normalizeAdminReview);
+  const totalCount = Number(data?.count ?? items.length);
+  const safePageSize = Number(data?.page_size ?? pageSize ?? 10) || 10;
+  const totalPages = Number(data?.total_pages ?? Math.max(1, Math.ceil(totalCount / safePageSize)));
+  const currentPage = Number(data?.page ?? page ?? 1);
+
+  return {
+    items,
+    count: totalCount,
+    page: currentPage,
+    pageSize: safePageSize,
+    totalPages,
+    hasNext: Boolean(data?.has_next ?? currentPage < totalPages),
+    hasPrevious: Boolean(data?.has_previous ?? currentPage > 1),
+  };
 }
 
 export async function setAdminReviewVisibility(reviewId, visible) {
@@ -683,6 +845,290 @@ export async function setAdminReviewVisibility(reviewId, visible) {
     body: { visible: Boolean(visible) },
   });
   return normalizeAdminReview(data || {});
+}
+
+export async function deleteAdminReview(reviewId) {
+  return apiRequest(`/admin/reviews/${reviewId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAdminReturnRequests({ q, status, limit = 200 } = {}) {
+  const data = await apiRequest("/admin/returns", {
+    query: {
+      q,
+      status,
+      limit,
+    },
+  });
+  return Array.isArray(data) ? data.map(normalizeAdminReturnRequest) : [];
+}
+
+export async function createAdminReturnRequest({ orderNo, reasonTitle, reasonDetail, requestedAmount } = {}) {
+  const data = await apiRequest("/admin/returns", {
+    method: "POST",
+    body: {
+      order_no: orderNo,
+      reason_title: reasonTitle,
+      reason_detail: reasonDetail,
+      requested_amount: requestedAmount,
+    },
+  });
+  return normalizeAdminReturnRequest(data || {});
+}
+
+export async function updateAdminReturnRequest(
+  returnRequestId,
+  { status, approvedAmount, rejectedReason, pickupCourierName, pickupTrackingNo, adminNote } = {},
+) {
+  const data = await apiRequest(`/admin/returns/${returnRequestId}`, {
+    method: "PATCH",
+    body: {
+      status,
+      approved_amount: approvedAmount,
+      rejected_reason: rejectedReason,
+      pickup_courier_name: pickupCourierName,
+      pickup_tracking_no: pickupTrackingNo,
+      admin_note: adminNote,
+    },
+  });
+  return normalizeAdminReturnRequest(data || {});
+}
+
+export async function deleteAdminReturnRequest(returnRequestId) {
+  return apiRequest(`/admin/returns/${returnRequestId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAdminSettlements({ q, status, limit = 200 } = {}) {
+  const data = await apiRequest("/admin/settlements", {
+    query: {
+      q,
+      status,
+      limit,
+    },
+  });
+  return Array.isArray(data) ? data.map(normalizeAdminSettlement) : [];
+}
+
+export async function generateAdminSettlements({ onlyPaidOrders = true } = {}) {
+  return apiRequest("/admin/settlements", {
+    method: "POST",
+    body: {
+      only_paid_orders: onlyPaidOrders,
+    },
+  });
+}
+
+export async function updateAdminSettlement(
+  settlementId,
+  { status, pgFee, platformFee, returnDeduction, expectedPayoutDate, markPaid, memo } = {},
+) {
+  const data = await apiRequest(`/admin/settlements/${settlementId}`, {
+    method: "PATCH",
+    body: {
+      status,
+      pg_fee: pgFee,
+      platform_fee: platformFee,
+      return_deduction: returnDeduction,
+      expected_payout_date: expectedPayoutDate,
+      mark_paid: markPaid,
+      memo,
+    },
+  });
+  return normalizeAdminSettlement(data || {});
+}
+
+export async function deleteAdminSettlement(settlementId) {
+  return apiRequest(`/admin/settlements/${settlementId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAdminStaffUsers() {
+  const data = await apiRequest("/admin/staff-users");
+  return Array.isArray(data)
+    ? data.map((row) => ({
+        id: Number(row.id || 0),
+        email: row.email || "",
+        name: row.name || "",
+      }))
+    : [];
+}
+
+export async function fetchAdminManagedBanners() {
+  const data = await apiRequest("/admin/banners/home/manage");
+  return Array.isArray(data) ? data.map(normalizeAdminBanner) : [];
+}
+
+export async function createAdminManagedBanner({
+  subtitle,
+  title,
+  description,
+  ctaText,
+  linkUrl,
+  sortOrder,
+  isActive,
+  imageFile,
+} = {}) {
+  const formData = new FormData();
+  if (subtitle !== undefined) formData.append("subtitle", subtitle);
+  if (title !== undefined) formData.append("title", title);
+  if (description !== undefined) formData.append("description", description);
+  if (ctaText !== undefined) formData.append("cta_text", ctaText);
+  if (linkUrl !== undefined) formData.append("link_url", linkUrl);
+  if (sortOrder !== undefined) formData.append("sort_order", String(sortOrder));
+  if (isActive !== undefined) formData.append("is_active", String(Boolean(isActive)));
+  if (imageFile) formData.append("image", imageFile);
+
+  const data = await apiRequest("/admin/banners/home/manage", {
+    method: "POST",
+    body: formData,
+    isForm: true,
+  });
+  return normalizeAdminBanner(data || {});
+}
+
+export async function updateAdminManagedBanner(
+  bannerId,
+  { subtitle, title, description, ctaText, linkUrl, sortOrder, isActive, imageFile } = {},
+) {
+  const formData = new FormData();
+  if (subtitle !== undefined) formData.append("subtitle", subtitle);
+  if (title !== undefined) formData.append("title", title);
+  if (description !== undefined) formData.append("description", description);
+  if (ctaText !== undefined) formData.append("cta_text", ctaText);
+  if (linkUrl !== undefined) formData.append("link_url", linkUrl);
+  if (sortOrder !== undefined) formData.append("sort_order", String(sortOrder));
+  if (isActive !== undefined) formData.append("is_active", String(Boolean(isActive)));
+  if (imageFile) formData.append("image", imageFile);
+
+  const data = await apiRequest(`/admin/banners/home/manage/${bannerId}`, {
+    method: "PATCH",
+    body: formData,
+    isForm: true,
+  });
+  return normalizeAdminBanner(data || {});
+}
+
+export async function deleteAdminManagedBanner(bannerId) {
+  return apiRequest(`/admin/banners/home/manage/${bannerId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAdminManagedProducts({ q, isActive, limit = 200 } = {}) {
+  const data = await apiRequest("/admin/products/manage", {
+    query: {
+      q,
+      is_active: typeof isActive === "boolean" ? String(isActive) : undefined,
+      limit,
+    },
+  });
+  return Array.isArray(data) ? data.map(normalizeAdminManagedProduct) : [];
+}
+
+export async function createAdminManagedProduct({
+  name,
+  oneLine,
+  description,
+  price,
+  originalPrice,
+  stock,
+  isActive,
+  badgeTypes,
+  thumbnailFile,
+} = {}) {
+  const formData = new FormData();
+  if (name !== undefined) formData.append("name", name);
+  if (oneLine !== undefined) formData.append("one_line", oneLine);
+  if (description !== undefined) formData.append("description", description);
+  if (price !== undefined) formData.append("price", String(price));
+  if (originalPrice !== undefined) formData.append("original_price", String(originalPrice));
+  if (stock !== undefined) formData.append("stock", String(stock));
+  if (isActive !== undefined) formData.append("is_active", String(Boolean(isActive)));
+  if (Array.isArray(badgeTypes)) {
+    if (!badgeTypes.length) {
+      formData.append("badge_types", "");
+    } else {
+      badgeTypes.forEach((badgeType) => formData.append("badge_types", badgeType));
+    }
+  }
+  if (thumbnailFile) formData.append("thumbnail", thumbnailFile);
+
+  const data = await apiRequest("/admin/products/manage", {
+    method: "POST",
+    body: formData,
+    isForm: true,
+  });
+  return normalizeAdminManagedProduct(data || {});
+}
+
+export async function updateAdminManagedProduct(
+  productId,
+  { name, oneLine, description, price, originalPrice, stock, isActive, badgeTypes, thumbnailFile } = {},
+) {
+  const formData = new FormData();
+  if (name !== undefined) formData.append("name", name);
+  if (oneLine !== undefined) formData.append("one_line", oneLine);
+  if (description !== undefined) formData.append("description", description);
+  if (price !== undefined) formData.append("price", String(price));
+  if (originalPrice !== undefined) formData.append("original_price", String(originalPrice));
+  if (stock !== undefined) formData.append("stock", String(stock));
+  if (isActive !== undefined) formData.append("is_active", String(Boolean(isActive)));
+  if (Array.isArray(badgeTypes)) {
+    if (!badgeTypes.length) {
+      formData.append("badge_types", "");
+    } else {
+      badgeTypes.forEach((badgeType) => formData.append("badge_types", badgeType));
+    }
+  }
+  if (thumbnailFile) formData.append("thumbnail", thumbnailFile);
+
+  const data = await apiRequest(`/admin/products/manage/${productId}`, {
+    method: "PATCH",
+    body: formData,
+    isForm: true,
+  });
+  return normalizeAdminManagedProduct(data || {});
+}
+
+export async function deleteAdminManagedProduct(productId) {
+  return apiRequest(`/admin/products/manage/${productId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAdminManagedUsers({ q, isActive, isStaff, limit = 200 } = {}) {
+  const data = await apiRequest("/admin/users/manage", {
+    query: {
+      q,
+      is_active: typeof isActive === "boolean" ? String(isActive) : undefined,
+      is_staff: typeof isStaff === "boolean" ? String(isStaff) : undefined,
+      limit,
+    },
+  });
+  return Array.isArray(data) ? data.map(normalizeAdminManagedUser) : [];
+}
+
+export async function updateAdminManagedUser(userId, { name, phone, isActive, isStaff } = {}) {
+  const data = await apiRequest(`/admin/users/manage/${userId}`, {
+    method: "PATCH",
+    body: {
+      name,
+      phone,
+      is_active: isActive,
+      is_staff: isStaff,
+    },
+  });
+  return normalizeAdminManagedUser(data || {});
+}
+
+export async function deactivateAdminManagedUser(userId) {
+  return apiRequest(`/admin/users/manage/${userId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function fetchAdminCoupons({ q, isUsed } = {}) {
@@ -729,6 +1175,12 @@ export async function issueAdminCoupon({
       min_order_amount: minOrderAmount,
       expires_at: expiresAt || null,
     },
+  });
+}
+
+export async function deleteAdminCoupon(couponId) {
+  return apiRequest(`/admin/coupons/${couponId}`, {
+    method: "DELETE",
   });
 }
 

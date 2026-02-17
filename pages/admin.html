@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>소살리토 | 관리자 대시보드</title>
+    <title>소살리토 | 관리자 운영센터</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,132 +12,478 @@
     />
     <link rel="stylesheet" href="../styles.css" />
   </head>
-  <body>
+  <body class="admin-desktop-only">
     <div id="siteHeaderMount"></div>
 
     <main class="admin-main">
       <section class="admin-head">
         <div>
-          <h2>관리자 대시보드</h2>
-          <p>주문, 배송, 문의, 리뷰, 쿠폰을 한 화면에서 관리합니다.</p>
+          <h2>관리자 운영센터</h2>
+          <p>주문, 배송, 반품, 정산, CS, 리뷰, 쿠폰 운영을 통합 관리합니다.</p>
         </div>
         <div class="admin-head-actions">
+          <p class="admin-action-notice hidden" id="adminActionNotice" role="status" aria-live="polite"></p>
+          <button class="ghost" type="button" id="adminGenerateSettlementBtn">정산 생성/갱신</button>
           <button class="ghost" type="button" id="adminReloadBtn">새로고침</button>
         </div>
       </section>
 
-      <section class="admin-summary-grid" id="adminSummary"></section>
+      <div class="admin-layout">
+        <aside class="admin-sidebar" aria-label="관리자 탭 메뉴">
+          <button class="admin-nav-btn active" type="button" data-tab-btn="dashboard">대시보드</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="orders">주문배송운영</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="returns">반품 환불 운영</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="settlements">정산운영</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="cs">CS운영</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="reviews">리뷰관리</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="products">상품관리</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="members">회원관리</button>
+          <button class="admin-nav-btn" type="button" data-tab-btn="coupons">쿠폰 운영</button>
+        </aside>
 
-      <section class="admin-card">
-        <div class="admin-card-head">
-          <h3>주문·배송 관리</h3>
-          <div class="admin-filter-row">
-            <input type="text" id="adminOrderSearch" placeholder="주문번호/수령인/전화/이메일 검색" />
-            <select id="adminOrderStatusFilter">
-              <option value="">주문상태 전체</option>
-              <option value="PENDING">PENDING</option>
-              <option value="PAID">PAID</option>
-              <option value="FAILED">FAILED</option>
-              <option value="CANCELED">CANCELED</option>
-              <option value="REFUNDED">REFUNDED</option>
-              <option value="PARTIAL_REFUNDED">PARTIAL_REFUNDED</option>
-            </select>
-            <select id="adminPaymentStatusFilter">
-              <option value="">결제상태 전체</option>
-              <option value="UNPAID">UNPAID</option>
-              <option value="READY">READY</option>
-              <option value="APPROVED">APPROVED</option>
-              <option value="CANCELED">CANCELED</option>
-              <option value="FAILED">FAILED</option>
-            </select>
-            <select id="adminShippingStatusFilter">
-              <option value="">배송상태 전체</option>
-              <option value="READY">READY</option>
-              <option value="PREPARING">PREPARING</option>
-              <option value="SHIPPED">SHIPPED</option>
-              <option value="DELIVERED">DELIVERED</option>
-            </select>
-            <button class="primary" type="button" id="adminOrderSearchBtn">조회</button>
-          </div>
-        </div>
-        <div class="admin-order-table-wrap" id="adminOrders"></div>
-      </section>
+        <section class="admin-content">
+          <section class="admin-tab-panel is-active" data-tab-panel="dashboard">
+            <div class="admin-tab-headline">
+              <h3>대시보드</h3>
+              <p>오늘 운영 현황과 최근 처리 이력을 확인하세요.</p>
+            </div>
+            <section class="admin-summary-grid" id="adminSummary"></section>
 
-      <section class="admin-card">
-        <div class="admin-card-head">
-          <h3>1:1 문의 답변</h3>
-          <select id="adminInquiryStatusFilter">
-            <option value="">상태 전체</option>
-            <option value="OPEN">OPEN</option>
-            <option value="ANSWERED">ANSWERED</option>
-            <option value="CLOSED">CLOSED</option>
-          </select>
-        </div>
-        <div id="adminInquiries"></div>
-      </section>
+            <section class="admin-board-grid">
+              <article class="admin-card">
+                <div class="admin-card-head">
+                  <h4>최근 주문</h4>
+                </div>
+                <div id="adminDashboardOrders"></div>
+              </article>
+              <article class="admin-card">
+                <div class="admin-card-head">
+                  <h4>최근 반품/환불</h4>
+                </div>
+                <div id="adminDashboardReturns"></div>
+              </article>
+              <article class="admin-card">
+                <div class="admin-card-head">
+                  <h4>최근 CS</h4>
+                </div>
+                <div id="adminDashboardInquiries"></div>
+              </article>
+              <article class="admin-card">
+                <div class="admin-card-head">
+                  <h4>최근 정산</h4>
+                </div>
+                <div id="adminDashboardSettlements"></div>
+              </article>
+              <article class="admin-card">
+                <div class="admin-card-head">
+                  <h4>최근 리뷰</h4>
+                </div>
+                <div id="adminDashboardReviews"></div>
+              </article>
+            </section>
+          </section>
 
-      <section class="admin-card">
-        <div class="admin-card-head">
-          <h3>리뷰 노출 관리</h3>
-          <select id="adminReviewStatusFilter">
-            <option value="">상태 전체</option>
-            <option value="VISIBLE">VISIBLE</option>
-            <option value="HIDDEN">HIDDEN</option>
-            <option value="DELETED">DELETED</option>
-          </select>
-        </div>
-        <div id="adminReviews"></div>
-      </section>
+          <section class="admin-tab-panel" data-tab-panel="orders" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>주문·배송 운영</h3>
+                <div class="admin-filter-row">
+                  <input type="text" id="adminOrderSearch" placeholder="주문번호/수령인/전화/이메일 검색" />
+                  <select id="adminOrderStatusFilter">
+                    <option value="">주문상태 전체</option>
+                    <option value="PENDING">주문접수</option>
+                    <option value="PAID">주문완료</option>
+                    <option value="FAILED">결제실패</option>
+                    <option value="CANCELED">주문취소</option>
+                    <option value="REFUNDED">전체환불</option>
+                    <option value="PARTIAL_REFUNDED">부분환불</option>
+                  </select>
+                  <select id="adminPaymentStatusFilter">
+                    <option value="">결제상태 전체</option>
+                    <option value="UNPAID">결제대기</option>
+                    <option value="READY">결제준비</option>
+                    <option value="APPROVED">결제완료</option>
+                    <option value="CANCELED">결제취소</option>
+                    <option value="FAILED">결제실패</option>
+                  </select>
+                  <select id="adminShippingStatusFilter">
+                    <option value="">배송상태 전체</option>
+                    <option value="READY">배송준비</option>
+                    <option value="PREPARING">상품준비중</option>
+                    <option value="SHIPPED">배송중</option>
+                    <option value="DELIVERED">배송완료</option>
+                  </select>
+                  <label class="admin-check-inline">
+                    <input type="checkbox" id="adminOrderOpenReturnOnly" />
+                    <span>반품 진행 주문만</span>
+                  </label>
+                  <button class="primary" type="button" id="adminOrderSearchBtn">조회</button>
+                </div>
+              </div>
+              <div class="admin-order-table-wrap" id="adminOrders"></div>
+            </section>
+          </section>
 
-      <section class="admin-card">
-        <div class="admin-card-head">
-          <h3>쿠폰 발급</h3>
-        </div>
-        <form class="admin-coupon-form" id="adminCouponForm">
-          <label>
-            <span>발급대상</span>
-            <select id="couponTarget" required>
-              <option value="ALL">전체 일반회원</option>
-              <option value="EMAIL">특정 이메일</option>
-            </select>
-          </label>
-          <label id="couponEmailField" class="hidden">
-            <span>회원 이메일</span>
-            <input type="email" id="couponEmail" placeholder="member@sausalito.com" />
-          </label>
-          <label>
-            <span>쿠폰명</span>
-            <input type="text" id="couponName" required maxlength="150" placeholder="봄맞이 할인 쿠폰" />
-          </label>
-          <label>
-            <span>쿠폰코드</span>
-            <input type="text" id="couponCode" required maxlength="64" placeholder="SPRING2026" />
-          </label>
-          <label>
-            <span>할인금액(원)</span>
-            <input type="number" id="couponDiscountAmount" required min="0" value="1000" />
-          </label>
-          <label>
-            <span>최소 주문금액(원)</span>
-            <input type="number" id="couponMinOrderAmount" required min="0" value="0" />
-          </label>
-          <label>
-            <span>만료일시 (선택)</span>
-            <input type="datetime-local" id="couponExpiresAt" />
-          </label>
-          <button class="primary" type="submit">쿠폰 발급</button>
-        </form>
+          <section class="admin-tab-panel" data-tab-panel="returns" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>반품·환불 운영</h3>
+                <div class="admin-filter-row">
+                  <input type="text" id="adminReturnSearch" placeholder="주문번호/고객/사유 검색" />
+                  <select id="adminReturnStatusFilter">
+                    <option value="">상태 전체</option>
+                    <option value="REQUESTED">요청</option>
+                    <option value="APPROVED">승인</option>
+                    <option value="PICKUP_SCHEDULED">회수예정</option>
+                    <option value="RECEIVED">회수완료</option>
+                    <option value="REFUNDING">환불처리중</option>
+                    <option value="REFUNDED">환불완료</option>
+                    <option value="REJECTED">반려</option>
+                    <option value="CLOSED">종결</option>
+                  </select>
+                  <button class="primary" type="button" id="adminReturnSearchBtn">조회</button>
+                </div>
+              </div>
 
-        <div class="admin-card-head">
-          <h4>최근 발급/보유 쿠폰</h4>
-          <input type="text" id="adminCouponSearch" placeholder="이메일/코드/쿠폰명 검색" />
-        </div>
-        <div id="adminCoupons"></div>
-      </section>
+              <form class="admin-return-form" id="adminReturnCreateForm">
+                <label>
+                  <span>주문번호</span>
+                  <input type="text" id="returnOrderNo" required placeholder="SAU..." />
+                </label>
+                <label>
+                  <span>요청 사유</span>
+                  <input type="text" id="returnReasonTitle" required maxlength="200" placeholder="예: 배송 지연" />
+                </label>
+                <label>
+                  <span>요청 금액(원)</span>
+                  <input type="number" id="returnRequestedAmount" min="0" placeholder="미입력 시 주문금액" />
+                </label>
+                <label class="admin-col-span-2">
+                  <span>상세 사유</span>
+                  <input type="text" id="returnReasonDetail" maxlength="500" placeholder="상세 사유를 입력하세요." />
+                </label>
+                <button class="ghost" type="submit">반품 요청 등록</button>
+              </form>
+
+              <div id="adminReturns"></div>
+            </section>
+          </section>
+
+          <section class="admin-tab-panel" data-tab-panel="settlements" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>정산 운영</h3>
+                <div class="admin-filter-row">
+                  <input type="text" id="adminSettlementSearch" placeholder="주문번호/이메일 검색" />
+                  <select id="adminSettlementStatusFilter">
+                    <option value="">상태 전체</option>
+                    <option value="PENDING">정산대기</option>
+                    <option value="HOLD">정산보류</option>
+                    <option value="SCHEDULED">지급예정</option>
+                    <option value="PAID">지급완료</option>
+                  </select>
+                  <button class="primary" type="button" id="adminSettlementSearchBtn">조회</button>
+                </div>
+              </div>
+              <div id="adminSettlements"></div>
+            </section>
+          </section>
+
+          <section class="admin-tab-panel" data-tab-panel="cs" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>CS 운영</h3>
+                <div class="admin-filter-row">
+                  <input type="text" id="adminInquirySearch" placeholder="제목/내용/회원 검색" />
+                  <select id="adminInquiryStatusFilter">
+                    <option value="">상태 전체</option>
+                    <option value="OPEN">접수</option>
+                    <option value="ANSWERED">답변완료</option>
+                    <option value="CLOSED">종결</option>
+                  </select>
+                  <select id="adminInquiryCategoryFilter">
+                    <option value="">카테고리 전체</option>
+                    <option value="DELIVERY">배송</option>
+                    <option value="RETURN_REFUND">반품/환불</option>
+                    <option value="PAYMENT">결제</option>
+                    <option value="ORDER">주문</option>
+                    <option value="PRODUCT">상품</option>
+                    <option value="ETC">기타</option>
+                  </select>
+                  <select id="adminInquiryPriorityFilter">
+                    <option value="">우선순위 전체</option>
+                    <option value="LOW">낮음</option>
+                    <option value="NORMAL">보통</option>
+                    <option value="HIGH">높음</option>
+                    <option value="URGENT">긴급</option>
+                  </select>
+                  <label class="admin-check-inline">
+                    <input type="checkbox" id="adminInquiryOverdueOnly" />
+                    <span>SLA 지연만</span>
+                  </label>
+                  <button class="primary" type="button" id="adminInquirySearchBtn">조회</button>
+                </div>
+              </div>
+              <div class="admin-cs-layout">
+                <div id="adminInquiries"></div>
+                <aside class="admin-cs-editor hidden" id="adminInquiryEditor">
+                  <div class="admin-card-head">
+                    <h4>답변하기</h4>
+                    <button class="ghost" type="button" id="adminInquiryEditorCloseBtn">닫기</button>
+                  </div>
+                  <p class="admin-cs-save-state hidden" id="adminInquiryEditorSavedState"></p>
+                  <p class="admin-cs-meta" id="adminInquiryEditorMeta">문의를 선택하면 답변 입력창이 열립니다.</p>
+                  <label>
+                    <span>상태</span>
+                    <select id="adminInquiryEditorStatus">
+                      <option value="OPEN">접수</option>
+                      <option value="ANSWERED">답변완료</option>
+                      <option value="CLOSED">종결</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>카테고리</span>
+                    <select id="adminInquiryEditorCategory">
+                      <option value="DELIVERY">배송</option>
+                      <option value="RETURN_REFUND">반품/환불</option>
+                      <option value="PAYMENT">결제</option>
+                      <option value="ORDER">주문</option>
+                      <option value="PRODUCT">상품</option>
+                      <option value="ETC">기타</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>우선순위</span>
+                    <select id="adminInquiryEditorPriority">
+                      <option value="LOW">낮음</option>
+                      <option value="NORMAL">보통</option>
+                      <option value="HIGH">높음</option>
+                      <option value="URGENT">긴급</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>담당 관리자</span>
+                    <select id="adminInquiryEditorAssignedAdmin"></select>
+                  </label>
+                  <label>
+                    <span>SLA 마감</span>
+                    <input type="datetime-local" id="adminInquiryEditorSlaDueAt" />
+                  </label>
+                  <label>
+                    <span>답변</span>
+                    <textarea id="adminInquiryEditorAnswer" rows="5" placeholder="회원에게 보여질 답변을 입력하세요."></textarea>
+                  </label>
+                  <label>
+                    <span>내부 메모</span>
+                    <textarea id="adminInquiryEditorInternalNote" rows="3" placeholder="관리용 메모"></textarea>
+                  </label>
+                  <div class="admin-cs-editor-actions">
+                    <button class="danger" type="button" id="adminInquiryEditorDeleteBtn">답변 삭제</button>
+                    <button class="primary" type="button" id="adminInquiryEditorSaveBtn">답변 저장</button>
+                  </div>
+                </aside>
+              </div>
+            </section>
+          </section>
+
+          <section class="admin-tab-panel" data-tab-panel="reviews" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>리뷰 노출 관리</h3>
+                <div class="admin-filter-row">
+                  <input type="text" id="adminReviewSearch" placeholder="상품/회원/내용 검색" />
+                  <select id="adminReviewStatusFilter">
+                    <option value="">상태 전체</option>
+                    <option value="VISIBLE">노출</option>
+                    <option value="HIDDEN">숨김</option>
+                    <option value="DELETED">삭제</option>
+                  </select>
+                  <select id="adminReviewSortFilter">
+                    <option value="latest">최신순</option>
+                    <option value="score_asc">별점 낮은 순</option>
+                  </select>
+                  <button class="primary" type="button" id="adminReviewSearchBtn">조회</button>
+                </div>
+              </div>
+              <div id="adminReviews"></div>
+              <div class="admin-pagination" id="adminReviewPagination"></div>
+            </section>
+          </section>
+
+          <section class="admin-tab-panel" data-tab-panel="products" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>배너 관리</h3>
+              </div>
+              <form class="admin-banner-form" id="adminBannerCreateForm">
+                <label>
+                  <span>제목</span>
+                  <input type="text" id="bannerTitle" required maxlength="255" placeholder="배너 제목" />
+                </label>
+                <label>
+                  <span>서브타이틀</span>
+                  <input type="text" id="bannerSubtitle" maxlength="255" placeholder="서브타이틀" />
+                </label>
+                <label>
+                  <span>CTA 문구</span>
+                  <input type="text" id="bannerCtaText" maxlength="100" placeholder="지금 보기" />
+                </label>
+                <label>
+                  <span>링크 URL</span>
+                  <input type="text" id="bannerLinkUrl" maxlength="500" placeholder="/pages/shop.html" />
+                </label>
+                <label>
+                  <span>정렬순서</span>
+                  <input type="number" id="bannerSortOrder" min="0" value="0" />
+                </label>
+                <label class="admin-check-inline">
+                  <input type="checkbox" id="bannerIsActive" checked />
+                  <span>활성화</span>
+                </label>
+                <label class="admin-col-span-2">
+                  <span>설명</span>
+                  <input type="text" id="bannerDescription" maxlength="1000" placeholder="배너 설명" />
+                </label>
+                <label>
+                  <span>배너 이미지</span>
+                  <input class="admin-file-input" type="file" id="bannerImageFile" accept="image/*" />
+                </label>
+                <button class="primary" type="submit">배너 등록</button>
+              </form>
+              <div id="adminManagedBanners"></div>
+            </section>
+
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>상품 관리</h3>
+                <div class="admin-filter-row">
+                  <input type="text" id="adminManagedProductSearch" placeholder="상품명/설명/ID 검색" />
+                  <select id="adminManagedProductActiveFilter">
+                    <option value="">노출상태 전체</option>
+                    <option value="true">활성화</option>
+                    <option value="false">비활성화</option>
+                  </select>
+                  <button class="primary" type="button" id="adminManagedProductSearchBtn">조회</button>
+                </div>
+              </div>
+              <form class="admin-product-form" id="adminProductCreateForm">
+                <label>
+                  <span>상품명</span>
+                  <input type="text" id="managedProductName" required maxlength="255" placeholder="상품명" />
+                </label>
+                <label>
+                  <span>한줄소개</span>
+                  <input type="text" id="managedProductOneLine" maxlength="255" placeholder="한줄소개" />
+                </label>
+                <label>
+                  <span>판매가(원)</span>
+                  <input type="number" id="managedProductPrice" required min="0" value="0" />
+                </label>
+                <label>
+                  <span>정상가(원)</span>
+                  <input type="number" id="managedProductOriginalPrice" required min="0" value="0" />
+                </label>
+                <label>
+                  <span>재고</span>
+                  <input type="number" id="managedProductStock" min="0" value="0" />
+                </label>
+                <label>
+                  <span>배지코드</span>
+                  <input type="text" id="managedProductBadges" placeholder="HOT,NEW" />
+                </label>
+                <label class="admin-check-inline">
+                  <input type="checkbox" id="managedProductIsActive" checked />
+                  <span>활성화</span>
+                </label>
+                <label>
+                  <span>썸네일 이미지</span>
+                  <input class="admin-file-input" type="file" id="managedProductThumbnail" accept="image/*" />
+                </label>
+                <label class="admin-col-span-2">
+                  <span>설명</span>
+                  <input type="text" id="managedProductDescription" maxlength="4000" placeholder="상품 설명" />
+                </label>
+                <button class="primary" type="submit">상품 등록</button>
+              </form>
+              <div id="adminManagedProducts"></div>
+            </section>
+          </section>
+
+          <section class="admin-tab-panel" data-tab-panel="members" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>회원 관리</h3>
+                <div class="admin-filter-row">
+                  <input type="text" id="adminMemberSearch" placeholder="이메일/이름/전화번호 검색" />
+                  <select id="adminMemberActiveFilter">
+                    <option value="">활성상태 전체</option>
+                    <option value="true">활성</option>
+                    <option value="false">비활성</option>
+                  </select>
+                  <select id="adminMemberStaffFilter">
+                    <option value="">권한 전체</option>
+                    <option value="true">관리자</option>
+                    <option value="false">일반회원</option>
+                  </select>
+                  <button class="primary" type="button" id="adminMemberSearchBtn">조회</button>
+                </div>
+              </div>
+              <div id="adminMembers"></div>
+            </section>
+          </section>
+
+          <section class="admin-tab-panel" data-tab-panel="coupons" hidden>
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h3>쿠폰 운영</h3>
+              </div>
+              <form class="admin-coupon-form" id="adminCouponForm">
+                <label>
+                  <span>발급대상</span>
+                  <select id="couponTarget" required>
+                    <option value="ALL">전체 일반회원</option>
+                    <option value="EMAIL">특정 이메일</option>
+                  </select>
+                </label>
+                <label id="couponEmailField" class="hidden">
+                  <span>회원 이메일</span>
+                  <input type="email" id="couponEmail" placeholder="member@sausalito.com" />
+                </label>
+                <label>
+                  <span>쿠폰명</span>
+                  <input type="text" id="couponName" required maxlength="150" placeholder="봄맞이 할인 쿠폰" />
+                </label>
+                <label>
+                  <span>쿠폰코드</span>
+                  <input type="text" id="couponCode" required maxlength="64" placeholder="SPRING2026" />
+                </label>
+                <label>
+                  <span>할인금액(원)</span>
+                  <input type="number" id="couponDiscountAmount" required min="0" value="1000" />
+                </label>
+                <label>
+                  <span>최소 주문금액(원)</span>
+                  <input type="number" id="couponMinOrderAmount" required min="0" value="0" />
+                </label>
+                <label>
+                  <span>만료일시 (선택)</span>
+                  <input type="datetime-local" id="couponExpiresAt" />
+                </label>
+                <button class="primary" type="submit">쿠폰 발급</button>
+              </form>
+
+              <div class="admin-card-head">
+                <h4>최근 발급/보유 쿠폰</h4>
+                <input type="text" id="adminCouponSearch" placeholder="이메일/코드/쿠폰명 검색" />
+              </div>
+              <div id="adminCoupons"></div>
+            </section>
+          </section>
+        </section>
+      </div>
     </main>
 
     <div id="siteFooterMount"></div>
-
     <script type="module" src="../scripts/pages/admin.js"></script>
   </body>
 </html>
