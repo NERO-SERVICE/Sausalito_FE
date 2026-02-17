@@ -148,6 +148,7 @@ const state = {
   settlements: [],
   inquiries: [],
   selectedInquiryId: null,
+  expandedInquiryId: null,
   reviews: [],
   reviewPage: 1,
   reviewPageSize: 10,
@@ -158,6 +159,14 @@ const state = {
   managedUsers: [],
   coupons: [],
   staffUsers: [],
+  editingRows: {
+    orders: new Set(),
+    returns: new Set(),
+    settlements: new Set(),
+    banners: new Set(),
+    products: new Set(),
+    users: new Set(),
+  },
 };
 
 const el = {
@@ -317,6 +326,36 @@ function formatTextPreview(value, maxLength = 220) {
   if (!text) return "";
   const preview = text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   return escapeHtml(preview).replace(/\n/g, "<br />");
+}
+
+function formatMultilineText(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return escapeHtml(text).replace(/\n/g, "<br />");
+}
+
+function isRowEditing(section, key) {
+  const set = state.editingRows?.[section];
+  if (!set) return false;
+  return set.has(String(key));
+}
+
+function setRowEditing(section, key, editing) {
+  const set = state.editingRows?.[section];
+  if (!set) return;
+  const normalized = String(key);
+  if (editing) {
+    set.clear();
+    set.add(normalized);
+    return;
+  }
+  set.delete(normalized);
+}
+
+function clearRowEditing(section) {
+  const set = state.editingRows?.[section];
+  if (!set) return;
+  set.clear();
 }
 
 function toIsoFromLocal(value) {
@@ -595,6 +634,7 @@ function renderOrders() {
       <table class="admin-excel-table admin-orders-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>주문번호</th>
             <th>주문일시</th>
             <th>주문자명</th>
@@ -607,46 +647,54 @@ function renderOrders() {
             <th>반품</th>
             <th>택배사(송장표기)</th>
             <th>송장번호</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           ${state.orders
-            .map(
-              (order) => `
-              <tr data-order-no="${escapeHtml(order.orderNo)}">
+            .map((order) => {
+              const editing = isRowEditing("orders", order.orderNo);
+              const disabled = editing ? "" : "disabled";
+              return `
+              <tr data-order-no="${escapeHtml(order.orderNo)}" class="${editing ? "is-editing" : "is-readonly"}">
+                <td class="admin-cell-actions">
+                  <div class="admin-inline-actions">
+                    ${
+                      editing
+                        ? `
+                          <button class="ghost" type="button" data-action="issueInvoice">송장발급</button>
+                          <button class="ghost" type="button" data-action="markDelivered">배송완료</button>
+                          <button class="primary" type="button" data-action="saveOrder">저장</button>
+                          <button class="ghost" type="button" data-action="cancelOrderEdit">취소</button>
+                        `
+                        : `<button class="primary" type="button" data-action="editOrder">수정</button>`
+                    }
+                  </div>
+                </td>
                 <td><strong>${escapeHtml(order.orderNo)}</strong></td>
                 <td>${formatDateTime(order.createdAt)} (상품 ${order.itemCount}개 / ${formatCurrency(order.totalAmount)})</td>
                 <td>${escapeHtml(order.userName || order.recipient || "-")}</td>
                 <td>${escapeHtml(order.phone || "-")}</td>
                 <td>${escapeHtml(formatAddress(order))}</td>
                 <td class="admin-cell-select">
-                  <select data-role="order-status">${buildOptions(ORDER_STATUS_OPTIONS, order.status, ORDER_STATUS_LABELS)}</select>
+                  <select data-role="order-status" ${disabled}>${buildOptions(ORDER_STATUS_OPTIONS, order.status, ORDER_STATUS_LABELS)}</select>
                 </td>
                 <td class="admin-cell-select">
-                  <select data-role="payment-status">${buildOptions(PAYMENT_STATUS_OPTIONS, order.paymentStatus, PAYMENT_STATUS_LABELS)}</select>
+                  <select data-role="payment-status" ${disabled}>${buildOptions(PAYMENT_STATUS_OPTIONS, order.paymentStatus, PAYMENT_STATUS_LABELS)}</select>
                 </td>
                 <td class="admin-cell-select">
-                  <select data-role="shipping-status">${buildOptions(SHIPPING_STATUS_OPTIONS, order.shippingStatus, SHIPPING_STATUS_LABELS)}</select>
+                  <select data-role="shipping-status" ${disabled}>${buildOptions(SHIPPING_STATUS_OPTIONS, order.shippingStatus, SHIPPING_STATUS_LABELS)}</select>
                 </td>
                 <td>${renderStatusBadge(order.settlementStatus || "-", SETTLEMENT_STATUS_LABELS)}</td>
                 <td>${order.returnRequestCount}건 ${order.hasOpenReturn ? "(진행중)" : ""}</td>
                 <td>
-                  <input type="text" data-role="courier-name" placeholder="고객표시 택배사" value="${escapeHtml(order.courierName || "")}" />
+                  <input type="text" data-role="courier-name" placeholder="고객표시 택배사" value="${escapeHtml(order.courierName || "")}" ${disabled} />
                 </td>
                 <td>
-                  <input type="text" data-role="tracking-no" placeholder="송장번호" value="${escapeHtml(order.trackingNo || "")}" />
-                </td>
-                <td class="admin-cell-actions">
-                  <div class="admin-inline-actions">
-                    <button class="ghost" type="button" data-action="issueInvoice">송장발급</button>
-                    <button class="ghost" type="button" data-action="markDelivered">배송완료</button>
-                    <button class="primary" type="button" data-action="saveOrder">저장</button>
-                  </div>
+                  <input type="text" data-role="tracking-no" placeholder="송장번호" value="${escapeHtml(order.trackingNo || "")}" ${disabled} />
                 </td>
               </tr>
-            `,
-            )
+            `;
+            })
             .join("")}
         </tbody>
       </table>
@@ -665,6 +713,7 @@ function renderReturns() {
       <table class="admin-excel-table admin-returns-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>주문번호</th>
             <th>회원</th>
             <th>요청사유</th>
@@ -676,14 +725,28 @@ function renderReturns() {
             <th>반려사유</th>
             <th>메모</th>
             <th>요청일시</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           ${state.returns
-            .map(
-              (row) => `
-              <tr data-return-id="${row.id}">
+            .map((row) => {
+              const editing = isRowEditing("returns", row.id);
+              const disabled = editing ? "" : "disabled";
+              return `
+              <tr data-return-id="${row.id}" class="${editing ? "is-editing" : "is-readonly"}">
+                <td class="admin-cell-actions">
+                  <div class="admin-inline-actions">
+                    ${
+                      editing
+                        ? `
+                          <button class="primary" type="button" data-action="saveReturn">저장</button>
+                          <button class="ghost" type="button" data-action="cancelReturnEdit">취소</button>
+                        `
+                        : `<button class="primary" type="button" data-action="editReturn">수정</button>`
+                    }
+                    <button class="danger" type="button" data-action="deleteReturn">삭제</button>
+                  </div>
+                </td>
                 <td><strong>${escapeHtml(row.orderNo)}</strong></td>
                 <td>${escapeHtml(row.userEmail || "-")}</td>
                 <td>
@@ -692,33 +755,27 @@ function renderReturns() {
                 </td>
                 <td>${formatCurrency(row.requestedAmount)}</td>
                 <td>
-                  <select data-role="return-status">${buildOptions(RETURN_STATUS_OPTIONS, row.status, RETURN_STATUS_LABELS)}</select>
+                  <select data-role="return-status" ${disabled}>${buildOptions(RETURN_STATUS_OPTIONS, row.status, RETURN_STATUS_LABELS)}</select>
                 </td>
                 <td>
-                  <input type="number" min="0" data-role="approved-amount" value="${row.approvedAmount || 0}" />
+                  <input type="number" min="0" data-role="approved-amount" value="${row.approvedAmount || 0}" ${disabled} />
                 </td>
                 <td>
-                  <input type="text" data-role="pickup-courier" placeholder="회수 택배사" value="${escapeHtml(row.pickupCourierName || "")}" />
+                  <input type="text" data-role="pickup-courier" placeholder="회수 택배사" value="${escapeHtml(row.pickupCourierName || "")}" ${disabled} />
                 </td>
                 <td>
-                  <input type="text" data-role="pickup-tracking" placeholder="회수 송장번호" value="${escapeHtml(row.pickupTrackingNo || "")}" />
+                  <input type="text" data-role="pickup-tracking" placeholder="회수 송장번호" value="${escapeHtml(row.pickupTrackingNo || "")}" ${disabled} />
                 </td>
                 <td>
-                  <input type="text" data-role="rejected-reason" placeholder="반려 사유" value="${escapeHtml(row.rejectedReason || "")}" />
+                  <input type="text" data-role="rejected-reason" placeholder="반려 사유" value="${escapeHtml(row.rejectedReason || "")}" ${disabled} />
                 </td>
                 <td>
-                  <input type="text" data-role="admin-note" placeholder="관리 메모" value="${escapeHtml(row.adminNote || "")}" />
+                  <input type="text" data-role="admin-note" placeholder="관리 메모" value="${escapeHtml(row.adminNote || "")}" ${disabled} />
                 </td>
                 <td>${formatDateTime(row.requestedAt)}</td>
-                <td class="admin-cell-actions">
-                  <div class="admin-inline-actions">
-                    <button class="primary" type="button" data-action="saveReturn">저장</button>
-                    <button class="danger" type="button" data-action="deleteReturn">삭제</button>
-                  </div>
-                </td>
               </tr>
-            `,
-            )
+            `;
+            })
             .join("")}
         </tbody>
       </table>
@@ -737,6 +794,7 @@ function renderSettlements() {
       <table class="admin-excel-table admin-settlements-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>주문번호</th>
             <th>회원</th>
             <th>상태</th>
@@ -747,42 +805,50 @@ function renderSettlements() {
             <th>정산금</th>
             <th>지급예정일</th>
             <th>메모</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           ${state.settlements
-            .map(
-              (row) => `
-              <tr data-settlement-id="${row.id}">
+            .map((row) => {
+              const editing = isRowEditing("settlements", row.id);
+              const disabled = editing ? "" : "disabled";
+              return `
+              <tr data-settlement-id="${row.id}" class="${editing ? "is-editing" : "is-readonly"}">
+                <td class="admin-cell-actions">
+                  <div class="admin-inline-actions">
+                    ${
+                      editing
+                        ? `
+                          <button class="ghost" type="button" data-action="markSettlementPaid">지급완료</button>
+                          <button class="primary" type="button" data-action="saveSettlement">저장</button>
+                          <button class="ghost" type="button" data-action="cancelSettlementEdit">취소</button>
+                        `
+                        : `<button class="primary" type="button" data-action="editSettlement">수정</button>`
+                    }
+                    <button class="danger" type="button" data-action="deleteSettlement">삭제</button>
+                  </div>
+                </td>
                 <td>
                   <strong>${escapeHtml(row.orderNo)}</strong>
                   <small>${formatDateTime(row.orderCreatedAt)}</small>
                 </td>
                 <td>${escapeHtml(row.userEmail || "-")}</td>
                 <td>
-                  <select data-role="settlement-status">${buildOptions(SETTLEMENT_STATUS_OPTIONS, row.status, SETTLEMENT_STATUS_LABELS)}</select>
+                  <select data-role="settlement-status" ${disabled}>${buildOptions(SETTLEMENT_STATUS_OPTIONS, row.status, SETTLEMENT_STATUS_LABELS)}</select>
                 </td>
                 <td>${formatCurrency(row.grossAmount)}</td>
-                <td><input type="number" data-role="pg-fee" value="${row.pgFee}" /></td>
-                <td><input type="number" data-role="platform-fee" value="${row.platformFee}" /></td>
-                <td><input type="number" data-role="return-deduction" value="${row.returnDeduction}" /></td>
+                <td><input type="number" data-role="pg-fee" value="${row.pgFee}" ${disabled} /></td>
+                <td><input type="number" data-role="platform-fee" value="${row.platformFee}" ${disabled} /></td>
+                <td><input type="number" data-role="return-deduction" value="${row.returnDeduction}" ${disabled} /></td>
                 <td>
                   <strong>${formatCurrency(row.settlementAmount)}</strong>
                   <small>지급 ${formatDateTime(row.paidAt)}</small>
                 </td>
-                <td><input type="date" data-role="expected-payout-date" value="${escapeHtml(row.expectedPayoutDate || "")}" /></td>
-                <td><input type="text" data-role="settlement-memo" value="${escapeHtml(row.memo || "")}" /></td>
-                <td class="admin-cell-actions">
-                  <div class="admin-inline-actions">
-                    <button class="ghost" type="button" data-action="markSettlementPaid">지급완료</button>
-                    <button class="primary" type="button" data-action="saveSettlement">저장</button>
-                    <button class="danger" type="button" data-action="deleteSettlement">삭제</button>
-                  </div>
-                </td>
+                <td><input type="date" data-role="expected-payout-date" value="${escapeHtml(row.expectedPayoutDate || "")}" ${disabled} /></td>
+                <td><input type="text" data-role="settlement-memo" value="${escapeHtml(row.memo || "")}" ${disabled} /></td>
               </tr>
-            `,
-            )
+            `;
+            })
             .join("")}
         </tbody>
       </table>
@@ -801,6 +867,7 @@ function renderInquiries() {
       <table class="admin-excel-table admin-cs-table">
         <thead>
           <tr>
+            <th class="admin-cs-col-actions">작업</th>
             <th class="admin-cs-col-id">ID</th>
             <th class="admin-cs-col-member">회원</th>
             <th class="admin-cs-col-title">문의제목</th>
@@ -808,14 +875,30 @@ function renderInquiries() {
             <th class="admin-cs-col-status">상태</th>
             <th class="admin-cs-col-priority">우선순위</th>
             <th class="admin-cs-col-created">등록일시</th>
-            <th class="admin-cs-col-actions">작업</th>
           </tr>
         </thead>
         <tbody>
           ${state.inquiries
-            .map(
-              (inquiry) => `
-              <tr class="${Number(inquiry.id) === Number(state.selectedInquiryId) ? "is-selected" : ""}">
+            .map((inquiry) => {
+              const hasAnswer = Boolean(String(inquiry.answer || "").trim());
+              const isSelected = Number(inquiry.id) === Number(state.selectedInquiryId);
+              const isExpanded = hasAnswer && Number(inquiry.id) === Number(state.expandedInquiryId);
+              const answerText = hasAnswer ? formatMultilineText(inquiry.answer) : "";
+
+              return `
+              <tr class="${isSelected ? "is-selected" : ""}">
+                <td class="admin-cs-col-actions">
+                  <div class="admin-inline-actions">
+                    ${
+                      hasAnswer
+                        ? `
+                          <button class="ghost admin-cs-btn-edit" type="button" data-action="openInquiryEditor" data-inquiry-id="${inquiry.id}">수정</button>
+                          <button class="ghost admin-cs-btn-view ${isExpanded ? "is-open" : ""}" type="button" data-action="toggleInquiryAnswer" data-inquiry-id="${inquiry.id}">확인</button>
+                        `
+                        : `<button class="primary admin-cs-btn-answer" type="button" data-action="openInquiryEditor" data-inquiry-id="${inquiry.id}">답변</button>`
+                    }
+                  </div>
+                </td>
                 <td class="admin-cs-col-id">${inquiry.id}</td>
                 <td class="admin-cs-col-member">
                   <p>${escapeHtml(inquiry.userName || "회원")}</p>
@@ -824,11 +907,6 @@ function renderInquiries() {
                 <td class="admin-cs-col-title">
                   <strong>${escapeHtml(inquiry.title)}</strong>
                   <small>${formatTextPreview(inquiry.content, 180)}</small>
-                  ${
-                    inquiry.answer
-                      ? `<small class="admin-cs-answer-preview"><b>답변</b> ${formatTextPreview(inquiry.answer, 260)}</small>`
-                      : ""
-                  }
                 </td>
                 <td class="admin-cs-col-category">${escapeHtml(getLabel(inquiry.category, CATEGORY_LABELS))}</td>
                 <td class="admin-cs-col-status">
@@ -837,20 +915,41 @@ function renderInquiries() {
                 </td>
                 <td class="admin-cs-col-priority">${escapeHtml(getLabel(inquiry.priority, PRIORITY_LABELS))}</td>
                 <td class="admin-cs-col-created">${formatDateTime(inquiry.createdAt)}</td>
-                <td class="admin-cs-col-actions">
-                  <div class="admin-inline-actions">
-                    <button class="primary" type="button" data-action="openInquiryEditor" data-inquiry-id="${inquiry.id}">답변하기</button>
-                    <button class="ghost" type="button" data-action="openInquiryEditor" data-inquiry-id="${inquiry.id}">수정하기</button>
-                  </div>
-                </td>
               </tr>
-            `,
-            )
+              ${
+                isExpanded
+                  ? `
+                    <tr class="admin-cs-answer-row">
+                      <td colspan="8">
+                        <section class="admin-cs-inline-answer">
+                          <p class="admin-cs-inline-answer-meta">답변 등록일 ${formatDateTime(inquiry.answeredAt || inquiry.updatedAt)}</p>
+                          <div class="admin-cs-inline-answer-body">${answerText}</div>
+                        </section>
+                      </td>
+                    </tr>
+                  `
+                  : ""
+              }
+            `;
+            })
             .join("")}
         </tbody>
       </table>
     </div>
   `;
+}
+
+function toggleInquiryAnswer(inquiryId) {
+  const inquiry = state.inquiries.find((row) => Number(row.id) === Number(inquiryId));
+  if (!inquiry || !String(inquiry.answer || "").trim()) return;
+
+  if (Number(state.expandedInquiryId) === Number(inquiryId)) {
+    state.expandedInquiryId = null;
+  } else {
+    state.expandedInquiryId = inquiryId;
+  }
+
+  renderInquiries();
 }
 
 function openInquiryEditor(inquiryId) {
@@ -910,6 +1009,7 @@ function renderReviews() {
       <table class="admin-excel-table admin-review-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>ID</th>
             <th>상품</th>
             <th>작성자</th>
@@ -918,7 +1018,6 @@ function renderReviews() {
             <th>이미지</th>
             <th>상태</th>
             <th>작성일시</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
@@ -926,6 +1025,13 @@ function renderReviews() {
             .map(
               (review) => `
               <tr data-review-id="${review.id}">
+                <td>
+                  <div class="admin-inline-actions">
+                    <button class="ghost" type="button" data-action="hideReview" ${review.status === "HIDDEN" ? "disabled" : ""}>숨기기</button>
+                    <button class="primary" type="button" data-action="showReview" ${review.status === "VISIBLE" ? "disabled" : ""}>노출</button>
+                    <button class="danger" type="button" data-action="deleteReview" ${review.status === "DELETED" ? "disabled" : ""}>삭제</button>
+                  </div>
+                </td>
                 <td>${review.id}</td>
                 <td>
                   <p><strong>${escapeHtml(review.productName)}</strong></p>
@@ -954,13 +1060,6 @@ function renderReviews() {
                 </td>
                 <td>${renderStatusBadge(review.status, REVIEW_STATUS_LABELS)}</td>
                 <td>${formatDateTime(review.createdAt)}</td>
-                <td>
-                  <div class="admin-inline-actions">
-                    <button class="ghost" type="button" data-action="hideReview" ${review.status === "HIDDEN" ? "disabled" : ""}>숨기기</button>
-                    <button class="primary" type="button" data-action="showReview" ${review.status === "VISIBLE" ? "disabled" : ""}>노출</button>
-                    <button class="danger" type="button" data-action="deleteReview" ${review.status === "DELETED" ? "disabled" : ""}>삭제</button>
-                  </div>
-                </td>
               </tr>
             `,
             )
@@ -1011,12 +1110,12 @@ function renderCoupons() {
       <table class="admin-excel-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>회원</th>
             <th>쿠폰</th>
             <th>할인/조건</th>
             <th>상태</th>
             <th>만료</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
@@ -1024,6 +1123,9 @@ function renderCoupons() {
             .map(
               (coupon) => `
               <tr data-coupon-id="${coupon.id}">
+                <td>
+                  <button class="danger" type="button" data-action="deleteCoupon" ${coupon.isUsed ? "disabled" : ""}>삭제</button>
+                </td>
                 <td>${escapeHtml(coupon.userEmail || "-")}</td>
                 <td>
                   <strong>${escapeHtml(coupon.name)}</strong>
@@ -1035,9 +1137,6 @@ function renderCoupons() {
                 </td>
                 <td>${coupon.isUsed ? "사용완료" : coupon.isExpired ? "만료" : "사용가능"}</td>
                 <td>${formatDateTime(coupon.expiresAt)}</td>
-                <td>
-                  <button class="danger" type="button" data-action="deleteCoupon" ${coupon.isUsed ? "disabled" : ""}>삭제</button>
-                </td>
               </tr>
             `,
             )
@@ -1059,6 +1158,7 @@ function renderManagedBanners() {
       <table class="admin-excel-table admin-banners-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>ID</th>
             <th>제목</th>
             <th>서브타이틀</th>
@@ -1068,42 +1168,50 @@ function renderManagedBanners() {
             <th>순서</th>
             <th>활성</th>
             <th>이미지</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           ${state.managedBanners
-            .map(
-              (banner) => `
-                <tr data-banner-id="${banner.id}">
+            .map((banner) => {
+              const editing = isRowEditing("banners", banner.id);
+              const disabled = editing ? "" : "disabled";
+              return `
+                <tr data-banner-id="${banner.id}" class="${editing ? "is-editing" : "is-readonly"}">
+                  <td class="admin-cell-actions">
+                    <div class="admin-inline-actions">
+                      ${
+                        editing
+                          ? `
+                            <button class="primary" type="button" data-action="saveBanner">저장</button>
+                            <button class="ghost" type="button" data-action="cancelBannerEdit">취소</button>
+                          `
+                          : `<button class="primary" type="button" data-action="editBanner">수정</button>`
+                      }
+                      <button class="danger" type="button" data-action="deleteBanner">삭제</button>
+                    </div>
+                  </td>
                   <td>${banner.id}</td>
-                  <td><input type="text" data-role="title" value="${escapeHtml(banner.title)}" /></td>
-                  <td><input type="text" data-role="subtitle" value="${escapeHtml(banner.subtitle)}" /></td>
-                  <td><input type="text" data-role="description" value="${escapeHtml(banner.description)}" /></td>
-                  <td><input type="text" data-role="cta-text" value="${escapeHtml(banner.ctaText)}" /></td>
-                  <td><input type="text" data-role="link-url" value="${escapeHtml(banner.linkUrl)}" /></td>
-                  <td><input type="number" data-role="sort-order" min="0" value="${banner.sortOrder}" /></td>
+                  <td><input type="text" data-role="title" value="${escapeHtml(banner.title)}" ${disabled} /></td>
+                  <td><input type="text" data-role="subtitle" value="${escapeHtml(banner.subtitle)}" ${disabled} /></td>
+                  <td><input type="text" data-role="description" value="${escapeHtml(banner.description)}" ${disabled} /></td>
+                  <td><input type="text" data-role="cta-text" value="${escapeHtml(banner.ctaText)}" ${disabled} /></td>
+                  <td><input type="text" data-role="link-url" value="${escapeHtml(banner.linkUrl)}" ${disabled} /></td>
+                  <td><input type="number" data-role="sort-order" min="0" value="${banner.sortOrder}" ${disabled} /></td>
                   <td>
                     <label class="admin-check-inline">
-                      <input type="checkbox" data-role="is-active" ${banner.isActive ? "checked" : ""} />
+                      <input type="checkbox" data-role="is-active" ${banner.isActive ? "checked" : ""} ${disabled} />
                       <span>활성</span>
                     </label>
                   </td>
                   <td>
                     <div class="admin-image-cell">
                       ${banner.imageUrl ? `<img class="admin-banner-thumb" src="${escapeHtml(banner.imageUrl)}" alt="배너 ${banner.id}" />` : '<span class="empty">이미지 없음</span>'}
-                      <input class="admin-file-input" type="file" data-role="image-file" accept="image/*" />
-                    </div>
-                  </td>
-                  <td class="admin-cell-actions">
-                    <div class="admin-inline-actions">
-                      <button class="primary" type="button" data-action="saveBanner">저장</button>
-                      <button class="danger" type="button" data-action="deleteBanner">삭제</button>
+                      <input class="admin-file-input" type="file" data-role="image-file" accept="image/*" ${disabled} />
                     </div>
                   </td>
                 </tr>
-              `,
-            )
+              `;
+            })
             .join("")}
         </tbody>
       </table>
@@ -1122,6 +1230,7 @@ function renderManagedProducts() {
       <table class="admin-excel-table admin-managed-products-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>ID</th>
             <th>상품명</th>
             <th>한줄소개</th>
@@ -1132,48 +1241,56 @@ function renderManagedProducts() {
             <th>활성</th>
             <th>썸네일</th>
             <th>설명</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           ${state.managedProducts
-            .map(
-              (product) => `
-                <tr data-product-id="${product.id}">
+            .map((product) => {
+              const editing = isRowEditing("products", product.id);
+              const disabled = editing ? "" : "disabled";
+              return `
+                <tr data-product-id="${product.id}" class="${editing ? "is-editing" : "is-readonly"}">
+                  <td class="admin-cell-actions">
+                    <div class="admin-inline-actions">
+                      ${
+                        editing
+                          ? `
+                            <button class="primary" type="button" data-action="saveManagedProduct">저장</button>
+                            <button class="ghost" type="button" data-action="cancelManagedProductEdit">취소</button>
+                          `
+                          : `<button class="primary" type="button" data-action="editManagedProduct">수정</button>`
+                      }
+                      <button class="danger" type="button" data-action="deleteManagedProduct">삭제</button>
+                    </div>
+                  </td>
                   <td>${product.id}</td>
-                  <td><input type="text" data-role="name" value="${escapeHtml(product.name)}" /></td>
-                  <td><input type="text" data-role="one-line" value="${escapeHtml(product.oneLine)}" /></td>
-                  <td><input type="number" min="0" data-role="price" value="${product.price}" /></td>
-                  <td><input type="number" min="0" data-role="original-price" value="${product.originalPrice}" /></td>
-                  <td><input type="number" min="0" data-role="stock" value="${product.stock}" /></td>
+                  <td><input type="text" data-role="name" value="${escapeHtml(product.name)}" ${disabled} /></td>
+                  <td><input type="text" data-role="one-line" value="${escapeHtml(product.oneLine)}" ${disabled} /></td>
+                  <td><input type="number" min="0" data-role="price" value="${product.price}" ${disabled} /></td>
+                  <td><input type="number" min="0" data-role="original-price" value="${product.originalPrice}" ${disabled} /></td>
+                  <td><input type="number" min="0" data-role="stock" value="${product.stock}" ${disabled} /></td>
                   <td>
-                    <input type="text" data-role="badge-types" value="${escapeHtml(product.badgeTypes.join(","))}" />
+                    <input type="text" data-role="badge-types" value="${escapeHtml(product.badgeTypes.join(","))}" ${disabled} />
                     <div>
                       ${product.badgeTypes.map((badgeType) => `<span class="admin-badge-chip">${escapeHtml(badgeType)}</span>`).join("")}
                     </div>
                   </td>
                   <td>
                     <label class="admin-check-inline">
-                      <input type="checkbox" data-role="is-active" ${product.isActive ? "checked" : ""} />
+                      <input type="checkbox" data-role="is-active" ${product.isActive ? "checked" : ""} ${disabled} />
                       <span>활성</span>
                     </label>
                   </td>
                   <td>
                     <div class="admin-image-cell">
                       ${product.thumbnailUrl ? `<img class="admin-product-thumb" src="${escapeHtml(product.thumbnailUrl)}" alt="상품 ${product.id}" />` : '<span class="empty">이미지 없음</span>'}
-                      <input class="admin-file-input" type="file" data-role="thumbnail-file" accept="image/*" />
+                      <input class="admin-file-input" type="file" data-role="thumbnail-file" accept="image/*" ${disabled} />
                     </div>
                   </td>
-                  <td><input type="text" data-role="description" value="${escapeHtml(product.description)}" /></td>
-                  <td class="admin-cell-actions">
-                    <div class="admin-inline-actions">
-                      <button class="primary" type="button" data-action="saveManagedProduct">저장</button>
-                      <button class="danger" type="button" data-action="deleteManagedProduct">삭제</button>
-                    </div>
-                  </td>
+                  <td><input type="text" data-role="description" value="${escapeHtml(product.description)}" ${disabled} /></td>
                 </tr>
-              `,
-            )
+              `;
+            })
             .join("")}
         </tbody>
       </table>
@@ -1192,6 +1309,7 @@ function renderManagedUsers() {
       <table class="admin-excel-table admin-members-table">
         <thead>
           <tr>
+            <th>작업</th>
             <th>ID</th>
             <th>이메일</th>
             <th>이름</th>
@@ -1201,26 +1319,40 @@ function renderManagedUsers() {
             <th>주문/리뷰/문의</th>
             <th>가입일</th>
             <th>최근로그인</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           ${state.managedUsers
-            .map(
-              (user) => `
-                <tr data-user-id="${user.id}">
+            .map((user) => {
+              const editing = isRowEditing("users", user.id);
+              const disabled = editing ? "" : "disabled";
+              return `
+                <tr data-user-id="${user.id}" class="${editing ? "is-editing" : "is-readonly"}">
+                  <td class="admin-cell-actions">
+                    <div class="admin-inline-actions">
+                      ${
+                        editing
+                          ? `
+                            <button class="primary" type="button" data-action="saveManagedUser">저장</button>
+                            <button class="ghost" type="button" data-action="cancelManagedUserEdit">취소</button>
+                          `
+                          : `<button class="primary" type="button" data-action="editManagedUser">수정</button>`
+                      }
+                      <button class="danger" type="button" data-action="deactivateManagedUser" ${!user.isActive ? "disabled" : ""}>비활성화</button>
+                    </div>
+                  </td>
                   <td>${user.id}</td>
                   <td>${escapeHtml(user.email)}</td>
-                  <td><input type="text" data-role="name" value="${escapeHtml(user.name)}" /></td>
-                  <td><input type="text" data-role="phone" value="${escapeHtml(user.phone)}" /></td>
+                  <td><input type="text" data-role="name" value="${escapeHtml(user.name)}" ${disabled} /></td>
+                  <td><input type="text" data-role="phone" value="${escapeHtml(user.phone)}" ${disabled} /></td>
                   <td>
-                    <select data-role="is-active">
+                    <select data-role="is-active" ${disabled}>
                       <option value="true" ${user.isActive ? "selected" : ""}>활성</option>
                       <option value="false" ${!user.isActive ? "selected" : ""}>비활성</option>
                     </select>
                   </td>
                   <td>
-                    <select data-role="is-staff">
+                    <select data-role="is-staff" ${disabled}>
                       <option value="false" ${!user.isStaff ? "selected" : ""}>일반회원</option>
                       <option value="true" ${user.isStaff ? "selected" : ""}>관리자</option>
                     </select>
@@ -1228,15 +1360,9 @@ function renderManagedUsers() {
                   <td>${user.orderCount} / ${user.reviewCount} / ${user.inquiryCount}</td>
                   <td>${formatDateTime(user.createdAt)}</td>
                   <td>${formatDateTime(user.lastLogin)}</td>
-                  <td class="admin-cell-actions">
-                    <div class="admin-inline-actions">
-                      <button class="primary" type="button" data-action="saveManagedUser">저장</button>
-                      <button class="danger" type="button" data-action="deactivateManagedUser" ${!user.isActive ? "disabled" : ""}>비활성화</button>
-                    </div>
-                  </td>
                 </tr>
-              `,
-            )
+              `;
+            })
             .join("")}
         </tbody>
       </table>
@@ -1278,6 +1404,7 @@ async function loadOrders() {
     shippingStatus: el.shippingStatus.value,
     hasOpenReturn: el.orderOpenReturnOnly.checked,
   });
+  clearRowEditing("orders");
   renderOrders();
 }
 
@@ -1286,6 +1413,7 @@ async function loadReturns() {
     q: el.returnSearch.value.trim(),
     status: el.returnStatus.value,
   });
+  clearRowEditing("returns");
   renderReturns();
 }
 
@@ -1294,6 +1422,7 @@ async function loadSettlements() {
     q: el.settlementSearch.value.trim(),
     status: el.settlementStatus.value,
   });
+  clearRowEditing("settlements");
   renderSettlements();
 }
 
@@ -1305,6 +1434,14 @@ async function loadInquiries() {
     priority: el.inquiryPriority.value,
     overdue: el.inquiryOverdueOnly.checked,
   });
+
+  if (state.expandedInquiryId) {
+    const expandedRow = state.inquiries.find((row) => Number(row.id) === Number(state.expandedInquiryId));
+    if (!expandedRow || !String(expandedRow.answer || "").trim()) {
+      state.expandedInquiryId = null;
+    }
+  }
+
   renderInquiries();
 
   if (state.selectedInquiryId) {
@@ -1342,6 +1479,7 @@ async function loadCoupons() {
 
 async function loadManagedBanners() {
   state.managedBanners = await fetchAdminManagedBanners();
+  clearRowEditing("banners");
   renderManagedBanners();
 }
 
@@ -1353,6 +1491,7 @@ async function loadManagedProducts() {
         ? undefined
         : el.managedProductActiveFilter.value === "true",
   });
+  clearRowEditing("products");
   renderManagedProducts();
 }
 
@@ -1368,6 +1507,7 @@ async function loadManagedUsers() {
         ? undefined
         : el.memberStaffFilter.value === "true",
   });
+  clearRowEditing("users");
   renderManagedUsers();
 }
 
@@ -1393,6 +1533,24 @@ async function handleOrderAction(button) {
   if (!row) return;
 
   const orderNo = row.dataset.orderNo;
+  const action = button.dataset.action;
+
+  if (action === "editOrder") {
+    setRowEditing("orders", orderNo, true);
+    renderOrders();
+    return "edit";
+  }
+
+  if (action === "cancelOrderEdit") {
+    setRowEditing("orders", orderNo, false);
+    renderOrders();
+    return "cancel";
+  }
+
+  if (!isRowEditing("orders", orderNo)) {
+    return "noop";
+  }
+
   const payload = {
     status: row.querySelector("[data-role='order-status']")?.value,
     paymentStatus: row.querySelector("[data-role='payment-status']")?.value,
@@ -1401,11 +1559,13 @@ async function handleOrderAction(button) {
     trackingNo: row.querySelector("[data-role='tracking-no']")?.value?.trim() || "",
   };
 
-  if (button.dataset.action === "issueInvoice") payload.issueInvoice = true;
-  if (button.dataset.action === "markDelivered") payload.markDelivered = true;
+  if (action === "issueInvoice") payload.issueInvoice = true;
+  if (action === "markDelivered") payload.markDelivered = true;
 
   await updateAdminOrder(orderNo, payload);
+  setRowEditing("orders", orderNo, false);
   await Promise.all([loadDashboard(), loadOrders(), loadSettlements()]);
+  return action;
 }
 
 async function handleReturnAction(button) {
@@ -1413,11 +1573,30 @@ async function handleReturnAction(button) {
   if (!row) return;
 
   const returnId = Number(row.dataset.returnId);
-  if (button.dataset.action === "deleteReturn") {
+  const action = button.dataset.action;
+
+  if (action === "editReturn") {
+    setRowEditing("returns", returnId, true);
+    renderReturns();
+    return "edit";
+  }
+
+  if (action === "cancelReturnEdit") {
+    setRowEditing("returns", returnId, false);
+    renderReturns();
+    return "cancel";
+  }
+
+  if (action === "deleteReturn") {
     if (!confirm("이 반품/환불 요청을 삭제하시겠습니까?")) return;
     await deleteAdminReturnRequest(returnId);
+    setRowEditing("returns", returnId, false);
     await Promise.all([loadDashboard(), loadReturns(), loadOrders(), loadSettlements()]);
-    return;
+    return "deleteReturn";
+  }
+
+  if (!isRowEditing("returns", returnId)) {
+    return "noop";
   }
 
   await updateAdminReturnRequest(returnId, {
@@ -1429,7 +1608,9 @@ async function handleReturnAction(button) {
     adminNote: row.querySelector("[data-role='admin-note']")?.value?.trim() || "",
   });
 
+  setRowEditing("returns", returnId, false);
   await Promise.all([loadDashboard(), loadReturns(), loadOrders(), loadSettlements()]);
+  return "saveReturn";
 }
 
 async function handleSettlementAction(button) {
@@ -1437,11 +1618,30 @@ async function handleSettlementAction(button) {
   if (!row) return;
 
   const settlementId = Number(row.dataset.settlementId);
-  if (button.dataset.action === "deleteSettlement") {
+  const action = button.dataset.action;
+
+  if (action === "editSettlement") {
+    setRowEditing("settlements", settlementId, true);
+    renderSettlements();
+    return "edit";
+  }
+
+  if (action === "cancelSettlementEdit") {
+    setRowEditing("settlements", settlementId, false);
+    renderSettlements();
+    return "cancel";
+  }
+
+  if (action === "deleteSettlement") {
     if (!confirm("이 정산 레코드를 삭제하시겠습니까? 지급완료 건은 삭제할 수 없습니다.")) return;
     await deleteAdminSettlement(settlementId);
+    setRowEditing("settlements", settlementId, false);
     await Promise.all([loadDashboard(), loadSettlements()]);
-    return;
+    return "deleteSettlement";
+  }
+
+  if (!isRowEditing("settlements", settlementId)) {
+    return "noop";
   }
 
   await updateAdminSettlement(settlementId, {
@@ -1451,10 +1651,12 @@ async function handleSettlementAction(button) {
     returnDeduction: Number(row.querySelector("[data-role='return-deduction']")?.value || 0),
     expectedPayoutDate: row.querySelector("[data-role='expected-payout-date']")?.value || null,
     memo: row.querySelector("[data-role='settlement-memo']")?.value?.trim() || "",
-    markPaid: button.dataset.action === "markSettlementPaid",
+    markPaid: action === "markSettlementPaid",
   });
 
+  setRowEditing("settlements", settlementId, false);
   await Promise.all([loadDashboard(), loadSettlements()]);
+  return action;
 }
 
 async function saveInquiryFromEditor() {
@@ -1528,11 +1730,30 @@ async function handleManagedBannerAction(button) {
   if (!row) return;
 
   const bannerId = Number(row.dataset.bannerId);
-  if (button.dataset.action === "deleteBanner") {
+  const action = button.dataset.action;
+
+  if (action === "editBanner") {
+    setRowEditing("banners", bannerId, true);
+    renderManagedBanners();
+    return "edit";
+  }
+
+  if (action === "cancelBannerEdit") {
+    setRowEditing("banners", bannerId, false);
+    renderManagedBanners();
+    return "cancel";
+  }
+
+  if (action === "deleteBanner") {
     if (!confirm("이 배너를 삭제하시겠습니까?")) return;
     await deleteAdminManagedBanner(bannerId);
+    setRowEditing("banners", bannerId, false);
     await Promise.all([loadManagedBanners(), loadDashboard()]);
-    return;
+    return "deleteBanner";
+  }
+
+  if (!isRowEditing("banners", bannerId)) {
+    return "noop";
   }
 
   await updateAdminManagedBanner(bannerId, {
@@ -1545,7 +1766,9 @@ async function handleManagedBannerAction(button) {
     isActive: row.querySelector("[data-role='is-active']")?.checked,
     imageFile: row.querySelector("[data-role='image-file']")?.files?.[0] || null,
   });
+  setRowEditing("banners", bannerId, false);
   await Promise.all([loadManagedBanners(), loadDashboard()]);
+  return "saveBanner";
 }
 
 async function handleManagedProductAction(button) {
@@ -1553,11 +1776,30 @@ async function handleManagedProductAction(button) {
   if (!row) return;
 
   const productId = Number(row.dataset.productId);
-  if (button.dataset.action === "deleteManagedProduct") {
+  const action = button.dataset.action;
+
+  if (action === "editManagedProduct") {
+    setRowEditing("products", productId, true);
+    renderManagedProducts();
+    return "edit";
+  }
+
+  if (action === "cancelManagedProductEdit") {
+    setRowEditing("products", productId, false);
+    renderManagedProducts();
+    return "cancel";
+  }
+
+  if (action === "deleteManagedProduct") {
     if (!confirm("이 상품을 삭제하시겠습니까?")) return;
     await deleteAdminManagedProduct(productId);
+    setRowEditing("products", productId, false);
     await Promise.all([loadManagedProducts(), loadDashboard(), loadOrders()]);
-    return;
+    return "deleteManagedProduct";
+  }
+
+  if (!isRowEditing("products", productId)) {
+    return "noop";
   }
 
   await updateAdminManagedProduct(productId, {
@@ -1571,7 +1813,9 @@ async function handleManagedProductAction(button) {
     badgeTypes: parseBadgeTypes(row.querySelector("[data-role='badge-types']")?.value || ""),
     thumbnailFile: row.querySelector("[data-role='thumbnail-file']")?.files?.[0] || null,
   });
+  setRowEditing("products", productId, false);
   await Promise.all([loadManagedProducts(), loadDashboard()]);
+  return "saveManagedProduct";
 }
 
 async function handleManagedUserAction(button) {
@@ -1579,11 +1823,30 @@ async function handleManagedUserAction(button) {
   if (!row) return;
 
   const userId = Number(row.dataset.userId);
-  if (button.dataset.action === "deactivateManagedUser") {
+  const action = button.dataset.action;
+
+  if (action === "editManagedUser") {
+    setRowEditing("users", userId, true);
+    renderManagedUsers();
+    return "edit";
+  }
+
+  if (action === "cancelManagedUserEdit") {
+    setRowEditing("users", userId, false);
+    renderManagedUsers();
+    return "cancel";
+  }
+
+  if (action === "deactivateManagedUser") {
     if (!confirm("해당 회원을 비활성화하시겠습니까?")) return;
     await deactivateAdminManagedUser(userId);
+    setRowEditing("users", userId, false);
     await Promise.all([loadManagedUsers(), loadDashboard()]);
-    return;
+    return "deactivateManagedUser";
+  }
+
+  if (!isRowEditing("users", userId)) {
+    return "noop";
   }
 
   await updateAdminManagedUser(userId, {
@@ -1592,7 +1855,9 @@ async function handleManagedUserAction(button) {
     isActive: row.querySelector("[data-role='is-active']")?.value === "true",
     isStaff: row.querySelector("[data-role='is-staff']")?.value === "true",
   });
+  setRowEditing("users", userId, false);
   await Promise.all([loadManagedUsers(), loadDashboard()]);
+  return "saveManagedUser";
 }
 
 function bindSearchWithEnter(target, handler) {
@@ -1756,7 +2021,16 @@ function bind() {
     if (!button) return;
 
     try {
-      await handleOrderAction(button);
+      const result = await handleOrderAction(button);
+      if (result === "edit") {
+        showNotice("수정 모드가 활성화되었습니다.");
+        return;
+      }
+      if (result === "cancel") {
+        showNotice("수정이 취소되었습니다.");
+        return;
+      }
+      if (result === "noop" || !result) return;
       showNotice("주문/배송 정보가 저장되었습니다.");
     } catch (error) {
       console.error(error);
@@ -1788,8 +2062,17 @@ function bind() {
     if (!button) return;
 
     try {
-      await handleReturnAction(button);
-      if (button.dataset.action === "deleteReturn") {
+      const result = await handleReturnAction(button);
+      if (result === "edit") {
+        showNotice("수정 모드가 활성화되었습니다.");
+        return;
+      }
+      if (result === "cancel") {
+        showNotice("수정이 취소되었습니다.");
+        return;
+      }
+      if (result === "noop" || !result) return;
+      if (result === "deleteReturn") {
         showNotice("반품/환불 요청이 삭제되었습니다.");
       } else {
         showNotice("반품/환불 정보가 저장되었습니다.");
@@ -1805,8 +2088,17 @@ function bind() {
     if (!button) return;
 
     try {
-      await handleSettlementAction(button);
-      if (button.dataset.action === "deleteSettlement") {
+      const result = await handleSettlementAction(button);
+      if (result === "edit") {
+        showNotice("수정 모드가 활성화되었습니다.");
+        return;
+      }
+      if (result === "cancel") {
+        showNotice("수정이 취소되었습니다.");
+        return;
+      }
+      if (result === "noop" || !result) return;
+      if (result === "deleteSettlement") {
         showNotice("정산 레코드가 삭제되었습니다.");
       } else {
         showNotice("정산 정보가 저장되었습니다.");
@@ -1818,12 +2110,20 @@ function bind() {
   });
 
   el.inquiries?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-action='openInquiryEditor']");
+    const button = event.target.closest("[data-action]");
     if (!button) return;
 
     const inquiryId = Number(button.dataset.inquiryId);
     if (!inquiryId) return;
-    openInquiryEditor(inquiryId);
+
+    if (button.dataset.action === "openInquiryEditor") {
+      openInquiryEditor(inquiryId);
+      return;
+    }
+
+    if (button.dataset.action === "toggleInquiryAnswer") {
+      toggleInquiryAnswer(inquiryId);
+    }
   });
 
   el.inquiryEditorCloseBtn?.addEventListener("click", () => {
@@ -1881,8 +2181,17 @@ function bind() {
     if (!button) return;
 
     try {
-      await handleManagedBannerAction(button);
-      showNotice(button.dataset.action === "deleteBanner" ? "배너가 삭제되었습니다." : "배너 정보가 저장되었습니다.");
+      const result = await handleManagedBannerAction(button);
+      if (result === "edit") {
+        showNotice("수정 모드가 활성화되었습니다.");
+        return;
+      }
+      if (result === "cancel") {
+        showNotice("수정이 취소되었습니다.");
+        return;
+      }
+      if (result === "noop" || !result) return;
+      showNotice(result === "deleteBanner" ? "배너가 삭제되었습니다." : "배너 정보가 저장되었습니다.");
     } catch (error) {
       console.error(error);
       showNotice(error.message || "배너 처리에 실패했습니다.", "error");
@@ -1919,8 +2228,17 @@ function bind() {
     if (!button) return;
 
     try {
-      await handleManagedProductAction(button);
-      showNotice(button.dataset.action === "deleteManagedProduct" ? "상품이 삭제되었습니다." : "상품 정보가 저장되었습니다.");
+      const result = await handleManagedProductAction(button);
+      if (result === "edit") {
+        showNotice("수정 모드가 활성화되었습니다.");
+        return;
+      }
+      if (result === "cancel") {
+        showNotice("수정이 취소되었습니다.");
+        return;
+      }
+      if (result === "noop" || !result) return;
+      showNotice(result === "deleteManagedProduct" ? "상품이 삭제되었습니다." : "상품 정보가 저장되었습니다.");
     } catch (error) {
       console.error(error);
       showNotice(error.message || "상품 처리에 실패했습니다.", "error");
@@ -1932,8 +2250,17 @@ function bind() {
     if (!button) return;
 
     try {
-      await handleManagedUserAction(button);
-      showNotice(button.dataset.action === "deactivateManagedUser" ? "회원이 비활성화되었습니다." : "회원 정보가 저장되었습니다.");
+      const result = await handleManagedUserAction(button);
+      if (result === "edit") {
+        showNotice("수정 모드가 활성화되었습니다.");
+        return;
+      }
+      if (result === "cancel") {
+        showNotice("수정이 취소되었습니다.");
+        return;
+      }
+      if (result === "noop" || !result) return;
+      showNotice(result === "deactivateManagedUser" ? "회원이 비활성화되었습니다." : "회원 정보가 저장되었습니다.");
     } catch (error) {
       console.error(error);
       showNotice(error.message || "회원 처리에 실패했습니다.", "error");
