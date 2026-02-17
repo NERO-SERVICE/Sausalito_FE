@@ -1,1 +1,0 @@
-import{m as a,a as r,s,g as n,d as o}from"./footer-CuxST7fX.js";import{c}from"./cart-service-BQgjICxU.js";const u=a({showCart:!0});r();async function m(){const e=await s()||n();let t=0;try{t=await c()}catch{t=0}o(u,{userName:e?.name||null,cartCountValue:t})}m();

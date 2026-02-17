@@ -23,7 +23,7 @@ const el = {
 
 async function syncHeader() {
   const user = (await syncCurrentUser()) || getUser();
-  syncSiteHeader(headerRefs, { userName: user?.name || null });
+  syncSiteHeader(headerRefs, { userName: user?.name || user?.email || null });
 }
 
 function render() {

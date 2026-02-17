@@ -1,7 +1,11 @@
 import {
+  addWishlistItem,
   fetchProductById,
   fetchProductDetailMeta,
   fetchReviewsByProduct,
+  fetchWishlistItems,
+  removeWishlistItem,
+  trackRecentProduct,
 } from "../services/api.js";
 import { addToCart, cartCount } from "../services/cart-service.js";
 import { getUser, syncCurrentUser } from "../services/auth-service.js";
@@ -21,6 +25,7 @@ const state = {
   activeSection: "section-detail",
   open: { shipping: false, inquiry: false },
   policyOpen: false,
+  wished: false,
 };
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
@@ -84,7 +89,7 @@ async function setHeader() {
   }
 
   syncSiteHeader(headerRefs, {
-    userName: user?.name || null,
+    userName: user?.name || user?.email || null,
     cartCountValue: count,
   });
 }
@@ -178,7 +183,7 @@ function render() {
         <div class="pd-qty-row"><h4>수량</h4><div class="qty-controls"><button data-action="decreaseQty">-</button><span>${state.quantity}</span><button data-action="increaseQty">+</button></div></div>
         <div class="pd-total-box"><p class="final">총 결제예상금액 <strong>${formatCurrency(total)}</strong></p></div>
         <div class="pd-static-cta">
-          <button class="ghost" data-action="toggleWish">찜하기</button>
+          <button class="ghost" data-action="toggleWish">${state.wished ? "찜 해제" : "찜하기"}</button>
           <button class="ghost" data-action="addCart">장바구니담기</button>
           <button class="primary" data-action="buyNow">바로구매</button>
         </div>
@@ -261,7 +266,7 @@ function render() {
     </div>
 
     <div class="pd-floating-cta">
-      <button class="ghost" data-action="toggleWish">찜하기</button>
+      <button class="ghost" data-action="toggleWish">${state.wished ? "찜 해제" : "찜하기"}</button>
       <button class="ghost" data-action="addCart">장바구니담기</button>
       <button class="primary" data-action="buyNow">바로구매</button>
     </div>
@@ -328,7 +333,26 @@ document.addEventListener("click", async (e) => {
   }
 
   if (action === "toggleWish") {
-    alert("찜 API 연동 예정입니다.");
+    const user = (await syncCurrentUser()) || getUser();
+    if (!user) {
+      alert("로그인 후 이용 가능합니다.");
+      location.href = "/pages/login.html";
+      return;
+    }
+    try {
+      if (state.wished) {
+        await removeWishlistItem(state.product.id);
+        state.wished = false;
+        alert("위시리스트에서 제거했습니다.");
+      } else {
+        await addWishlistItem(state.product.id);
+        state.wished = true;
+        alert("위시리스트에 추가했습니다.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "찜 처리에 실패했습니다.");
+    }
   }
 
   render();
@@ -339,6 +363,24 @@ async function init() {
     state.product = await fetchProductById(id);
     state.meta = await fetchProductDetailMeta(id);
     state.reviews = await fetchReviewsByProduct(id);
+
+    const currentUser = (await syncCurrentUser()) || getUser();
+    if (currentUser) {
+      try {
+        await trackRecentProduct(id);
+      } catch (error) {
+        console.error(error);
+      }
+      try {
+        const wishlist = await fetchWishlistItems();
+        state.wished = wishlist.some((item) => item.id === id);
+      } catch (error) {
+        console.error(error);
+      }
+    } else {
+      state.wished = false;
+    }
+
     initMobilePullBack();
     await setHeader();
     render();

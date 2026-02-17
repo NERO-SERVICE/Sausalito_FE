@@ -19,6 +19,7 @@ export default defineConfig({
         detail: resolve(__dirname, "pages/detail.html"),
         login: resolve(__dirname, "pages/login.html"),
         cart: resolve(__dirname, "pages/cart.html"),
+        mypage: resolve(__dirname, "pages/mypage.html"),
       },
     },
   },

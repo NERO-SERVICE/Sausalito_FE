@@ -1,9 +1,11 @@
+import { logout } from "../services/auth-service.js";
+
 const MAIN_LOGO_SRC = "../dist/assets/logo/main_logo.svg";
 const MAIN_LOGO_FALLBACKS = ["/dist/assets/logo/main_logo.svg", "dist/assets/logo/main_logo.svg"];
 
 export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
   const mount = document.getElementById("siteHeaderMount");
-  if (!mount) return { loginLink: null, cartCount: null };
+  if (!mount) return { accountLink: null, logoutBtn: null, cartCount: null };
 
   mount.innerHTML = `
     <header class="site-header">
@@ -16,7 +18,10 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
           </div>
         </a>
         <div class="header-actions">
-          <a class="text-btn" href="/pages/login.html" id="loginLink">로그인</a>
+          <div class="header-account">
+            <a class="text-btn" href="/pages/login.html" id="accountLink">로그인</a>
+            <button class="icon-btn header-logout-btn" id="logoutBtn" type="button" hidden>로그아웃</button>
+          </div>
           ${
             showCart
               ? `<a class="icon-btn cart-link" href="/pages/cart.html" aria-label="장바구니">
@@ -53,13 +58,36 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
     });
   }
 
+  const logoutBtn = mount.querySelector("#logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await logout();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        location.href = "/pages/home.html";
+      }
+    });
+  }
+
   return {
-    loginLink: mount.querySelector("#loginLink"),
+    accountLink: mount.querySelector("#accountLink"),
+    logoutBtn,
     cartCount: mount.querySelector("#cartCount"),
   };
 }
 
 export function syncSiteHeader(refs, { userName = null, cartCountValue = null } = {}) {
-  if (refs.loginLink) refs.loginLink.textContent = userName ? `${userName}님` : "로그인";
+  if (refs.accountLink) {
+    if (userName) {
+      refs.accountLink.textContent = "마이페이지";
+      refs.accountLink.href = "/pages/mypage.html";
+    } else {
+      refs.accountLink.textContent = "로그인";
+      refs.accountLink.href = "/pages/login.html";
+    }
+  }
+  if (refs.logoutBtn) refs.logoutBtn.hidden = !userName;
   if (refs.cartCount && typeof cartCountValue === "number") refs.cartCount.textContent = cartCountValue;
 }

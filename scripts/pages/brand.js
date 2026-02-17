@@ -16,7 +16,7 @@ async function syncHeader() {
   }
 
   syncSiteHeader(headerRefs, {
-    userName: user?.name || null,
+    userName: user?.name || user?.email || null,
     cartCountValue: count,
   });
 }

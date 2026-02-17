@@ -287,6 +287,86 @@ function normalizeReview(raw = {}) {
   };
 }
 
+function normalizeOrderSummary(raw = {}) {
+  return {
+    id: raw.id,
+    orderNo: raw.order_no || raw.orderNo || "",
+    status: raw.status || "",
+    paymentStatus: raw.payment_status || raw.paymentStatus || "",
+    totalAmount: Number(raw.total_amount ?? raw.totalAmount ?? 0),
+    createdAt: raw.created_at || raw.createdAt || null,
+    recipient: raw.recipient || "",
+    itemCount: Array.isArray(raw.items) ? raw.items.length : 0,
+    items: Array.isArray(raw.items) ? raw.items : [],
+  };
+}
+
+function normalizeMoneyHistory(raw = {}) {
+  return {
+    id: raw.id,
+    txType: raw.tx_type || raw.txType || "",
+    amount: Number(raw.amount || 0),
+    balanceAfter: Number(raw.balance_after ?? raw.balanceAfter ?? 0),
+    description: raw.description || "",
+    createdAt: raw.created_at || raw.createdAt || null,
+  };
+}
+
+function normalizeCoupon(raw = {}) {
+  return {
+    id: raw.id,
+    name: raw.name || "",
+    code: raw.code || "",
+    discountAmount: Number(raw.discount_amount ?? raw.discountAmount ?? 0),
+    minOrderAmount: Number(raw.min_order_amount ?? raw.minOrderAmount ?? 0),
+    expiresAt: raw.expires_at || raw.expiresAt || null,
+    isUsed: Boolean(raw.is_used ?? raw.isUsed),
+    usedAt: raw.used_at || raw.usedAt || null,
+    isExpired: Boolean(raw.is_expired ?? raw.isExpired),
+    createdAt: raw.created_at || raw.createdAt || null,
+  };
+}
+
+function normalizeMyPageDashboard(raw = {}) {
+  const shopping = raw.shopping || {};
+  const activity = raw.activity || {};
+  const summary = shopping.summary || {};
+
+  return {
+    shopping: {
+      summary: {
+        orderCount: Number(summary.order_count ?? summary.orderCount ?? 0),
+        pointBalance: Number(summary.point_balance ?? summary.pointBalance ?? 0),
+        depositBalance: Number(summary.deposit_balance ?? summary.depositBalance ?? 0),
+        couponCount: Number(summary.coupon_count ?? summary.couponCount ?? 0),
+      },
+      orders: Array.isArray(shopping.orders) ? shopping.orders.map(normalizeOrderSummary) : [],
+      pointHistory: Array.isArray(shopping.point_history)
+        ? shopping.point_history.map(normalizeMoneyHistory)
+        : [],
+      depositHistory: Array.isArray(shopping.deposit_history)
+        ? shopping.deposit_history.map(normalizeMoneyHistory)
+        : [],
+      couponHistory: Array.isArray(shopping.coupon_history)
+        ? shopping.coupon_history.map(normalizeCoupon)
+        : [],
+    },
+    activity: {
+      recentProducts: Array.isArray(activity.recent_products)
+        ? activity.recent_products.map(normalizeProductBase)
+        : [],
+      wishlistProducts: Array.isArray(activity.wishlist_products)
+        ? activity.wishlist_products.map(normalizeProductBase)
+        : [],
+      myReviews: Array.isArray(activity.my_reviews)
+        ? activity.my_reviews.map(normalizeReview)
+        : [],
+    },
+    profile: raw.profile || null,
+    inquiries: Array.isArray(raw.inquiries) ? raw.inquiries : [],
+  };
+}
+
 async function fetchReviewsWithPagination({ productId, sort = "latest", hasImage, pageSize = 100 } = {}) {
   let page = 1;
   let count = null;
@@ -402,6 +482,62 @@ export async function fetchFeaturedReviews(limit = 6) {
 
 export async function fetchAllReviews() {
   return fetchReviewsWithPagination({ sort: "latest", pageSize: 100 });
+}
+
+export async function fetchMyPageDashboard() {
+  const data = await apiRequest("/users/me/dashboard");
+  return normalizeMyPageDashboard(data);
+}
+
+export async function updateMyProfile({ name, phone }) {
+  return apiRequest("/users/me", {
+    method: "PATCH",
+    body: { name, phone },
+  });
+}
+
+export async function changeMyPassword({ oldPassword, newPassword, newPasswordConfirm }) {
+  return apiRequest("/users/me/password", {
+    method: "POST",
+    body: {
+      old_password: oldPassword,
+      new_password: newPassword,
+      new_password_confirm: newPasswordConfirm,
+    },
+  });
+}
+
+export async function fetchWishlistItems() {
+  const data = await apiRequest("/users/me/wishlist");
+  return Array.isArray(data) ? data.map(normalizeProductBase) : [];
+}
+
+export async function addWishlistItem(productId) {
+  const data = await apiRequest("/users/me/wishlist", {
+    method: "POST",
+    body: { product_id: productId },
+  });
+  return normalizeProductBase(data || {});
+}
+
+export async function removeWishlistItem(productId) {
+  return apiRequest(`/users/me/wishlist/${productId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function trackRecentProduct(productId) {
+  return apiRequest("/users/me/recent-products", {
+    method: "POST",
+    body: { product_id: productId },
+  });
+}
+
+export async function createMyInquiry({ title, content }) {
+  return apiRequest("/users/me/inquiries", {
+    method: "POST",
+    body: { title, content },
+  });
 }
 
 export async function createReview({ productId, score, title, content, images = [] }) {

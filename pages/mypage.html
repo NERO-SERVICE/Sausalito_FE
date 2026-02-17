@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소살리토 | 마이페이지</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="mypage-main">
+      <section class="mypage-head">
+        <h2>마이페이지</h2>
+        <p id="mypageGreeting">회원님의 쇼핑/활동/계정 정보를 한 번에 관리하세요.</p>
+      </section>
+
+      <section class="mypage-summary-grid" id="mypageSummary"></section>
+
+      <section class="mypage-card">
+        <div class="mypage-card-head">
+          <h3>쇼핑정보</h3>
+        </div>
+        <div class="mypage-board" id="mypageOrders"></div>
+        <div class="mypage-columns-2">
+          <article class="mypage-subcard">
+            <h4>적립금 내역</h4>
+            <div id="mypagePointHistory"></div>
+          </article>
+          <article class="mypage-subcard">
+            <h4>예치금 내역</h4>
+            <div id="mypageDepositHistory"></div>
+          </article>
+        </div>
+        <article class="mypage-subcard">
+          <h4>쿠폰 내역</h4>
+          <div id="mypageCouponHistory"></div>
+        </article>
+      </section>
+
+      <section class="mypage-card">
+        <div class="mypage-card-head">
+          <h3>활동정보</h3>
+        </div>
+        <article class="mypage-subcard">
+          <h4>최근 본 상품</h4>
+          <div class="mypage-product-grid" id="mypageRecentProducts"></div>
+        </article>
+        <article class="mypage-subcard">
+          <h4>나의 위시리스트</h4>
+          <div class="mypage-product-grid" id="mypageWishlistProducts"></div>
+        </article>
+        <article class="mypage-subcard">
+          <h4>나의 리뷰</h4>
+          <div id="mypageMyReviews"></div>
+        </article>
+      </section>
+
+      <section class="mypage-card">
+        <div class="mypage-card-head">
+          <h3>나의 정보</h3>
+        </div>
+        <form class="mypage-form" id="mypageProfileForm">
+          <h4>회원 정보 수정</h4>
+          <label>
+            <span>이메일</span>
+            <input type="email" id="mypageEmail" readonly />
+          </label>
+          <label>
+            <span>이름</span>
+            <input type="text" id="mypageName" required maxlength="100" />
+          </label>
+          <label>
+            <span>연락처</span>
+            <input type="text" id="mypagePhone" maxlength="20" placeholder="010-0000-0000" />
+          </label>
+          <button class="primary" type="submit">정보 저장</button>
+        </form>
+
+        <form class="mypage-form" id="mypagePasswordForm">
+          <h4>비밀번호 변경</h4>
+          <label>
+            <span>현재 비밀번호</span>
+            <input type="password" id="mypageOldPassword" required />
+          </label>
+          <label>
+            <span>새 비밀번호</span>
+            <input type="password" id="mypageNewPassword" required />
+          </label>
+          <label>
+            <span>새 비밀번호 확인</span>
+            <input type="password" id="mypageNewPasswordConfirm" required />
+          </label>
+          <button class="primary" type="submit">비밀번호 변경</button>
+        </form>
+
+        <div class="mypage-logout-row">
+          <button class="ghost" type="button" id="mypageLogoutBtn">로그아웃</button>
+        </div>
+      </section>
+
+      <section class="mypage-card">
+        <div class="mypage-card-head">
+          <h3>1대1 문의하기</h3>
+          <button class="primary" type="button" id="openInquiryBtn">문의하기</button>
+        </div>
+        <form class="mypage-form mypage-inquiry-form hidden" id="mypageInquiryForm">
+          <label>
+            <span>문의 제목</span>
+            <input type="text" id="inquiryTitle" required maxlength="200" />
+          </label>
+          <label>
+            <span>문의 내용</span>
+            <textarea id="inquiryContent" rows="4" required maxlength="2000"></textarea>
+          </label>
+          <div class="mypage-inline-actions">
+            <button class="ghost" type="button" id="cancelInquiryBtn">취소</button>
+            <button class="primary" type="submit">문의 등록</button>
+          </div>
+        </form>
+        <div id="mypageInquiryHistory"></div>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+    <script type="module" src="../scripts/pages/mypage.js"></script>
+  </body>
+</html>
