@@ -45,40 +45,41 @@
           <section class="admin-tab-panel is-active" data-tab-panel="dashboard">
             <div class="admin-tab-headline">
               <h3>대시보드</h3>
-              <p>오늘 운영 현황과 최근 처리 이력을 확인하세요.</p>
+              <p>최근 6개월 월별 운영 지표와 현재 운영 상태를 한 화면에서 확인하세요.</p>
             </div>
             <section class="admin-summary-grid" id="adminSummary"></section>
 
-            <section class="admin-board-grid">
+            <section class="admin-card">
+              <div class="admin-card-head">
+                <h4>월별 운영 지표 (최근 6개월)</h4>
+              </div>
+              <div id="adminDashboardMonthly"></div>
+            </section>
+
+            <section class="admin-board-grid admin-sector-grid">
               <article class="admin-card">
                 <div class="admin-card-head">
-                  <h4>최근 주문</h4>
+                  <h4>배송 상태</h4>
                 </div>
-                <div id="adminDashboardOrders"></div>
+                <div id="adminDashboardShipping"></div>
               </article>
               <article class="admin-card">
                 <div class="admin-card-head">
-                  <h4>최근 반품/환불</h4>
+                  <h4>반품/환불 상태</h4>
                 </div>
                 <div id="adminDashboardReturns"></div>
               </article>
               <article class="admin-card">
                 <div class="admin-card-head">
-                  <h4>최근 CS</h4>
+                  <h4>CS 상태</h4>
                 </div>
                 <div id="adminDashboardInquiries"></div>
               </article>
               <article class="admin-card">
                 <div class="admin-card-head">
-                  <h4>최근 정산</h4>
+                  <h4>정산 상태</h4>
                 </div>
                 <div id="adminDashboardSettlements"></div>
-              </article>
-              <article class="admin-card">
-                <div class="admin-card-head">
-                  <h4>최근 리뷰</h4>
-                </div>
-                <div id="adminDashboardReviews"></div>
               </article>
             </section>
           </section>
@@ -358,6 +359,9 @@
                 <h3>상품 관리</h3>
                 <div class="admin-filter-row">
                   <input type="text" id="adminManagedProductSearch" placeholder="상품명/설명/ID 검색" />
+                  <select id="adminManagedProductCategoryFilter">
+                    <option value="">카테고리 전체</option>
+                  </select>
                   <select id="adminManagedProductActiveFilter">
                     <option value="">노출상태 전체</option>
                     <option value="true">활성화</option>
@@ -368,12 +372,38 @@
               </div>
               <form class="admin-product-form" id="adminProductCreateForm">
                 <label>
+                  <span>카테고리</span>
+                  <select id="managedProductCategoryId">
+                    <option value="">선택 안함</option>
+                  </select>
+                </label>
+                <label>
+                  <span>상품관리코드(SKU)</span>
+                  <input type="text" id="managedProductSku" maxlength="80" placeholder="SKU-0001" />
+                </label>
+                <label>
                   <span>상품명</span>
                   <input type="text" id="managedProductName" required maxlength="255" placeholder="상품명" />
                 </label>
                 <label>
                   <span>한줄소개</span>
                   <input type="text" id="managedProductOneLine" maxlength="255" placeholder="한줄소개" />
+                </label>
+                <label>
+                  <span>제조사</span>
+                  <input type="text" id="managedProductManufacturer" maxlength="120" placeholder="제조사" />
+                </label>
+                <label>
+                  <span>원산지</span>
+                  <input type="text" id="managedProductOriginCountry" maxlength="120" placeholder="원산지" />
+                </label>
+                <label>
+                  <span>세금구분</span>
+                  <select id="managedProductTaxStatus">
+                    <option value="TAXABLE">과세</option>
+                    <option value="ZERO">영세</option>
+                    <option value="EXEMPT">면세</option>
+                  </select>
                 </label>
                 <label>
                   <span>판매가(원)</span>
@@ -388,16 +418,52 @@
                   <input type="number" id="managedProductStock" min="0" value="0" />
                 </label>
                 <label>
-                  <span>배지코드</span>
-                  <input type="text" id="managedProductBadges" placeholder="HOT,NEW" />
+                  <span>배송비(원)</span>
+                  <input type="number" id="managedProductDeliveryFee" min="0" value="3000" />
                 </label>
-                <label class="admin-check-inline">
-                  <input type="checkbox" id="managedProductIsActive" checked />
-                  <span>활성화</span>
+                <label>
+                  <span>무료배송 기준금액(원)</span>
+                  <input type="number" id="managedProductFreeShippingAmount" min="0" value="50000" />
+                </label>
+                <label>
+                  <span>출시일</span>
+                  <input type="date" id="managedProductReleaseDate" />
+                </label>
+                <label>
+                  <span>노출 시작일시</span>
+                  <input type="datetime-local" id="managedProductDisplayStartAt" />
+                </label>
+                <label>
+                  <span>노출 종료일시</span>
+                  <input type="datetime-local" id="managedProductDisplayEndAt" />
+                </label>
+                <label>
+                  <span>복용법</span>
+                  <input type="text" id="managedProductIntake" maxlength="1000" placeholder="복용법" />
+                </label>
+                <label>
+                  <span>권장 대상</span>
+                  <input type="text" id="managedProductTarget" maxlength="1000" placeholder="권장 대상" />
+                </label>
+                <label class="admin-col-span-2">
+                  <span>검색 키워드(쉼표 구분)</span>
+                  <input type="text" id="managedProductSearchKeywords" maxlength="500" placeholder="다이어트,비타민,건강" />
+                </label>
+                <label class="admin-col-span-2">
+                  <span>배지 선택</span>
+                  <div id="managedProductBadgeGroup" class="admin-badge-checkboxes"></div>
                 </label>
                 <label>
                   <span>썸네일 이미지</span>
                   <input class="admin-file-input" type="file" id="managedProductThumbnail" accept="image/*" />
+                </label>
+                <label class="admin-col-span-2">
+                  <span>추가 상품 이미지(여러 장)</span>
+                  <input class="admin-file-input" type="file" id="managedProductImages" accept="image/*" multiple />
+                </label>
+                <label class="admin-check-inline">
+                  <input type="checkbox" id="managedProductIsActive" checked />
+                  <span>활성화</span>
                 </label>
                 <label class="admin-col-span-2">
                   <span>설명</span>

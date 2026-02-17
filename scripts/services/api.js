@@ -384,6 +384,7 @@ function normalizeAdminOrder(raw = {}) {
     phone: raw.phone || "",
     postalCode: raw.postal_code || raw.postalCode || "",
     roadAddress: raw.road_address || raw.roadAddress || "",
+    jibunAddress: raw.jibun_address || raw.jibunAddress || "",
     detailAddress: raw.detail_address || raw.detailAddress || "",
     courierName: raw.courier_name || raw.courierName || "",
     trackingNo: raw.tracking_no || raw.trackingNo || "",
@@ -482,6 +483,10 @@ function normalizeAdminSettlement(raw = {}) {
     orderCreatedAt: raw.order_created_at || raw.orderCreatedAt || null,
     orderPaymentStatus: raw.order_payment_status || raw.orderPaymentStatus || "",
     orderShippingStatus: raw.order_shipping_status || raw.orderShippingStatus || "",
+    orderSubtotalAmount: Number(raw.order_subtotal_amount ?? raw.orderSubtotalAmount ?? 0),
+    orderShippingFee: Number(raw.order_shipping_fee ?? raw.orderShippingFee ?? 0),
+    orderDiscountAmount: Number(raw.order_discount_amount ?? raw.orderDiscountAmount ?? 0),
+    orderTotalAmount: Number(raw.order_total_amount ?? raw.orderTotalAmount ?? 0),
     createdAt: raw.created_at || raw.createdAt || null,
     updatedAt: raw.updated_at || raw.updatedAt || null,
   };
@@ -506,9 +511,22 @@ function normalizeAdminBanner(raw = {}) {
 function normalizeAdminManagedProduct(raw = {}) {
   return {
     id: Number(raw.id || 0),
+    categoryId: Number(raw.category_id ?? raw.categoryId ?? 0) || null,
     name: raw.name || "",
+    sku: raw.sku || "",
     oneLine: raw.one_line || raw.oneLine || "",
     description: raw.description || "",
+    intake: raw.intake || "",
+    target: raw.target || "",
+    manufacturer: raw.manufacturer || "",
+    originCountry: raw.origin_country || raw.originCountry || "",
+    taxStatus: raw.tax_status || raw.taxStatus || "TAXABLE",
+    deliveryFee: Number(raw.delivery_fee ?? raw.deliveryFee ?? 0),
+    freeShippingAmount: Number(raw.free_shipping_amount ?? raw.freeShippingAmount ?? 0),
+    searchKeywords: Array.isArray(raw.search_keywords) ? raw.search_keywords : [],
+    releaseDate: raw.release_date || raw.releaseDate || "",
+    displayStartAt: raw.display_start_at || raw.displayStartAt || null,
+    displayEndAt: raw.display_end_at || raw.displayEndAt || null,
     price: Number(raw.price ?? 0),
     originalPrice: Number(raw.original_price ?? raw.originalPrice ?? 0),
     stock: Number(raw.stock ?? 0),
@@ -516,6 +534,14 @@ function normalizeAdminManagedProduct(raw = {}) {
     categoryName: raw.category_name || raw.categoryName || "",
     badgeTypes: Array.isArray(raw.badge_types) ? raw.badge_types : [],
     thumbnailUrl: raw.thumbnail_url || raw.thumbnailUrl || "",
+    images: Array.isArray(raw.images)
+      ? raw.images.map((image) => ({
+          id: Number(image.id || 0),
+          imageUrl: image.image_url || image.imageUrl || "",
+          isThumbnail: Boolean(image.is_thumbnail ?? image.isThumbnail),
+          sortOrder: Number(image.sort_order ?? image.sortOrder ?? 0),
+        }))
+      : [],
     createdAt: raw.created_at || raw.createdAt || null,
     updatedAt: raw.updated_at || raw.updatedAt || null,
   };
@@ -716,11 +742,18 @@ export async function fetchAdminDashboard() {
 
   return {
     summary: {
-      totalOrders: Number(summary.total_orders ?? summary.totalOrders ?? 0),
-      paidOrders: Number(summary.paid_orders ?? summary.paidOrders ?? 0),
-      totalOrderAmount: Number(summary.total_order_amount ?? summary.totalOrderAmount ?? 0),
-      totalPaidAmount: Number(summary.total_paid_amount ?? summary.totalPaidAmount ?? 0),
-      todayPaidAmount: Number(summary.today_paid_amount ?? summary.todayPaidAmount ?? 0),
+      currentMonth: summary.current_month || summary.currentMonth || "",
+      thisMonthOrderCount: Number(summary.this_month_order_count ?? summary.thisMonthOrderCount ?? 0),
+      thisMonthPaidOrderCount: Number(summary.this_month_paid_order_count ?? summary.thisMonthPaidOrderCount ?? 0),
+      thisMonthOrderAmount: Number(summary.this_month_order_amount ?? summary.thisMonthOrderAmount ?? 0),
+      thisMonthPaidAmount: Number(summary.this_month_paid_amount ?? summary.thisMonthPaidAmount ?? 0),
+      thisMonthRefundAmount: Number(summary.this_month_refund_amount ?? summary.thisMonthRefundAmount ?? 0),
+      thisMonthNewUserCount: Number(summary.this_month_new_user_count ?? summary.thisMonthNewUserCount ?? 0),
+      thisMonthInquiryCount: Number(summary.this_month_inquiry_count ?? summary.thisMonthInquiryCount ?? 0),
+      thisMonthPaidSettlementAmount: Number(
+        summary.this_month_paid_settlement_amount ?? summary.thisMonthPaidSettlementAmount ?? 0,
+      ),
+      openOrderCount: Number(summary.open_order_count ?? summary.openOrderCount ?? 0),
       shippingPendingCount: Number(summary.shipping_pending_count ?? summary.shippingPendingCount ?? 0),
       shippingShippedCount: Number(summary.shipping_shipped_count ?? summary.shippingShippedCount ?? 0),
       shippingDeliveredCount: Number(summary.shipping_delivered_count ?? summary.shippingDeliveredCount ?? 0),
@@ -732,15 +765,49 @@ export async function fetchAdminDashboard() {
       pendingSettlementAmount: Number(summary.pending_settlement_amount ?? summary.pendingSettlementAmount ?? 0),
       paidSettlementAmount: Number(summary.paid_settlement_amount ?? summary.paidSettlementAmount ?? 0),
     },
-    recentOrders: Array.isArray(data?.recent_orders) ? data.recent_orders.map(normalizeAdminOrder) : [],
-    recentInquiries: Array.isArray(data?.recent_inquiries)
-      ? data.recent_inquiries.map(normalizeAdminInquiry)
+    monthlyMetrics: Array.isArray(data?.monthly_metrics)
+      ? data.monthly_metrics.map((row) => ({
+          month: row.month || "",
+          orderCount: Number(row.order_count ?? row.orderCount ?? 0),
+          paidOrderCount: Number(row.paid_order_count ?? row.paidOrderCount ?? 0),
+          orderAmount: Number(row.order_amount ?? row.orderAmount ?? 0),
+          paidAmount: Number(row.paid_amount ?? row.paidAmount ?? 0),
+          refundAmount: Number(row.refund_amount ?? row.refundAmount ?? 0),
+          returnRequestCount: Number(row.return_request_count ?? row.returnRequestCount ?? 0),
+          newUserCount: Number(row.new_user_count ?? row.newUserCount ?? 0),
+          inquiryCount: Number(row.inquiry_count ?? row.inquiryCount ?? 0),
+          paidSettlementCount: Number(row.paid_settlement_count ?? row.paidSettlementCount ?? 0),
+          paidSettlementAmount: Number(row.paid_settlement_amount ?? row.paidSettlementAmount ?? 0),
+        }))
       : [],
-    recentReviews: Array.isArray(data?.recent_reviews) ? data.recent_reviews.map(normalizeAdminReview) : [],
-    recentReturns: Array.isArray(data?.recent_returns) ? data.recent_returns.map(normalizeAdminReturnRequest) : [],
-    recentSettlements: Array.isArray(data?.recent_settlements)
-      ? data.recent_settlements.map(normalizeAdminSettlement)
-      : [],
+    statusSectors: {
+      shipping: {
+        ready: Number(data?.status_sectors?.shipping?.ready ?? data?.statusSectors?.shipping?.ready ?? 0),
+        preparing: Number(data?.status_sectors?.shipping?.preparing ?? data?.statusSectors?.shipping?.preparing ?? 0),
+        shipped: Number(data?.status_sectors?.shipping?.shipped ?? data?.statusSectors?.shipping?.shipped ?? 0),
+        delivered: Number(data?.status_sectors?.shipping?.delivered ?? data?.statusSectors?.shipping?.delivered ?? 0),
+      },
+      returns: {
+        requested: Number(data?.status_sectors?.returns?.requested ?? data?.statusSectors?.returns?.requested ?? 0),
+        approved: Number(data?.status_sectors?.returns?.approved ?? data?.statusSectors?.returns?.approved ?? 0),
+        refunding: Number(data?.status_sectors?.returns?.refunding ?? data?.statusSectors?.returns?.refunding ?? 0),
+        refunded: Number(data?.status_sectors?.returns?.refunded ?? data?.statusSectors?.returns?.refunded ?? 0),
+        rejected: Number(data?.status_sectors?.returns?.rejected ?? data?.statusSectors?.returns?.rejected ?? 0),
+      },
+      inquiries: {
+        open: Number(data?.status_sectors?.inquiries?.open ?? data?.statusSectors?.inquiries?.open ?? 0),
+        answered: Number(data?.status_sectors?.inquiries?.answered ?? data?.statusSectors?.inquiries?.answered ?? 0),
+        closed: Number(data?.status_sectors?.inquiries?.closed ?? data?.statusSectors?.inquiries?.closed ?? 0),
+      },
+      settlements: {
+        pending: Number(data?.status_sectors?.settlements?.pending ?? data?.statusSectors?.settlements?.pending ?? 0),
+        hold: Number(data?.status_sectors?.settlements?.hold ?? data?.statusSectors?.settlements?.hold ?? 0),
+        scheduled: Number(
+          data?.status_sectors?.settlements?.scheduled ?? data?.statusSectors?.settlements?.scheduled ?? 0,
+        ),
+        paid: Number(data?.status_sectors?.settlements?.paid ?? data?.statusSectors?.settlements?.paid ?? 0),
+      },
+    },
   };
 }
 
@@ -760,6 +827,12 @@ export async function fetchAdminOrders({ q, status, paymentStatus, shippingStatu
 
 export async function updateAdminOrder(orderNo, payload = {}) {
   const body = {};
+  if (payload.recipient !== undefined) body.recipient = payload.recipient;
+  if (payload.phone !== undefined) body.phone = payload.phone;
+  if (payload.postalCode !== undefined) body.postal_code = payload.postalCode;
+  if (payload.roadAddress !== undefined) body.road_address = payload.roadAddress;
+  if (payload.jibunAddress !== undefined) body.jibun_address = payload.jibunAddress;
+  if (payload.detailAddress !== undefined) body.detail_address = payload.detailAddress;
   if (payload.status !== undefined) body.status = payload.status;
   if (payload.paymentStatus !== undefined) body.payment_status = payload.paymentStatus;
   if (payload.shippingStatus !== undefined) body.shipping_status = payload.shippingStatus;
@@ -1018,11 +1091,37 @@ export async function deleteAdminManagedBanner(bannerId) {
   });
 }
 
-export async function fetchAdminManagedProducts({ q, isActive, limit = 200 } = {}) {
+export async function fetchAdminProductMeta() {
+  const data = await apiRequest("/admin/products/manage/meta");
+  return {
+    badgeOptions: Array.isArray(data?.badge_options)
+      ? data.badge_options.map((row) => ({
+          code: row.code || "",
+          label: row.label || row.code || "",
+        }))
+      : [],
+    taxStatusOptions: Array.isArray(data?.tax_status_options)
+      ? data.tax_status_options.map((row) => ({
+          code: row.code || "",
+          label: row.label || row.code || "",
+        }))
+      : [],
+    categoryOptions: Array.isArray(data?.category_options)
+      ? data.category_options.map((row) => ({
+          id: Number(row.id || 0),
+          name: row.name || "",
+          slug: row.slug || "",
+        }))
+      : [],
+  };
+}
+
+export async function fetchAdminManagedProducts({ q, isActive, categoryId, limit = 200 } = {}) {
   const data = await apiRequest("/admin/products/manage", {
     query: {
       q,
       is_active: typeof isActive === "boolean" ? String(isActive) : undefined,
+      category_id: categoryId,
       limit,
     },
   });
@@ -1030,20 +1129,53 @@ export async function fetchAdminManagedProducts({ q, isActive, limit = 200 } = {
 }
 
 export async function createAdminManagedProduct({
+  categoryId,
+  sku,
   name,
   oneLine,
   description,
+  intake,
+  target,
+  manufacturer,
+  originCountry,
+  taxStatus,
+  deliveryFee,
+  freeShippingAmount,
+  searchKeywords,
+  releaseDate,
+  displayStartAt,
+  displayEndAt,
   price,
   originalPrice,
   stock,
   isActive,
   badgeTypes,
   thumbnailFile,
+  imageFiles,
 } = {}) {
   const formData = new FormData();
+  if (categoryId !== undefined && categoryId !== null) formData.append("category_id", String(categoryId));
+  if (sku !== undefined) formData.append("sku", sku);
   if (name !== undefined) formData.append("name", name);
   if (oneLine !== undefined) formData.append("one_line", oneLine);
   if (description !== undefined) formData.append("description", description);
+  if (intake !== undefined) formData.append("intake", intake);
+  if (target !== undefined) formData.append("target", target);
+  if (manufacturer !== undefined) formData.append("manufacturer", manufacturer);
+  if (originCountry !== undefined) formData.append("origin_country", originCountry);
+  if (taxStatus !== undefined) formData.append("tax_status", taxStatus);
+  if (deliveryFee !== undefined) formData.append("delivery_fee", String(deliveryFee));
+  if (freeShippingAmount !== undefined) formData.append("free_shipping_amount", String(freeShippingAmount));
+  if (Array.isArray(searchKeywords)) {
+    if (!searchKeywords.length) {
+      formData.append("search_keywords", "");
+    } else {
+      searchKeywords.forEach((keyword) => formData.append("search_keywords", keyword));
+    }
+  }
+  if (releaseDate !== undefined) formData.append("release_date", releaseDate || "");
+  if (displayStartAt !== undefined) formData.append("display_start_at", displayStartAt || "");
+  if (displayEndAt !== undefined) formData.append("display_end_at", displayEndAt || "");
   if (price !== undefined) formData.append("price", String(price));
   if (originalPrice !== undefined) formData.append("original_price", String(originalPrice));
   if (stock !== undefined) formData.append("stock", String(stock));
@@ -1056,6 +1188,9 @@ export async function createAdminManagedProduct({
     }
   }
   if (thumbnailFile) formData.append("thumbnail", thumbnailFile);
+  if (Array.isArray(imageFiles)) {
+    imageFiles.filter(Boolean).forEach((file) => formData.append("images", file));
+  }
 
   const data = await apiRequest("/admin/products/manage", {
     method: "POST",
@@ -1067,12 +1202,63 @@ export async function createAdminManagedProduct({
 
 export async function updateAdminManagedProduct(
   productId,
-  { name, oneLine, description, price, originalPrice, stock, isActive, badgeTypes, thumbnailFile } = {},
+  {
+    categoryId,
+    sku,
+    name,
+    oneLine,
+    description,
+    intake,
+    target,
+    manufacturer,
+    originCountry,
+    taxStatus,
+    deliveryFee,
+    freeShippingAmount,
+    searchKeywords,
+    releaseDate,
+    displayStartAt,
+    displayEndAt,
+    price,
+    originalPrice,
+    stock,
+    isActive,
+    badgeTypes,
+    thumbnailFile,
+    imageFiles,
+    deleteImageIds,
+    thumbnailImageId,
+  } = {},
 ) {
   const formData = new FormData();
+  if (categoryId !== undefined) {
+    if (categoryId === null || categoryId === "") {
+      formData.append("category_id", "");
+    } else {
+      formData.append("category_id", String(categoryId));
+    }
+  }
+  if (sku !== undefined) formData.append("sku", sku);
   if (name !== undefined) formData.append("name", name);
   if (oneLine !== undefined) formData.append("one_line", oneLine);
   if (description !== undefined) formData.append("description", description);
+  if (intake !== undefined) formData.append("intake", intake);
+  if (target !== undefined) formData.append("target", target);
+  if (manufacturer !== undefined) formData.append("manufacturer", manufacturer);
+  if (originCountry !== undefined) formData.append("origin_country", originCountry);
+  if (taxStatus !== undefined) formData.append("tax_status", taxStatus);
+  if (deliveryFee !== undefined) formData.append("delivery_fee", String(deliveryFee));
+  if (freeShippingAmount !== undefined) formData.append("free_shipping_amount", String(freeShippingAmount));
+  if (Array.isArray(searchKeywords)) {
+    if (!searchKeywords.length) {
+      formData.append("search_keywords", "");
+    } else {
+      searchKeywords.forEach((keyword) => formData.append("search_keywords", keyword));
+    }
+  }
+  if (releaseDate !== undefined) formData.append("release_date", releaseDate || "");
+  if (displayStartAt !== undefined) formData.append("display_start_at", displayStartAt || "");
+  if (displayEndAt !== undefined) formData.append("display_end_at", displayEndAt || "");
   if (price !== undefined) formData.append("price", String(price));
   if (originalPrice !== undefined) formData.append("original_price", String(originalPrice));
   if (stock !== undefined) formData.append("stock", String(stock));
@@ -1085,6 +1271,15 @@ export async function updateAdminManagedProduct(
     }
   }
   if (thumbnailFile) formData.append("thumbnail", thumbnailFile);
+  if (Array.isArray(imageFiles)) {
+    imageFiles.filter(Boolean).forEach((file) => formData.append("images", file));
+  }
+  if (Array.isArray(deleteImageIds) && deleteImageIds.length) {
+    deleteImageIds.forEach((imageId) => formData.append("delete_image_ids", String(imageId)));
+  }
+  if (thumbnailImageId !== undefined && thumbnailImageId !== null) {
+    formData.append("thumbnail_image_id", String(thumbnailImageId));
+  }
 
   const data = await apiRequest(`/admin/products/manage/${productId}`, {
     method: "PATCH",

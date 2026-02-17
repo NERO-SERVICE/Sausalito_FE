@@ -7,7 +7,6 @@ import {
   createAdminManagedBanner,
   createAdminManagedProduct,
   createAdminReturnRequest,
-  deactivateAdminManagedUser,
   deleteAdminCoupon,
   deleteAdminManagedBanner,
   deleteAdminManagedProduct,
@@ -16,6 +15,7 @@ import {
   deleteAdminSettlement,
   fetchAdminManagedBanners,
   fetchAdminManagedProducts,
+  fetchAdminProductMeta,
   fetchAdminManagedUsers,
   fetchAdminCoupons,
   fetchAdminDashboard,
@@ -30,7 +30,6 @@ import {
   setAdminReviewVisibility,
   updateAdminManagedBanner,
   updateAdminManagedProduct,
-  updateAdminManagedUser,
   updateAdminOrder,
   updateAdminReturnRequest,
   updateAdminSettlement,
@@ -139,6 +138,12 @@ const PRIORITY_LABELS = {
   URGENT: "긴급",
 };
 
+const TAX_STATUS_LABELS = {
+  TAXABLE: "과세",
+  ZERO: "영세",
+  EXEMPT: "면세",
+};
+
 const state = {
   user: null,
   activeTab: "dashboard",
@@ -156,6 +161,11 @@ const state = {
   reviewTotalCount: 0,
   managedBanners: [],
   managedProducts: [],
+  productMeta: {
+    badgeOptions: [],
+    categoryOptions: [],
+    taxStatusOptions: [],
+  },
   managedUsers: [],
   coupons: [],
   staffUsers: [],
@@ -165,7 +175,6 @@ const state = {
     settlements: new Set(),
     banners: new Set(),
     products: new Set(),
-    users: new Set(),
   },
 };
 
@@ -178,11 +187,11 @@ const el = {
   tabPanels: Array.from(document.querySelectorAll("[data-tab-panel]")),
 
   summary: document.getElementById("adminSummary"),
-  dashboardOrders: document.getElementById("adminDashboardOrders"),
+  dashboardMonthly: document.getElementById("adminDashboardMonthly"),
+  dashboardShipping: document.getElementById("adminDashboardShipping"),
   dashboardReturns: document.getElementById("adminDashboardReturns"),
   dashboardInquiries: document.getElementById("adminDashboardInquiries"),
   dashboardSettlements: document.getElementById("adminDashboardSettlements"),
-  dashboardReviews: document.getElementById("adminDashboardReviews"),
 
   orders: document.getElementById("adminOrders"),
   orderSearch: document.getElementById("adminOrderSearch"),
@@ -241,18 +250,33 @@ const el = {
 
   managedProducts: document.getElementById("adminManagedProducts"),
   managedProductSearch: document.getElementById("adminManagedProductSearch"),
+  managedProductCategoryFilter: document.getElementById("adminManagedProductCategoryFilter"),
   managedProductActiveFilter: document.getElementById("adminManagedProductActiveFilter"),
   managedProductSearchBtn: document.getElementById("adminManagedProductSearchBtn"),
   productCreateForm: document.getElementById("adminProductCreateForm"),
+  productCategoryId: document.getElementById("managedProductCategoryId"),
+  productSku: document.getElementById("managedProductSku"),
   productName: document.getElementById("managedProductName"),
   productOneLine: document.getElementById("managedProductOneLine"),
   productDescription: document.getElementById("managedProductDescription"),
+  productIntake: document.getElementById("managedProductIntake"),
+  productTarget: document.getElementById("managedProductTarget"),
+  productManufacturer: document.getElementById("managedProductManufacturer"),
+  productOriginCountry: document.getElementById("managedProductOriginCountry"),
+  productTaxStatus: document.getElementById("managedProductTaxStatus"),
+  productDeliveryFee: document.getElementById("managedProductDeliveryFee"),
+  productFreeShippingAmount: document.getElementById("managedProductFreeShippingAmount"),
+  productSearchKeywords: document.getElementById("managedProductSearchKeywords"),
+  productReleaseDate: document.getElementById("managedProductReleaseDate"),
+  productDisplayStartAt: document.getElementById("managedProductDisplayStartAt"),
+  productDisplayEndAt: document.getElementById("managedProductDisplayEndAt"),
   productPrice: document.getElementById("managedProductPrice"),
   productOriginalPrice: document.getElementById("managedProductOriginalPrice"),
   productStock: document.getElementById("managedProductStock"),
-  productBadges: document.getElementById("managedProductBadges"),
+  productBadgeGroup: document.getElementById("managedProductBadgeGroup"),
   productIsActive: document.getElementById("managedProductIsActive"),
   productThumbnail: document.getElementById("managedProductThumbnail"),
+  productImages: document.getElementById("managedProductImages"),
 
   managedUsers: document.getElementById("adminMembers"),
   memberSearch: document.getElementById("adminMemberSearch"),
@@ -409,19 +433,86 @@ function buildStaffOptions(currentId) {
   return [...base, ...rows].join("");
 }
 
-function formatAddress(order) {
-  const parts = [];
-  if (order.postalCode) parts.push(`(${order.postalCode})`);
-  if (order.roadAddress) parts.push(order.roadAddress);
-  if (order.detailAddress) parts.push(order.detailAddress);
-  return parts.join(" ").trim() || "-";
+function toDateInputValue(value) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function parseBadgeTypes(value) {
+function parseKeywordList(value) {
   return String(value || "")
     .split(",")
-    .map((row) => row.trim().toUpperCase())
+    .map((row) => row.trim())
     .filter(Boolean);
+}
+
+function buildCategoryOptions(currentValue = "", includeEmpty = true) {
+  const rows = [];
+  if (includeEmpty) {
+    rows.push(`<option value="">선택 안함</option>`);
+  }
+  state.productMeta.categoryOptions.forEach((category) => {
+    const selected = String(category.id) === String(currentValue) ? "selected" : "";
+    rows.push(`<option value="${category.id}" ${selected}>${escapeHtml(category.name)}</option>`);
+  });
+  return rows.join("");
+}
+
+function buildTaxStatusOptions(currentValue = "TAXABLE") {
+  const rows = state.productMeta.taxStatusOptions.length
+    ? state.productMeta.taxStatusOptions
+    : [
+        { code: "TAXABLE", label: "과세" },
+        { code: "ZERO", label: "영세" },
+        { code: "EXEMPT", label: "면세" },
+      ];
+  return rows
+    .map(
+      (row) =>
+        `<option value="${escapeHtml(row.code)}" ${row.code === currentValue ? "selected" : ""}>${escapeHtml(row.label)}</option>`,
+    )
+    .join("");
+}
+
+function renderBadgeCheckboxes(selectedBadgeTypes = [], disabled = false) {
+  const selectedSet = new Set((selectedBadgeTypes || []).map((item) => String(item)));
+  const rows = state.productMeta.badgeOptions.length
+    ? state.productMeta.badgeOptions
+    : [
+        { code: "HOT", label: "HOT" },
+        { code: "BESTSELLER", label: "BESTSELLER" },
+        { code: "DISCOUNT", label: "DISCOUNT" },
+        { code: "NEW", label: "NEW" },
+        { code: "RECOMMENDED", label: "RECOMMENDED" },
+      ];
+  return rows
+    .map(
+      (row) => `
+      <label class="admin-check-inline">
+        <input type="checkbox" data-role="badge-type" value="${escapeHtml(row.code)}" ${selectedSet.has(row.code) ? "checked" : ""} ${disabled ? "disabled" : ""} />
+        <span>${escapeHtml(row.label)}</span>
+      </label>
+    `,
+    )
+    .join("");
+}
+
+function getSelectedBadgeTypes(container) {
+  if (!container) return [];
+  return Array.from(container.querySelectorAll("input[data-role='badge-type']:checked"))
+    .map((input) => String(input.value || "").trim())
+    .filter(Boolean);
+}
+
+function renderSectorRows(sector = {}, labels = {}) {
+  return Object.entries(labels)
+    .map(([key, label]) => `<p><span>${escapeHtml(label)}</span><strong>${Number(sector?.[key] ?? 0)}건</strong></p>`)
+    .join("");
 }
 
 function showInquiryEditorSavedState(message, type = "success") {
@@ -460,167 +551,150 @@ function renderSummary() {
   const summary = state.dashboard?.summary || {};
   el.summary.innerHTML = `
     <article>
-      <p>총 주문건수</p>
-      <strong>${summary.totalOrders || 0}건</strong>
+      <p>${escapeHtml(summary.currentMonth || "-")} 주문건수</p>
+      <strong>${summary.thisMonthOrderCount || 0}건</strong>
     </article>
     <article>
-      <p>승인 주문건수</p>
-      <strong>${summary.paidOrders || 0}건</strong>
+      <p>${escapeHtml(summary.currentMonth || "-")} 주문금액</p>
+      <strong>${formatCurrency(summary.thisMonthOrderAmount || 0)}</strong>
     </article>
     <article>
-      <p>누적 결제금액</p>
-      <strong>${formatCurrency(summary.totalPaidAmount || 0)}</strong>
+      <p>${escapeHtml(summary.currentMonth || "-")} 결제완료 주문</p>
+      <strong>${summary.thisMonthPaidOrderCount || 0}건</strong>
     </article>
     <article>
-      <p>오늘 결제금액</p>
-      <strong>${formatCurrency(summary.todayPaidAmount || 0)}</strong>
+      <p>${escapeHtml(summary.currentMonth || "-")} 결제금액</p>
+      <strong>${formatCurrency(summary.thisMonthPaidAmount || 0)}</strong>
     </article>
     <article>
-      <p>반품 진행 / 완료</p>
-      <strong>${summary.openReturnCount || 0} / ${summary.completedReturnCount || 0}</strong>
+      <p>${escapeHtml(summary.currentMonth || "-")} 환불금액</p>
+      <strong>${formatCurrency(summary.thisMonthRefundAmount || 0)}</strong>
+    </article>
+    <article>
+      <p>${escapeHtml(summary.currentMonth || "-")} 신규회원</p>
+      <strong>${summary.thisMonthNewUserCount || 0}명</strong>
+    </article>
+    <article>
+      <p>${escapeHtml(summary.currentMonth || "-")} CS 문의</p>
+      <strong>${summary.thisMonthInquiryCount || 0}건</strong>
+    </article>
+    <article>
+      <p>${escapeHtml(summary.currentMonth || "-")} 정산 지급완료</p>
+      <strong>${formatCurrency(summary.thisMonthPaidSettlementAmount || 0)}</strong>
+    </article>
+    <article>
+      <p>진행 주문건</p>
+      <strong>${summary.openOrderCount || 0}건</strong>
+    </article>
+    <article>
+      <p>반품 진행건</p>
+      <strong>${summary.openReturnCount || 0}건</strong>
+    </article>
+    <article>
+      <p>반품 완료건</p>
+      <strong>${summary.completedReturnCount || 0}건</strong>
+    </article>
+    <article>
+      <p>CS 미처리</p>
+      <strong>${summary.openInquiryCount || 0}건</strong>
+    </article>
+    <article>
+      <p>CS SLA 지연</p>
+      <strong>${summary.overdueInquiryCount || 0}건</strong>
     </article>
     <article>
       <p>정산 예정금</p>
       <strong>${formatCurrency(summary.pendingSettlementAmount || 0)}</strong>
     </article>
     <article>
-      <p>정산 지급완료</p>
+      <p>정산 지급완료 누적</p>
       <strong>${formatCurrency(summary.paidSettlementAmount || 0)}</strong>
-    </article>
-    <article>
-      <p>CS 미처리 / SLA 지연</p>
-      <strong>${summary.openInquiryCount || 0} / ${summary.overdueInquiryCount || 0}</strong>
-    </article>
-    <article>
-      <p>배송 대기</p>
-      <strong>${summary.shippingPendingCount || 0}건</strong>
-    </article>
-    <article>
-      <p>배송 중</p>
-      <strong>${summary.shippingShippedCount || 0}건</strong>
-    </article>
-    <article>
-      <p>배송 완료</p>
-      <strong>${summary.shippingDeliveredCount || 0}건</strong>
-    </article>
-    <article>
-      <p>숨김 리뷰</p>
-      <strong>${summary.hiddenReviewCount || 0}건</strong>
     </article>
   `;
 }
 
-function renderDashboardOrders() {
-  const rows = state.dashboard?.recentOrders || [];
+function renderDashboardMonthly() {
+  const rows = state.dashboard?.monthlyMetrics || [];
   if (!rows.length) {
-    el.dashboardOrders.innerHTML = '<p class="empty">최근 주문 데이터가 없습니다.</p>';
+    el.dashboardMonthly.innerHTML = '<p class="empty">월별 지표 데이터가 없습니다.</p>';
     return;
   }
 
-  el.dashboardOrders.innerHTML = rows
-    .slice(0, 8)
-    .map(
-      (row) => `
-      <article class="admin-mini-item">
-        <strong>${escapeHtml(row.orderNo)}</strong>
-        <p>${formatDateTime(row.createdAt)} · ${formatCurrency(row.totalAmount)}</p>
-        <p>${renderStatusBadge(row.paymentStatus, PAYMENT_STATUS_LABELS)} ${renderStatusBadge(row.shippingStatus, SHIPPING_STATUS_LABELS)}</p>
-      </article>
-    `,
-    )
-    .join("");
+  el.dashboardMonthly.innerHTML = `
+    <div class="admin-excel-wrap">
+      <table class="admin-excel-table admin-dashboard-monthly-table">
+        <thead>
+          <tr>
+            <th>월</th>
+            <th>주문건수</th>
+            <th>결제완료 주문</th>
+            <th>주문금액</th>
+            <th>결제금액</th>
+            <th>환불금액</th>
+            <th>반품요청건</th>
+            <th>신규회원</th>
+            <th>CS 문의</th>
+            <th>정산지급건</th>
+            <th>정산지급금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              (row) => `
+            <tr>
+              <td>${escapeHtml(row.month)}</td>
+              <td>${row.orderCount}건</td>
+              <td>${row.paidOrderCount}건</td>
+              <td>${formatCurrency(row.orderAmount)}</td>
+              <td>${formatCurrency(row.paidAmount)}</td>
+              <td>${formatCurrency(row.refundAmount)}</td>
+              <td>${row.returnRequestCount}건</td>
+              <td>${row.newUserCount}명</td>
+              <td>${row.inquiryCount}건</td>
+              <td>${row.paidSettlementCount}건</td>
+              <td>${formatCurrency(row.paidSettlementAmount)}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
-function renderDashboardReturns() {
-  const rows = state.dashboard?.recentReturns || [];
-  if (!rows.length) {
-    el.dashboardReturns.innerHTML = '<p class="empty">최근 반품/환불 데이터가 없습니다.</p>';
-    return;
-  }
-
-  el.dashboardReturns.innerHTML = rows
-    .slice(0, 8)
-    .map(
-      (row) => `
-      <article class="admin-mini-item">
-        <strong>${escapeHtml(row.orderNo)}</strong>
-        <p>${escapeHtml(row.userEmail || "-")} · ${formatCurrency(row.requestedAmount)}</p>
-        <p>${renderStatusBadge(row.status, RETURN_STATUS_LABELS)}</p>
-      </article>
-    `,
-    )
-    .join("");
-}
-
-function renderDashboardInquiries() {
-  const rows = state.dashboard?.recentInquiries || [];
-  if (!rows.length) {
-    el.dashboardInquiries.innerHTML = '<p class="empty">최근 CS 데이터가 없습니다.</p>';
-    return;
-  }
-
-  el.dashboardInquiries.innerHTML = rows
-    .slice(0, 8)
-    .map(
-      (row) => `
-      <article class="admin-mini-item">
-        <strong>${escapeHtml(row.title)}</strong>
-        <p>${escapeHtml(row.userEmail || "-")} · ${formatDateTime(row.createdAt)}</p>
-        <p>${renderStatusBadge(row.status, INQUIRY_STATUS_LABELS)} ${renderStatusBadge(row.priority, PRIORITY_LABELS)}</p>
-      </article>
-    `,
-    )
-    .join("");
-}
-
-function renderDashboardSettlements() {
-  const rows = state.dashboard?.recentSettlements || [];
-  if (!rows.length) {
-    el.dashboardSettlements.innerHTML = '<p class="empty">최근 정산 데이터가 없습니다.</p>';
-    return;
-  }
-
-  el.dashboardSettlements.innerHTML = rows
-    .slice(0, 8)
-    .map(
-      (row) => `
-      <article class="admin-mini-item">
-        <strong>${escapeHtml(row.orderNo)}</strong>
-        <p>${escapeHtml(row.userEmail || "-")} · ${formatCurrency(row.settlementAmount)}</p>
-        <p>${renderStatusBadge(row.status, SETTLEMENT_STATUS_LABELS)}</p>
-      </article>
-    `,
-    )
-    .join("");
-}
-
-function renderDashboardReviews() {
-  const rows = state.dashboard?.recentReviews || [];
-  if (!rows.length) {
-    el.dashboardReviews.innerHTML = '<p class="empty">최근 리뷰 데이터가 없습니다.</p>';
-    return;
-  }
-
-  el.dashboardReviews.innerHTML = rows
-    .slice(0, 8)
-    .map(
-      (row) => `
-      <article class="admin-mini-item">
-        <strong>${escapeHtml(row.productName)}</strong>
-        <p>${escapeHtml(row.userEmail || "-")} · ${formatDateTime(row.createdAt)}</p>
-        <p>${renderStatusBadge(row.status, REVIEW_STATUS_LABELS)} · 평점 ${row.score}</p>
-      </article>
-    `,
-    )
-    .join("");
+function renderDashboardSectors() {
+  const sectors = state.dashboard?.statusSectors || {};
+  el.dashboardShipping.innerHTML = renderSectorRows(sectors.shipping, {
+    ready: "배송준비",
+    preparing: "상품준비중",
+    shipped: "배송중",
+    delivered: "배송완료",
+  });
+  el.dashboardReturns.innerHTML = renderSectorRows(sectors.returns, {
+    requested: "요청",
+    approved: "승인",
+    refunding: "환불처리중",
+    refunded: "환불완료",
+    rejected: "반려",
+  });
+  el.dashboardInquiries.innerHTML = renderSectorRows(sectors.inquiries, {
+    open: "접수",
+    answered: "답변완료",
+    closed: "종결",
+  });
+  el.dashboardSettlements.innerHTML = renderSectorRows(sectors.settlements, {
+    pending: "정산대기",
+    hold: "정산보류",
+    scheduled: "지급예정",
+    paid: "지급완료",
+  });
 }
 
 function renderDashboardBoards() {
-  renderDashboardOrders();
-  renderDashboardReturns();
-  renderDashboardInquiries();
-  renderDashboardSettlements();
-  renderDashboardReviews();
+  renderDashboardMonthly();
+  renderDashboardSectors();
 }
 
 function renderOrders() {
@@ -637,15 +711,22 @@ function renderOrders() {
             <th>작업</th>
             <th>주문번호</th>
             <th>주문일시</th>
+            <th>상품수</th>
+            <th>총결제금액</th>
             <th>주문자명</th>
+            <th>수령인</th>
             <th>연락처</th>
-            <th>배송지</th>
+            <th>우편번호</th>
+            <th>도로명주소</th>
+            <th>지번주소</th>
+            <th>상세주소</th>
             <th>주문상태</th>
             <th>결제상태</th>
             <th>배송상태</th>
             <th>정산상태</th>
-            <th>반품</th>
-            <th>택배사(송장표기)</th>
+            <th>반품요청건</th>
+            <th>반품진행</th>
+            <th>택배사</th>
             <th>송장번호</th>
           </tr>
         </thead>
@@ -671,10 +752,16 @@ function renderOrders() {
                   </div>
                 </td>
                 <td><strong>${escapeHtml(order.orderNo)}</strong></td>
-                <td>${formatDateTime(order.createdAt)} (상품 ${order.itemCount}개 / ${formatCurrency(order.totalAmount)})</td>
-                <td>${escapeHtml(order.userName || order.recipient || "-")}</td>
-                <td>${escapeHtml(order.phone || "-")}</td>
-                <td>${escapeHtml(formatAddress(order))}</td>
+                <td>${formatDateTime(order.createdAt)}</td>
+                <td>${order.itemCount}개</td>
+                <td>${formatCurrency(order.totalAmount)}</td>
+                <td>${escapeHtml(order.userName || "-")}</td>
+                <td><input type="text" data-role="recipient" value="${escapeHtml(order.recipient || "")}" ${disabled} /></td>
+                <td><input type="text" data-role="phone" value="${escapeHtml(order.phone || "")}" ${disabled} /></td>
+                <td><input type="text" data-role="postal-code" value="${escapeHtml(order.postalCode || "")}" ${disabled} /></td>
+                <td><input type="text" data-role="road-address" value="${escapeHtml(order.roadAddress || "")}" ${disabled} /></td>
+                <td><input type="text" data-role="jibun-address" value="${escapeHtml(order.jibunAddress || "")}" ${disabled} /></td>
+                <td><input type="text" data-role="detail-address" value="${escapeHtml(order.detailAddress || "")}" ${disabled} /></td>
                 <td class="admin-cell-select">
                   <select data-role="order-status" ${disabled}>${buildOptions(ORDER_STATUS_OPTIONS, order.status, ORDER_STATUS_LABELS)}</select>
                 </td>
@@ -685,12 +772,13 @@ function renderOrders() {
                   <select data-role="shipping-status" ${disabled}>${buildOptions(SHIPPING_STATUS_OPTIONS, order.shippingStatus, SHIPPING_STATUS_LABELS)}</select>
                 </td>
                 <td>${renderStatusBadge(order.settlementStatus || "-", SETTLEMENT_STATUS_LABELS)}</td>
-                <td>${order.returnRequestCount}건 ${order.hasOpenReturn ? "(진행중)" : ""}</td>
+                <td>${order.returnRequestCount}건</td>
+                <td>${order.hasOpenReturn ? "진행중" : "-"}</td>
                 <td>
-                  <input type="text" data-role="courier-name" placeholder="고객표시 택배사" value="${escapeHtml(order.courierName || "")}" ${disabled} />
+                  <input type="text" data-role="courier-name" value="${escapeHtml(order.courierName || "")}" ${disabled} />
                 </td>
                 <td>
-                  <input type="text" data-role="tracking-no" placeholder="송장번호" value="${escapeHtml(order.trackingNo || "")}" ${disabled} />
+                  <input type="text" data-role="tracking-no" value="${escapeHtml(order.trackingNo || "")}" ${disabled} />
                 </td>
               </tr>
             `;
@@ -717,6 +805,7 @@ function renderReturns() {
             <th>주문번호</th>
             <th>회원</th>
             <th>요청사유</th>
+            <th>상세사유</th>
             <th>요청금액</th>
             <th>상태</th>
             <th>승인금액</th>
@@ -749,10 +838,8 @@ function renderReturns() {
                 </td>
                 <td><strong>${escapeHtml(row.orderNo)}</strong></td>
                 <td>${escapeHtml(row.userEmail || "-")}</td>
-                <td>
-                  <p><b>${escapeHtml(row.reasonTitle)}</b></p>
-                  <small>${escapeHtml(row.reasonDetail || "(상세 사유 없음)")}</small>
-                </td>
+                <td>${escapeHtml(row.reasonTitle || "-")}</td>
+                <td>${escapeHtml(row.reasonDetail || "-")}</td>
                 <td>${formatCurrency(row.requestedAmount)}</td>
                 <td>
                   <select data-role="return-status" ${disabled}>${buildOptions(RETURN_STATUS_OPTIONS, row.status, RETURN_STATUS_LABELS)}</select>
@@ -794,16 +881,26 @@ function renderSettlements() {
       <table class="admin-excel-table admin-settlements-table">
         <thead>
           <tr>
-            <th>작업</th>
-            <th>주문번호</th>
-            <th>회원</th>
-            <th>상태</th>
-            <th>총 결제금액</th>
+            <th rowspan="2">작업</th>
+            <th rowspan="2">주문번호</th>
+            <th rowspan="2">주문일시</th>
+            <th rowspan="2">회원</th>
+            <th colspan="4">주문 데이터</th>
+            <th colspan="3">정산 공제</th>
+            <th colspan="5">정산 결과</th>
+          </tr>
+          <tr>
+            <th>주문소계</th>
+            <th>배송비</th>
+            <th>할인금액</th>
+            <th>총결제금액</th>
             <th>PG수수료</th>
             <th>플랫폼수수료</th>
             <th>반품차감</th>
+            <th>정산상태</th>
             <th>정산금</th>
             <th>지급예정일</th>
+            <th>지급완료일</th>
             <th>메모</th>
           </tr>
         </thead>
@@ -828,23 +925,22 @@ function renderSettlements() {
                     <button class="danger" type="button" data-action="deleteSettlement">삭제</button>
                   </div>
                 </td>
-                <td>
-                  <strong>${escapeHtml(row.orderNo)}</strong>
-                  <small>${formatDateTime(row.orderCreatedAt)}</small>
-                </td>
+                <td><strong>${escapeHtml(row.orderNo)}</strong></td>
+                <td>${formatDateTime(row.orderCreatedAt)}</td>
                 <td>${escapeHtml(row.userEmail || "-")}</td>
-                <td>
-                  <select data-role="settlement-status" ${disabled}>${buildOptions(SETTLEMENT_STATUS_OPTIONS, row.status, SETTLEMENT_STATUS_LABELS)}</select>
-                </td>
-                <td>${formatCurrency(row.grossAmount)}</td>
+                <td>${formatCurrency(row.orderSubtotalAmount)}</td>
+                <td>${formatCurrency(row.orderShippingFee)}</td>
+                <td>${formatCurrency(row.orderDiscountAmount)}</td>
+                <td>${formatCurrency(row.orderTotalAmount)}</td>
                 <td><input type="number" data-role="pg-fee" value="${row.pgFee}" ${disabled} /></td>
                 <td><input type="number" data-role="platform-fee" value="${row.platformFee}" ${disabled} /></td>
                 <td><input type="number" data-role="return-deduction" value="${row.returnDeduction}" ${disabled} /></td>
                 <td>
-                  <strong>${formatCurrency(row.settlementAmount)}</strong>
-                  <small>지급 ${formatDateTime(row.paidAt)}</small>
+                  <select data-role="settlement-status" ${disabled}>${buildOptions(SETTLEMENT_STATUS_OPTIONS, row.status, SETTLEMENT_STATUS_LABELS)}</select>
                 </td>
+                <td>${formatCurrency(row.settlementAmount)}</td>
                 <td><input type="date" data-role="expected-payout-date" value="${escapeHtml(row.expectedPayoutDate || "")}" ${disabled} /></td>
+                <td>${formatDateTime(row.paidAt)}</td>
                 <td><input type="text" data-role="settlement-memo" value="${escapeHtml(row.memo || "")}" ${disabled} /></td>
               </tr>
             `;
@@ -869,10 +965,13 @@ function renderInquiries() {
           <tr>
             <th class="admin-cs-col-actions">작업</th>
             <th class="admin-cs-col-id">ID</th>
-            <th class="admin-cs-col-member">회원</th>
+            <th class="admin-cs-col-member">회원명</th>
+            <th class="admin-cs-col-member-email">회원이메일</th>
             <th class="admin-cs-col-title">문의제목</th>
+            <th class="admin-cs-col-content">문의내용</th>
             <th class="admin-cs-col-category">카테고리</th>
             <th class="admin-cs-col-status">상태</th>
+            <th class="admin-cs-col-sla">SLA 지연</th>
             <th class="admin-cs-col-priority">우선순위</th>
             <th class="admin-cs-col-created">등록일시</th>
           </tr>
@@ -900,19 +999,13 @@ function renderInquiries() {
                   </div>
                 </td>
                 <td class="admin-cs-col-id">${inquiry.id}</td>
-                <td class="admin-cs-col-member">
-                  <p>${escapeHtml(inquiry.userName || "회원")}</p>
-                  <small>${escapeHtml(inquiry.userEmail || "-")}</small>
-                </td>
-                <td class="admin-cs-col-title">
-                  <strong>${escapeHtml(inquiry.title)}</strong>
-                  <small>${formatTextPreview(inquiry.content, 180)}</small>
-                </td>
+                <td class="admin-cs-col-member">${escapeHtml(inquiry.userName || "회원")}</td>
+                <td class="admin-cs-col-member-email">${escapeHtml(inquiry.userEmail || "-")}</td>
+                <td class="admin-cs-col-title">${escapeHtml(inquiry.title)}</td>
+                <td class="admin-cs-col-content">${formatTextPreview(inquiry.content, 180)}</td>
                 <td class="admin-cs-col-category">${escapeHtml(getLabel(inquiry.category, CATEGORY_LABELS))}</td>
-                <td class="admin-cs-col-status">
-                  ${renderStatusBadge(inquiry.status, INQUIRY_STATUS_LABELS)}
-                  ${inquiry.isSlaOverdue ? '<span class="admin-status overdue">SLA 지연</span>' : ""}
-                </td>
+                <td class="admin-cs-col-status">${renderStatusBadge(inquiry.status, INQUIRY_STATUS_LABELS)}</td>
+                <td class="admin-cs-col-sla">${inquiry.isSlaOverdue ? '<span class="admin-status overdue">지연</span>' : "-"}</td>
                 <td class="admin-cs-col-priority">${escapeHtml(getLabel(inquiry.priority, PRIORITY_LABELS))}</td>
                 <td class="admin-cs-col-created">${formatDateTime(inquiry.createdAt)}</td>
               </tr>
@@ -920,7 +1013,7 @@ function renderInquiries() {
                 isExpanded
                   ? `
                     <tr class="admin-cs-answer-row">
-                      <td colspan="8">
+                      <td colspan="11">
                         <section class="admin-cs-inline-answer">
                           <p class="admin-cs-inline-answer-meta">답변 등록일 ${formatDateTime(inquiry.answeredAt || inquiry.updatedAt)}</p>
                           <div class="admin-cs-inline-answer-body">${answerText}</div>
@@ -1011,10 +1104,13 @@ function renderReviews() {
           <tr>
             <th>작업</th>
             <th>ID</th>
-            <th>상품</th>
-            <th>작성자</th>
+            <th>상품ID</th>
+            <th>상품명</th>
+            <th>작성자명</th>
+            <th>작성자이메일</th>
             <th>별점</th>
-            <th>리뷰 내용</th>
+            <th>제목</th>
+            <th>내용</th>
             <th>이미지</th>
             <th>상태</th>
             <th>작성일시</th>
@@ -1033,19 +1129,13 @@ function renderReviews() {
                   </div>
                 </td>
                 <td>${review.id}</td>
-                <td>
-                  <p><strong>${escapeHtml(review.productName)}</strong></p>
-                  <small>상품ID ${review.productId}</small>
-                </td>
-                <td>
-                  <p>${escapeHtml(review.userName || "회원")}</p>
-                  <small>${escapeHtml(review.userEmail || "-")}</small>
-                </td>
+                <td>${review.productId}</td>
+                <td>${escapeHtml(review.productName)}</td>
+                <td>${escapeHtml(review.userName || "회원")}</td>
+                <td>${escapeHtml(review.userEmail || "-")}</td>
                 <td>${review.score} / 5</td>
-                <td>
-                  <p><b>${escapeHtml(review.title || "(제목 없음)")}</b></p>
-                  <small>${escapeHtml(review.content)}</small>
-                </td>
+                <td>${escapeHtml(review.title || "(제목 없음)")}</td>
+                <td>${escapeHtml(review.content)}</td>
                 <td>
                   ${
                     review.images.length
@@ -1112,8 +1202,10 @@ function renderCoupons() {
           <tr>
             <th>작업</th>
             <th>회원</th>
-            <th>쿠폰</th>
-            <th>할인/조건</th>
+            <th>쿠폰명</th>
+            <th>쿠폰코드</th>
+            <th>할인금액</th>
+            <th>최소주문금액</th>
             <th>상태</th>
             <th>만료</th>
           </tr>
@@ -1127,14 +1219,10 @@ function renderCoupons() {
                   <button class="danger" type="button" data-action="deleteCoupon" ${coupon.isUsed ? "disabled" : ""}>삭제</button>
                 </td>
                 <td>${escapeHtml(coupon.userEmail || "-")}</td>
-                <td>
-                  <strong>${escapeHtml(coupon.name)}</strong>
-                  <p>${escapeHtml(coupon.code)}</p>
-                </td>
-                <td>
-                  <p>${formatCurrency(coupon.discountAmount)}</p>
-                  <small>${coupon.minOrderAmount ? `${formatCurrency(coupon.minOrderAmount)} 이상` : "최소금액 없음"}</small>
-                </td>
+                <td>${escapeHtml(coupon.name)}</td>
+                <td>${escapeHtml(coupon.code)}</td>
+                <td>${formatCurrency(coupon.discountAmount)}</td>
+                <td>${coupon.minOrderAmount ? formatCurrency(coupon.minOrderAmount) : "-"}</td>
                 <td>${coupon.isUsed ? "사용완료" : coupon.isExpired ? "만료" : "사용가능"}</td>
                 <td>${formatDateTime(coupon.expiresAt)}</td>
               </tr>
@@ -1232,14 +1320,29 @@ function renderManagedProducts() {
           <tr>
             <th>작업</th>
             <th>ID</th>
+            <th>카테고리</th>
+            <th>SKU</th>
             <th>상품명</th>
             <th>한줄소개</th>
+            <th>제조사</th>
+            <th>원산지</th>
+            <th>세금구분</th>
             <th>판매가</th>
             <th>정상가</th>
             <th>재고</th>
+            <th>배송비</th>
+            <th>무료배송기준</th>
+            <th>출시일</th>
+            <th>노출시작</th>
+            <th>노출종료</th>
+            <th>검색키워드</th>
             <th>배지</th>
             <th>활성</th>
             <th>썸네일</th>
+            <th>추가이미지수</th>
+            <th>이미지관리</th>
+            <th>복용법</th>
+            <th>권장대상</th>
             <th>설명</th>
           </tr>
         </thead>
@@ -1248,6 +1351,8 @@ function renderManagedProducts() {
             .map((product) => {
               const editing = isRowEditing("products", product.id);
               const disabled = editing ? "" : "disabled";
+              const images = Array.isArray(product.images) ? product.images.filter((image) => image.imageUrl) : [];
+              const additionalImageCount = images.filter((image) => !image.isThumbnail).length;
               return `
                 <tr data-product-id="${product.id}" class="${editing ? "is-editing" : "is-readonly"}">
                   <td class="admin-cell-actions">
@@ -1264,15 +1369,29 @@ function renderManagedProducts() {
                     </div>
                   </td>
                   <td>${product.id}</td>
+                  <td>
+                    <select data-role="category-id" ${disabled}>${buildCategoryOptions(product.categoryId || "", true)}</select>
+                  </td>
+                  <td><input type="text" data-role="sku" value="${escapeHtml(product.sku || "")}" ${disabled} /></td>
                   <td><input type="text" data-role="name" value="${escapeHtml(product.name)}" ${disabled} /></td>
                   <td><input type="text" data-role="one-line" value="${escapeHtml(product.oneLine)}" ${disabled} /></td>
+                  <td><input type="text" data-role="manufacturer" value="${escapeHtml(product.manufacturer || "")}" ${disabled} /></td>
+                  <td><input type="text" data-role="origin-country" value="${escapeHtml(product.originCountry || "")}" ${disabled} /></td>
+                  <td>
+                    <select data-role="tax-status" ${disabled}>${buildTaxStatusOptions(product.taxStatus || "TAXABLE")}</select>
+                  </td>
                   <td><input type="number" min="0" data-role="price" value="${product.price}" ${disabled} /></td>
                   <td><input type="number" min="0" data-role="original-price" value="${product.originalPrice}" ${disabled} /></td>
                   <td><input type="number" min="0" data-role="stock" value="${product.stock}" ${disabled} /></td>
+                  <td><input type="number" min="0" data-role="delivery-fee" value="${product.deliveryFee || 0}" ${disabled} /></td>
+                  <td><input type="number" min="0" data-role="free-shipping-amount" value="${product.freeShippingAmount || 0}" ${disabled} /></td>
+                  <td><input type="date" data-role="release-date" value="${escapeHtml(toDateInputValue(product.releaseDate))}" ${disabled} /></td>
+                  <td><input type="datetime-local" data-role="display-start-at" value="${escapeHtml(toLocalInputValue(product.displayStartAt))}" ${disabled} /></td>
+                  <td><input type="datetime-local" data-role="display-end-at" value="${escapeHtml(toLocalInputValue(product.displayEndAt))}" ${disabled} /></td>
+                  <td><input type="text" data-role="search-keywords" value="${escapeHtml((product.searchKeywords || []).join(","))}" ${disabled} /></td>
                   <td>
-                    <input type="text" data-role="badge-types" value="${escapeHtml(product.badgeTypes.join(","))}" ${disabled} />
-                    <div>
-                      ${product.badgeTypes.map((badgeType) => `<span class="admin-badge-chip">${escapeHtml(badgeType)}</span>`).join("")}
+                    <div data-role="badge-types" class="admin-badge-checkboxes ${editing ? "" : "is-disabled"}">
+                      ${renderBadgeCheckboxes(product.badgeTypes || [], !editing)}
                     </div>
                   </td>
                   <td>
@@ -1287,6 +1406,39 @@ function renderManagedProducts() {
                       <input class="admin-file-input" type="file" data-role="thumbnail-file" accept="image/*" ${disabled} />
                     </div>
                   </td>
+                  <td>${additionalImageCount}장</td>
+                  <td>
+                    <div class="admin-image-cell">
+                      ${
+                        images.length
+                          ? `
+                            <div class="admin-managed-image-grid">
+                              ${images
+                                .map(
+                                  (image) => `
+                                  <div class="admin-managed-image-item">
+                                    <img class="admin-product-thumb" src="${escapeHtml(image.imageUrl || "")}" alt="상품 이미지 ${image.id}" />
+                                    <label class="admin-check-inline">
+                                      <input type="radio" name="thumbnail-image-id-${product.id}" data-role="thumbnail-image-id" value="${image.id}" ${image.isThumbnail ? "checked" : ""} ${disabled} />
+                                      <span>대표</span>
+                                    </label>
+                                    <label class="admin-check-inline">
+                                      <input type="checkbox" data-role="delete-image-id" value="${image.id}" ${disabled} />
+                                      <span>삭제</span>
+                                    </label>
+                                  </div>
+                                `,
+                                )
+                                .join("")}
+                            </div>
+                          `
+                          : '<span class="empty">등록 이미지 없음</span>'
+                      }
+                      <input class="admin-file-input" type="file" data-role="image-files" accept="image/*" multiple ${disabled} />
+                    </div>
+                  </td>
+                  <td><input type="text" data-role="intake" value="${escapeHtml(product.intake || "")}" ${disabled} /></td>
+                  <td><input type="text" data-role="target" value="${escapeHtml(product.target || "")}" ${disabled} /></td>
                   <td><input type="text" data-role="description" value="${escapeHtml(product.description)}" ${disabled} /></td>
                 </tr>
               `;
@@ -1309,14 +1461,15 @@ function renderManagedUsers() {
       <table class="admin-excel-table admin-members-table">
         <thead>
           <tr>
-            <th>작업</th>
             <th>ID</th>
             <th>이메일</th>
             <th>이름</th>
             <th>전화번호</th>
             <th>상태</th>
             <th>권한</th>
-            <th>주문/리뷰/문의</th>
+            <th>주문수</th>
+            <th>리뷰수</th>
+            <th>문의수</th>
             <th>가입일</th>
             <th>최근로그인</th>
           </tr>
@@ -1324,40 +1477,17 @@ function renderManagedUsers() {
         <tbody>
           ${state.managedUsers
             .map((user) => {
-              const editing = isRowEditing("users", user.id);
-              const disabled = editing ? "" : "disabled";
               return `
-                <tr data-user-id="${user.id}" class="${editing ? "is-editing" : "is-readonly"}">
-                  <td class="admin-cell-actions">
-                    <div class="admin-inline-actions">
-                      ${
-                        editing
-                          ? `
-                            <button class="primary" type="button" data-action="saveManagedUser">저장</button>
-                            <button class="ghost" type="button" data-action="cancelManagedUserEdit">취소</button>
-                          `
-                          : `<button class="primary" type="button" data-action="editManagedUser">수정</button>`
-                      }
-                      <button class="danger" type="button" data-action="deactivateManagedUser" ${!user.isActive ? "disabled" : ""}>비활성화</button>
-                    </div>
-                  </td>
+                <tr data-user-id="${user.id}" class="is-readonly">
                   <td>${user.id}</td>
                   <td>${escapeHtml(user.email)}</td>
-                  <td><input type="text" data-role="name" value="${escapeHtml(user.name)}" ${disabled} /></td>
-                  <td><input type="text" data-role="phone" value="${escapeHtml(user.phone)}" ${disabled} /></td>
-                  <td>
-                    <select data-role="is-active" ${disabled}>
-                      <option value="true" ${user.isActive ? "selected" : ""}>활성</option>
-                      <option value="false" ${!user.isActive ? "selected" : ""}>비활성</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select data-role="is-staff" ${disabled}>
-                      <option value="false" ${!user.isStaff ? "selected" : ""}>일반회원</option>
-                      <option value="true" ${user.isStaff ? "selected" : ""}>관리자</option>
-                    </select>
-                  </td>
-                  <td>${user.orderCount} / ${user.reviewCount} / ${user.inquiryCount}</td>
+                  <td>${escapeHtml(user.name || "-")}</td>
+                  <td>${escapeHtml(user.phone || "-")}</td>
+                  <td>${user.isActive ? "활성" : "비활성"}</td>
+                  <td>${user.isStaff ? "관리자" : "일반회원"}</td>
+                  <td>${user.orderCount}</td>
+                  <td>${user.reviewCount}</td>
+                  <td>${user.inquiryCount}</td>
                   <td>${formatDateTime(user.createdAt)}</td>
                   <td>${formatDateTime(user.lastLogin)}</td>
                 </tr>
@@ -1394,6 +1524,35 @@ async function loadDashboard() {
 
 async function loadStaffUsers() {
   state.staffUsers = await fetchAdminStaffUsers();
+}
+
+function applyProductMetaToForm({ preserveFilter = true } = {}) {
+  const currentCategoryFilter = preserveFilter ? String(el.managedProductCategoryFilter?.value || "") : "";
+  if (el.productCategoryId) {
+    el.productCategoryId.innerHTML = buildCategoryOptions("", true);
+  }
+  if (el.managedProductCategoryFilter) {
+    el.managedProductCategoryFilter.innerHTML = `
+      <option value="">카테고리 전체</option>
+      ${state.productMeta.categoryOptions
+        .map((category) => `<option value="${category.id}">${escapeHtml(category.name)}</option>`)
+        .join("")}
+    `;
+    if (currentCategoryFilter) {
+      el.managedProductCategoryFilter.value = currentCategoryFilter;
+    }
+  }
+  if (el.productTaxStatus) {
+    el.productTaxStatus.innerHTML = buildTaxStatusOptions("TAXABLE");
+  }
+  if (el.productBadgeGroup) {
+    el.productBadgeGroup.innerHTML = renderBadgeCheckboxes([], false);
+  }
+}
+
+async function loadProductMeta() {
+  state.productMeta = await fetchAdminProductMeta();
+  applyProductMetaToForm({ preserveFilter: true });
 }
 
 async function loadOrders() {
@@ -1486,6 +1645,7 @@ async function loadManagedBanners() {
 async function loadManagedProducts() {
   state.managedProducts = await fetchAdminManagedProducts({
     q: el.managedProductSearch.value.trim(),
+    categoryId: el.managedProductCategoryFilter.value || undefined,
     isActive:
       el.managedProductActiveFilter.value === ""
         ? undefined
@@ -1507,12 +1667,11 @@ async function loadManagedUsers() {
         ? undefined
         : el.memberStaffFilter.value === "true",
   });
-  clearRowEditing("users");
   renderManagedUsers();
 }
 
 async function reloadAll() {
-  await loadStaffUsers();
+  await Promise.all([loadStaffUsers(), loadProductMeta()]);
   await Promise.all([
     loadDashboard(),
     loadOrders(),
@@ -1552,6 +1711,12 @@ async function handleOrderAction(button) {
   }
 
   const payload = {
+    recipient: row.querySelector("[data-role='recipient']")?.value?.trim() || "",
+    phone: row.querySelector("[data-role='phone']")?.value?.trim() || "",
+    postalCode: row.querySelector("[data-role='postal-code']")?.value?.trim() || "",
+    roadAddress: row.querySelector("[data-role='road-address']")?.value?.trim() || "",
+    jibunAddress: row.querySelector("[data-role='jibun-address']")?.value?.trim() || "",
+    detailAddress: row.querySelector("[data-role='detail-address']")?.value?.trim() || "",
     status: row.querySelector("[data-role='order-status']")?.value,
     paymentStatus: row.querySelector("[data-role='payment-status']")?.value,
     shippingStatus: row.querySelector("[data-role='shipping-status']")?.value,
@@ -1802,62 +1967,46 @@ async function handleManagedProductAction(button) {
     return "noop";
   }
 
+  const badgeTypes = getSelectedBadgeTypes(row.querySelector("[data-role='badge-types']"));
+  const deleteImageIds = Array.from(row.querySelectorAll("input[data-role='delete-image-id']:checked"))
+    .map((input) => Number(input.value || 0))
+    .filter((value) => value > 0);
+  const thumbnailImageId = Number(
+    row.querySelector("input[data-role='thumbnail-image-id']:checked")?.value || 0,
+  ) || undefined;
+  const imageFiles = Array.from(row.querySelector("[data-role='image-files']")?.files || []);
+  const categoryValue = row.querySelector("[data-role='category-id']")?.value || "";
+
   await updateAdminManagedProduct(productId, {
+    categoryId: categoryValue ? Number(categoryValue) : null,
+    sku: row.querySelector("[data-role='sku']")?.value?.trim() || "",
     name: row.querySelector("[data-role='name']")?.value?.trim() || "",
     oneLine: row.querySelector("[data-role='one-line']")?.value?.trim() || "",
     description: row.querySelector("[data-role='description']")?.value?.trim() || "",
+    intake: row.querySelector("[data-role='intake']")?.value?.trim() || "",
+    target: row.querySelector("[data-role='target']")?.value?.trim() || "",
+    manufacturer: row.querySelector("[data-role='manufacturer']")?.value?.trim() || "",
+    originCountry: row.querySelector("[data-role='origin-country']")?.value?.trim() || "",
+    taxStatus: row.querySelector("[data-role='tax-status']")?.value || "TAXABLE",
+    deliveryFee: Number(row.querySelector("[data-role='delivery-fee']")?.value || 0),
+    freeShippingAmount: Number(row.querySelector("[data-role='free-shipping-amount']")?.value || 0),
+    searchKeywords: parseKeywordList(row.querySelector("[data-role='search-keywords']")?.value || ""),
+    releaseDate: row.querySelector("[data-role='release-date']")?.value || "",
+    displayStartAt: toIsoFromLocal(row.querySelector("[data-role='display-start-at']")?.value || ""),
+    displayEndAt: toIsoFromLocal(row.querySelector("[data-role='display-end-at']")?.value || ""),
     price: Number(row.querySelector("[data-role='price']")?.value || 0),
     originalPrice: Number(row.querySelector("[data-role='original-price']")?.value || 0),
     stock: Number(row.querySelector("[data-role='stock']")?.value || 0),
     isActive: row.querySelector("[data-role='is-active']")?.checked,
-    badgeTypes: parseBadgeTypes(row.querySelector("[data-role='badge-types']")?.value || ""),
+    badgeTypes,
     thumbnailFile: row.querySelector("[data-role='thumbnail-file']")?.files?.[0] || null,
+    imageFiles,
+    deleteImageIds,
+    thumbnailImageId,
   });
   setRowEditing("products", productId, false);
   await Promise.all([loadManagedProducts(), loadDashboard()]);
   return "saveManagedProduct";
-}
-
-async function handleManagedUserAction(button) {
-  const row = button.closest("tr[data-user-id]");
-  if (!row) return;
-
-  const userId = Number(row.dataset.userId);
-  const action = button.dataset.action;
-
-  if (action === "editManagedUser") {
-    setRowEditing("users", userId, true);
-    renderManagedUsers();
-    return "edit";
-  }
-
-  if (action === "cancelManagedUserEdit") {
-    setRowEditing("users", userId, false);
-    renderManagedUsers();
-    return "cancel";
-  }
-
-  if (action === "deactivateManagedUser") {
-    if (!confirm("해당 회원을 비활성화하시겠습니까?")) return;
-    await deactivateAdminManagedUser(userId);
-    setRowEditing("users", userId, false);
-    await Promise.all([loadManagedUsers(), loadDashboard()]);
-    return "deactivateManagedUser";
-  }
-
-  if (!isRowEditing("users", userId)) {
-    return "noop";
-  }
-
-  await updateAdminManagedUser(userId, {
-    name: row.querySelector("[data-role='name']")?.value?.trim() || "",
-    phone: row.querySelector("[data-role='phone']")?.value?.trim() || "",
-    isActive: row.querySelector("[data-role='is-active']")?.value === "true",
-    isStaff: row.querySelector("[data-role='is-staff']")?.value === "true",
-  });
-  setRowEditing("users", userId, false);
-  await Promise.all([loadManagedUsers(), loadDashboard()]);
-  return "saveManagedUser";
 }
 
 function bindSearchWithEnter(target, handler) {
@@ -1880,6 +2029,7 @@ function bindTabs() {
       setActiveTab(tab);
       if (tab === "products") {
         try {
+          await loadProductMeta();
           await Promise.all([loadManagedBanners(), loadManagedProducts()]);
         } catch (error) {
           console.error(error);
@@ -1981,7 +2131,7 @@ function bind() {
     });
   });
 
-  [el.managedProductSearchBtn, el.managedProductActiveFilter].forEach((target) => {
+  [el.managedProductSearchBtn, el.managedProductCategoryFilter, el.managedProductActiveFilter].forEach((target) => {
     const eventName = target?.tagName === "BUTTON" ? "click" : "change";
     target?.addEventListener(eventName, async () => {
       try {
@@ -2203,18 +2353,33 @@ function bind() {
 
     try {
       await createAdminManagedProduct({
+        categoryId: el.productCategoryId.value ? Number(el.productCategoryId.value) : null,
+        sku: el.productSku.value.trim(),
         name: el.productName.value.trim(),
         oneLine: el.productOneLine.value.trim(),
         description: el.productDescription.value.trim(),
+        intake: el.productIntake.value.trim(),
+        target: el.productTarget.value.trim(),
+        manufacturer: el.productManufacturer.value.trim(),
+        originCountry: el.productOriginCountry.value.trim(),
+        taxStatus: el.productTaxStatus.value || "TAXABLE",
+        deliveryFee: Number(el.productDeliveryFee.value || 0),
+        freeShippingAmount: Number(el.productFreeShippingAmount.value || 0),
+        searchKeywords: parseKeywordList(el.productSearchKeywords.value),
+        releaseDate: el.productReleaseDate.value || "",
+        displayStartAt: toIsoFromLocal(el.productDisplayStartAt.value),
+        displayEndAt: toIsoFromLocal(el.productDisplayEndAt.value),
         price: Number(el.productPrice.value || 0),
         originalPrice: Number(el.productOriginalPrice.value || 0),
         stock: Number(el.productStock.value || 0),
         isActive: el.productIsActive.checked,
-        badgeTypes: parseBadgeTypes(el.productBadges.value),
+        badgeTypes: getSelectedBadgeTypes(el.productBadgeGroup),
         thumbnailFile: el.productThumbnail.files?.[0] || null,
+        imageFiles: Array.from(el.productImages.files || []),
       });
       el.productCreateForm.reset();
       if (el.productIsActive) el.productIsActive.checked = true;
+      applyProductMetaToForm();
       showNotice("상품이 등록되었습니다.");
       await Promise.all([loadManagedProducts(), loadDashboard(), loadOrders()]);
     } catch (error) {
@@ -2242,28 +2407,6 @@ function bind() {
     } catch (error) {
       console.error(error);
       showNotice(error.message || "상품 처리에 실패했습니다.", "error");
-    }
-  });
-
-  el.managedUsers?.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-action]");
-    if (!button) return;
-
-    try {
-      const result = await handleManagedUserAction(button);
-      if (result === "edit") {
-        showNotice("수정 모드가 활성화되었습니다.");
-        return;
-      }
-      if (result === "cancel") {
-        showNotice("수정이 취소되었습니다.");
-        return;
-      }
-      if (result === "noop" || !result) return;
-      showNotice(result === "deactivateManagedUser" ? "회원이 비활성화되었습니다." : "회원 정보가 저장되었습니다.");
-    } catch (error) {
-      console.error(error);
-      showNotice(error.message || "회원 처리에 실패했습니다.", "error");
     }
   });
 
