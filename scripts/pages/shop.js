@@ -29,6 +29,7 @@ async function syncHeader() {
 
   syncSiteHeader(headerRefs, {
     userName: user?.name || user?.email || null,
+    isAdmin: Boolean(user?.is_staff ?? user?.isStaff),
     cartCountValue: count,
   });
 }

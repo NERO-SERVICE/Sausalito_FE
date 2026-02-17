@@ -367,6 +367,63 @@ function normalizeMyPageDashboard(raw = {}) {
   };
 }
 
+function normalizeAdminOrder(raw = {}) {
+  return {
+    id: raw.id,
+    orderNo: raw.order_no || raw.orderNo || "",
+    userEmail: raw.user_email || raw.userEmail || "",
+    userName: raw.user_name || raw.userName || "",
+    status: raw.status || "",
+    paymentStatus: raw.payment_status || raw.paymentStatus || "",
+    shippingStatus: raw.shipping_status || raw.shippingStatus || "",
+    subtotalAmount: Number(raw.subtotal_amount ?? raw.subtotalAmount ?? 0),
+    shippingFee: Number(raw.shipping_fee ?? raw.shippingFee ?? 0),
+    discountAmount: Number(raw.discount_amount ?? raw.discountAmount ?? 0),
+    totalAmount: Number(raw.total_amount ?? raw.totalAmount ?? 0),
+    recipient: raw.recipient || "",
+    phone: raw.phone || "",
+    courierName: raw.courier_name || raw.courierName || "",
+    trackingNo: raw.tracking_no || raw.trackingNo || "",
+    invoiceIssuedAt: raw.invoice_issued_at || raw.invoiceIssuedAt || null,
+    shippedAt: raw.shipped_at || raw.shippedAt || null,
+    deliveredAt: raw.delivered_at || raw.deliveredAt || null,
+    createdAt: raw.created_at || raw.createdAt || null,
+    itemCount: Number(raw.item_count ?? raw.itemCount ?? 0),
+  };
+}
+
+function normalizeAdminInquiry(raw = {}) {
+  return {
+    id: raw.id,
+    userEmail: raw.user_email || raw.userEmail || "",
+    userName: raw.user_name || raw.userName || "",
+    title: raw.title || "",
+    content: raw.content || "",
+    status: raw.status || "",
+    answer: raw.answer || "",
+    answeredAt: raw.answered_at || raw.answeredAt || null,
+    createdAt: raw.created_at || raw.createdAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
+function normalizeAdminReview(raw = {}) {
+  return {
+    id: raw.id,
+    productId: Number(raw.product_id ?? raw.productId ?? 0),
+    productName: raw.product_name || raw.productName || "",
+    userEmail: raw.user_email || raw.userEmail || "",
+    userName: raw.user_name || raw.userName || "",
+    score: Number(raw.score || 0),
+    title: raw.title || "",
+    content: raw.content || "",
+    status: raw.status || "",
+    helpfulCount: Number(raw.helpful_count ?? raw.helpfulCount ?? 0),
+    createdAt: raw.created_at || raw.createdAt || null,
+    images: Array.isArray(raw.images) ? raw.images.filter(Boolean) : [],
+  };
+}
+
 async function fetchReviewsWithPagination({ productId, sort = "latest", hasImage, pageSize = 100 } = {}) {
   let page = 1;
   let count = null;
@@ -537,6 +594,141 @@ export async function createMyInquiry({ title, content }) {
   return apiRequest("/users/me/inquiries", {
     method: "POST",
     body: { title, content },
+  });
+}
+
+export async function fetchAdminDashboard() {
+  const data = await apiRequest("/admin/dashboard");
+  const summary = data?.summary || {};
+
+  return {
+    summary: {
+      totalOrders: Number(summary.total_orders ?? summary.totalOrders ?? 0),
+      paidOrders: Number(summary.paid_orders ?? summary.paidOrders ?? 0),
+      totalOrderAmount: Number(summary.total_order_amount ?? summary.totalOrderAmount ?? 0),
+      totalPaidAmount: Number(summary.total_paid_amount ?? summary.totalPaidAmount ?? 0),
+      todayPaidAmount: Number(summary.today_paid_amount ?? summary.todayPaidAmount ?? 0),
+      shippingPendingCount: Number(summary.shipping_pending_count ?? summary.shippingPendingCount ?? 0),
+      shippingShippedCount: Number(summary.shipping_shipped_count ?? summary.shippingShippedCount ?? 0),
+      shippingDeliveredCount: Number(summary.shipping_delivered_count ?? summary.shippingDeliveredCount ?? 0),
+      openInquiryCount: Number(summary.open_inquiry_count ?? summary.openInquiryCount ?? 0),
+      hiddenReviewCount: Number(summary.hidden_review_count ?? summary.hiddenReviewCount ?? 0),
+    },
+    recentOrders: Array.isArray(data?.recent_orders) ? data.recent_orders.map(normalizeAdminOrder) : [],
+    recentInquiries: Array.isArray(data?.recent_inquiries)
+      ? data.recent_inquiries.map(normalizeAdminInquiry)
+      : [],
+    recentReviews: Array.isArray(data?.recent_reviews) ? data.recent_reviews.map(normalizeAdminReview) : [],
+  };
+}
+
+export async function fetchAdminOrders({ q, status, paymentStatus, shippingStatus, limit = 80 } = {}) {
+  const data = await apiRequest("/admin/orders", {
+    query: {
+      q,
+      status,
+      payment_status: paymentStatus,
+      shipping_status: shippingStatus,
+      limit,
+    },
+  });
+  return Array.isArray(data) ? data.map(normalizeAdminOrder) : [];
+}
+
+export async function updateAdminOrder(orderNo, payload = {}) {
+  const body = {};
+  if (payload.status !== undefined) body.status = payload.status;
+  if (payload.paymentStatus !== undefined) body.payment_status = payload.paymentStatus;
+  if (payload.shippingStatus !== undefined) body.shipping_status = payload.shippingStatus;
+  if (payload.courierName !== undefined) body.courier_name = payload.courierName;
+  if (payload.trackingNo !== undefined) body.tracking_no = payload.trackingNo;
+  if (payload.issueInvoice !== undefined) body.issue_invoice = payload.issueInvoice;
+  if (payload.markDelivered !== undefined) body.mark_delivered = payload.markDelivered;
+
+  const data = await apiRequest(`/admin/orders/${orderNo}`, {
+    method: "PATCH",
+    body,
+  });
+  return normalizeAdminOrder(data || {});
+}
+
+export async function fetchAdminInquiries({ status } = {}) {
+  const data = await apiRequest("/admin/inquiries", {
+    query: { status },
+  });
+  return Array.isArray(data) ? data.map(normalizeAdminInquiry) : [];
+}
+
+export async function answerAdminInquiry(inquiryId, { answer, status } = {}) {
+  const data = await apiRequest(`/admin/inquiries/${inquiryId}/answer`, {
+    method: "PATCH",
+    body: { answer, status },
+  });
+  return normalizeAdminInquiry(data || {});
+}
+
+export async function fetchAdminReviews({ status, productId } = {}) {
+  const data = await apiRequest("/admin/reviews", {
+    query: {
+      status,
+      product_id: productId,
+    },
+  });
+  return Array.isArray(data) ? data.map(normalizeAdminReview) : [];
+}
+
+export async function setAdminReviewVisibility(reviewId, visible) {
+  const data = await apiRequest(`/admin/reviews/${reviewId}/visibility`, {
+    method: "PATCH",
+    body: { visible: Boolean(visible) },
+  });
+  return normalizeAdminReview(data || {});
+}
+
+export async function fetchAdminCoupons({ q, isUsed } = {}) {
+  const data = await apiRequest("/admin/coupons", {
+    query: {
+      q,
+      is_used: typeof isUsed === "boolean" ? String(isUsed) : undefined,
+    },
+  });
+  return Array.isArray(data)
+    ? data.map((coupon) => ({
+        id: coupon.id,
+        userEmail: coupon.user_email || coupon.userEmail || "",
+        name: coupon.name || "",
+        code: coupon.code || "",
+        discountAmount: Number(coupon.discount_amount ?? coupon.discountAmount ?? 0),
+        minOrderAmount: Number(coupon.min_order_amount ?? coupon.minOrderAmount ?? 0),
+        expiresAt: coupon.expires_at || coupon.expiresAt || null,
+        isUsed: Boolean(coupon.is_used ?? coupon.isUsed),
+        usedAt: coupon.used_at || coupon.usedAt || null,
+        isExpired: Boolean(coupon.is_expired ?? coupon.isExpired),
+        createdAt: coupon.created_at || coupon.createdAt || null,
+      }))
+    : [];
+}
+
+export async function issueAdminCoupon({
+  target,
+  email,
+  name,
+  code,
+  discountAmount,
+  minOrderAmount,
+  expiresAt,
+}) {
+  return apiRequest("/admin/coupons", {
+    method: "POST",
+    body: {
+      target,
+      email,
+      name,
+      code,
+      discount_amount: discountAmount,
+      min_order_amount: minOrderAmount,
+      expires_at: expiresAt || null,
+    },
   });
 }
 

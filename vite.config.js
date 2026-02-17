@@ -20,6 +20,7 @@ export default defineConfig({
         login: resolve(__dirname, "pages/login.html"),
         cart: resolve(__dirname, "pages/cart.html"),
         mypage: resolve(__dirname, "pages/mypage.html"),
+        admin: resolve(__dirname, "pages/admin.html"),
       },
     },
   },
