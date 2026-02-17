@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소살리토 | 회원가입</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="signup-main">
+      <section class="signup-card">
+        <header class="signup-head">
+          <h2>회원가입</h2>
+          <p>소살리토 주문/배송을 위해 필요한 정보를 입력하고 바로 구매를 시작하세요.</p>
+        </header>
+
+        <section class="signup-section">
+          <h3>간편 회원가입</h3>
+          <p>카카오 계정으로 3초 만에 회원가입을 진행할 수 있어요.</p>
+          <button class="signup-kakao-btn" type="button" id="kakaoSignupBtn">카카오로 간편 회원가입</button>
+        </section>
+
+        <section class="signup-section">
+          <div class="signup-section-head">
+            <h3>일반 회원가입</h3>
+            <button class="ghost signup-toggle-btn" type="button" id="openNormalSignupBtn">일반 회원가입</button>
+          </div>
+
+          <form id="signupForm" class="signup-form" hidden>
+            <label>
+              <span>이메일(로그인 ID)</span>
+              <input type="email" name="email" placeholder="example@domain.com" required />
+            </label>
+            <label>
+              <span>연락처</span>
+              <input type="tel" name="phone" placeholder="01012345678" required />
+            </label>
+            <label>
+              <span>비밀번호</span>
+              <input type="password" name="password" placeholder="8자 이상" minlength="8" required />
+            </label>
+            <label>
+              <span>비밀번호 확인</span>
+              <input type="password" name="passwordConfirm" placeholder="비밀번호 재입력" minlength="8" required />
+            </label>
+            <label>
+              <span>주문자 이름</span>
+              <input type="text" name="name" placeholder="홍길동" maxlength="100" required />
+            </label>
+            <label>
+              <span>수령인 이름</span>
+              <input type="text" name="recipient" placeholder="홍길동" maxlength="100" required />
+            </label>
+            <label>
+              <span>수령인 연락처</span>
+              <input type="tel" name="recipientPhone" placeholder="미입력 시 주문자 연락처 사용" maxlength="20" />
+            </label>
+            <label>
+              <span>우편번호</span>
+              <input type="text" name="postalCode" placeholder="04524" maxlength="10" required />
+            </label>
+            <label class="signup-col-2">
+              <span>도로명 주소</span>
+              <input type="text" name="roadAddress" placeholder="서울특별시 중구 세종대로 110" maxlength="255" required />
+            </label>
+            <label class="signup-col-2">
+              <span>상세 주소</span>
+              <textarea name="detailAddress" placeholder="101동 1101호" maxlength="255"></textarea>
+            </label>
+            <button class="primary signup-submit signup-col-2" type="submit">일반 회원가입 완료</button>
+          </form>
+        </section>
+
+        <p class="signup-notice" id="signupNotice" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+
+    <script type="module" src="../scripts/pages/signup.js"></script>
+  </body>
+</html>

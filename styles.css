@@ -2628,6 +2628,176 @@ button,input,select,textarea { font: inherit; }
 
 .form-grid { display: grid; gap: 10px; }
 .auth-card { max-width: 520px; margin: 0 auto; }
+.auth-card h2 { margin-bottom: 10px; }
+
+.signup-main {
+  width: min(760px, 92vw);
+  margin: 28px auto 84px;
+}
+
+.signup-card {
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+}
+
+.signup-head h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.2vw, 1.9rem);
+}
+
+.signup-head p {
+  margin: 8px 0 0;
+  color: #64748b;
+}
+
+.signup-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  background: #fcfdff;
+  display: grid;
+  gap: 10px;
+}
+
+.signup-section h3 {
+  margin: 0;
+  font-size: 1.06rem;
+}
+
+.signup-section p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.signup-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.signup-toggle-btn {
+  min-height: 34px;
+}
+
+.signup-kakao-btn {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 10px;
+  border: 1px solid #facc15;
+  background: #fee500;
+  color: #3c1e1e;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.16s ease;
+}
+
+.signup-kakao-btn:hover:not(:disabled) {
+  border-color: #eab308;
+  background: #fde047;
+}
+
+.signup-kakao-btn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.signup-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.signup-form label {
+  display: grid;
+  gap: 5px;
+}
+
+.signup-form label > span {
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.signup-form input,
+.signup-form textarea {
+  border: 1px solid #cfd7e5;
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  background: #fff;
+}
+
+.signup-form textarea {
+  min-height: 84px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.signup-col-2 {
+  grid-column: span 2;
+}
+
+.signup-submit {
+  width: 100%;
+}
+
+.signup-notice {
+  margin: 0;
+  color: #475569;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.signup-notice a {
+  color: #0f172a;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid #0f172a;
+}
+
+.signup-notice.is-error {
+  color: #b91c1c;
+}
+
+.signup-notice.is-success {
+  color: #166534;
+}
+
+.signup-callback-main {
+  width: min(640px, 92vw);
+  margin: 32px auto 90px;
+}
+
+.signup-callback-card {
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 26px 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.signup-callback-card h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.signup-callback-card p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.signup-callback-card p.is-error {
+  color: #b91c1c;
+}
 
 .cart-item { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
 .qty-controls { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
@@ -2694,6 +2864,8 @@ button,input,select,textarea { font: inherit; }
   .review-toolbar { grid-template-columns: 1fr; }
   .shop-grid,
   .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .signup-form { grid-template-columns: 1fr; }
+  .signup-col-2 { grid-column: auto; }
   .mypage-columns-2 { grid-template-columns: 1fr; }
   .mypage-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body:not(.admin-desktop-only) .admin-head { align-items: flex-start; flex-direction: column; }

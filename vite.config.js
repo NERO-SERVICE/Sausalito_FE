@@ -19,6 +19,8 @@ export default defineConfig({
         detail: resolve(__dirname, "pages/detail.html"),
         checkout: resolve(__dirname, "pages/checkout.html"),
         login: resolve(__dirname, "pages/login.html"),
+        signup: resolve(__dirname, "pages/signup.html"),
+        kakaoCallback: resolve(__dirname, "pages/kakao-callback.html"),
         cart: resolve(__dirname, "pages/cart.html"),
         mypage: resolve(__dirname, "pages/mypage.html"),
         memberEdit: resolve(__dirname, "pages/member-edit.html"),

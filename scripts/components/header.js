@@ -42,6 +42,7 @@ export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
           <a href="/pages/home.html" class="${currentNav === "home" ? "active" : ""}">홈</a>
           <a href="/pages/brand.html" class="${currentNav === "brand" ? "active" : ""}">브랜드</a>
           <a href="/pages/shop.html" class="${currentNav === "shop" ? "active" : ""}">쇼핑</a>
+          <a href="/pages/signup.html" class="${currentNav === "signup" ? "active" : ""}">회원가입</a>
           <a href="/pages/reviews.html" class="${currentNav === "review" ? "active" : ""}">리뷰</a>
         </nav>
       </div>

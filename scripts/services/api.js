@@ -725,6 +725,65 @@ export async function apiLogin({ email, password }) {
   });
 }
 
+export async function apiRegister({
+  email,
+  password,
+  passwordConfirm,
+  name,
+  phone,
+  recipient,
+  recipientPhone = "",
+  postalCode,
+  roadAddress,
+  detailAddress = "",
+}) {
+  return apiRequest("/auth/register", {
+    method: "POST",
+    body: {
+      email,
+      password,
+      password_confirm: passwordConfirm,
+      name,
+      phone,
+      recipient,
+      recipient_phone: recipientPhone,
+      postal_code: postalCode,
+      road_address: roadAddress,
+      detail_address: detailAddress,
+    },
+    auth: false,
+    retryOnAuth: false,
+  });
+}
+
+export async function apiGetKakaoAuthorizeUrl({ redirectUri, state } = {}) {
+  const data = await apiRequest("/auth/kakao/authorize-url", {
+    query: {
+      redirect_uri: redirectUri,
+      state,
+    },
+    auth: false,
+    retryOnAuth: false,
+  });
+  return {
+    authorizeUrl: data?.authorize_url || data?.authorizeUrl || "",
+    redirectUri: data?.redirect_uri || data?.redirectUri || redirectUri || "",
+  };
+}
+
+export async function apiKakaoCallback({ code, redirectUri, state } = {}) {
+  return apiRequest("/auth/kakao/callback", {
+    method: "POST",
+    body: {
+      code,
+      redirect_uri: redirectUri,
+      state,
+    },
+    auth: false,
+    retryOnAuth: false,
+  });
+}
+
 export async function apiLogout({ refresh }) {
   return apiRequest("/auth/logout", {
     method: "POST",
