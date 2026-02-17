@@ -216,6 +216,91 @@ function normalizeProductDetail(raw = {}) {
           stock: Number(option.stock || 0),
         }))
       : [],
+    couponBenefit: normalizeCouponBenefit(raw.coupon_benefit || raw.couponBenefit || null, base),
+  };
+}
+
+function normalizeCouponBenefit(raw, product = {}) {
+  const basePrice = Number(product.price || 0);
+  const baseOriginalPrice = Number(product.originalPrice || basePrice || 0);
+  const baseDiscountRate =
+    baseOriginalPrice > 0
+      ? Math.max(0, Number(((1 - basePrice / baseOriginalPrice) * 100).toFixed(2)))
+      : 0;
+
+  const empty = {
+    isAuthenticated: false,
+    hasAvailableCoupon: false,
+    hasEligibleCoupon: false,
+    availableCouponCount: 0,
+    eligibleCouponCount: 0,
+    soonExpiringCouponCount: 0,
+    basePrice,
+    baseOriginalPrice,
+    baseDiscountRate,
+    maxExtraDiscountRate: 0,
+    maxFinalDiscountRate: baseDiscountRate,
+    priceAfterBestCoupon: basePrice,
+    marketingCopy: "로그인하면 보유 쿠폰 기반 추가 할인 혜택을 확인할 수 있어요.",
+    bestCoupon: null,
+    couponItems: [],
+  };
+
+  if (!raw || typeof raw !== "object") return empty;
+
+  const couponItems = Array.isArray(raw.coupon_items)
+    ? raw.coupon_items.map((item) => ({
+        id: Number(item.id || 0),
+        name: item.name || "",
+        code: item.code || "",
+        discountAmount: Number(item.discount_amount ?? item.discountAmount ?? 0),
+        minOrderAmount: Number(item.min_order_amount ?? item.minOrderAmount ?? 0),
+        expiresAt: item.expires_at || item.expiresAt || null,
+        isEligible: Boolean(item.is_eligible ?? item.isEligible),
+        requiredAmount: Number(item.required_amount ?? item.requiredAmount ?? 0),
+        appliedDiscountAmount: Number(item.applied_discount_amount ?? item.appliedDiscountAmount ?? 0),
+        finalPrice: Number(item.final_price ?? item.finalPrice ?? basePrice),
+        extraDiscountRate: Number(item.extra_discount_rate ?? item.extraDiscountRate ?? 0),
+        finalDiscountRate: Number(item.final_discount_rate ?? item.finalDiscountRate ?? baseDiscountRate),
+      }))
+    : [];
+
+  const bestCouponRaw = raw.best_coupon || raw.bestCoupon;
+  const bestCoupon = bestCouponRaw
+    ? {
+        id: Number(bestCouponRaw.id || 0),
+        name: bestCouponRaw.name || "",
+        code: bestCouponRaw.code || "",
+        discountAmount: Number(bestCouponRaw.discount_amount ?? bestCouponRaw.discountAmount ?? 0),
+        minOrderAmount: Number(bestCouponRaw.min_order_amount ?? bestCouponRaw.minOrderAmount ?? 0),
+        expiresAt: bestCouponRaw.expires_at || bestCouponRaw.expiresAt || null,
+        isEligible: Boolean(bestCouponRaw.is_eligible ?? bestCouponRaw.isEligible),
+        requiredAmount: Number(bestCouponRaw.required_amount ?? bestCouponRaw.requiredAmount ?? 0),
+        appliedDiscountAmount: Number(
+          bestCouponRaw.applied_discount_amount ?? bestCouponRaw.appliedDiscountAmount ?? 0,
+        ),
+        finalPrice: Number(bestCouponRaw.final_price ?? bestCouponRaw.finalPrice ?? basePrice),
+        extraDiscountRate: Number(bestCouponRaw.extra_discount_rate ?? bestCouponRaw.extraDiscountRate ?? 0),
+        finalDiscountRate: Number(bestCouponRaw.final_discount_rate ?? bestCouponRaw.finalDiscountRate ?? baseDiscountRate),
+      }
+    : null;
+
+  return {
+    isAuthenticated: Boolean(raw.is_authenticated ?? raw.isAuthenticated),
+    hasAvailableCoupon: Boolean(raw.has_available_coupon ?? raw.hasAvailableCoupon),
+    hasEligibleCoupon: Boolean(raw.has_eligible_coupon ?? raw.hasEligibleCoupon),
+    availableCouponCount: Number(raw.available_coupon_count ?? raw.availableCouponCount ?? couponItems.length),
+    eligibleCouponCount: Number(raw.eligible_coupon_count ?? raw.eligibleCouponCount ?? 0),
+    soonExpiringCouponCount: Number(raw.soon_expiring_coupon_count ?? raw.soonExpiringCouponCount ?? 0),
+    basePrice: Number(raw.base_price ?? raw.basePrice ?? basePrice),
+    baseOriginalPrice: Number(raw.base_original_price ?? raw.baseOriginalPrice ?? baseOriginalPrice),
+    baseDiscountRate: Number(raw.base_discount_rate ?? raw.baseDiscountRate ?? baseDiscountRate),
+    maxExtraDiscountRate: Number(raw.max_extra_discount_rate ?? raw.maxExtraDiscountRate ?? 0),
+    maxFinalDiscountRate: Number(raw.max_final_discount_rate ?? raw.maxFinalDiscountRate ?? baseDiscountRate),
+    priceAfterBestCoupon: Number(raw.price_after_best_coupon ?? raw.priceAfterBestCoupon ?? basePrice),
+    marketingCopy: raw.marketing_copy || raw.marketingCopy || empty.marketingCopy,
+    bestCoupon,
+    couponItems,
   };
 }
 
@@ -634,10 +719,7 @@ export async function fetchProducts({ q, sort, minPrice, maxPrice } = {}) {
 
 export async function fetchProductById(id) {
   if (!id) return null;
-  const data = await apiRequest(`/products/${id}`, {
-    auth: false,
-    retryOnAuth: false,
-  });
+  const data = await apiRequest(`/products/${id}`);
   return normalizeProductDetail(data);
 }
 

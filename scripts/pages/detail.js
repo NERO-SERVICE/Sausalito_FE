@@ -95,6 +95,179 @@ async function setHeader() {
   });
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatPercent(value, digits = 1) {
+  const safe = Number.isFinite(Number(value)) ? Number(value) : 0;
+  return `${safe.toFixed(digits)}%`;
+}
+
+function daysUntil(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const diff = date.getTime() - Date.now();
+  return Math.ceil(diff / (24 * 60 * 60 * 1000));
+}
+
+function buildCouponPreview(orderAmount, originalAmount) {
+  const benefit = state.product?.couponBenefit || null;
+  const safeOrderAmount = Math.max(0, Number(orderAmount || 0));
+  const safeOriginalAmount = Math.max(1, Number(originalAmount || safeOrderAmount || 1));
+
+  if (!benefit) {
+    return {
+      isAuthenticated: false,
+      hasAvailableCoupon: false,
+      hasEligibleCoupon: false,
+      availableCouponCount: 0,
+      eligibleCouponCount: 0,
+      marketingCopy: "로그인하면 보유 쿠폰 기반 추가 할인 혜택을 확인할 수 있어요.",
+      bestCoupon: null,
+      couponItems: [],
+      minRequiredAmount: 0,
+    };
+  }
+
+  const couponItems = Array.isArray(benefit.couponItems)
+    ? benefit.couponItems
+        .map((item) => {
+          const minOrderAmount = Number(item.minOrderAmount || 0);
+          const discountAmount = Number(item.discountAmount || 0);
+          const isEligible = safeOrderAmount >= minOrderAmount;
+          const requiredAmount = Math.max(minOrderAmount - safeOrderAmount, 0);
+          const appliedDiscountAmount = isEligible ? Math.min(safeOrderAmount, discountAmount) : 0;
+          const finalPrice = Math.max(safeOrderAmount - appliedDiscountAmount, 0);
+          const extraDiscountRate = safeOrderAmount > 0 ? (appliedDiscountAmount / safeOrderAmount) * 100 : 0;
+          const finalDiscountRate = (1 - finalPrice / safeOriginalAmount) * 100;
+          const daysLeft = daysUntil(item.expiresAt);
+          const expiresSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3;
+          return {
+            ...item,
+            isEligible,
+            requiredAmount,
+            appliedDiscountAmount,
+            finalPrice,
+            extraDiscountRate: Math.max(0, Number(extraDiscountRate.toFixed(2))),
+            finalDiscountRate: Math.max(0, Number(finalDiscountRate.toFixed(2))),
+            expiresSoon,
+            daysLeft,
+          };
+        })
+        .sort((a, b) => b.discountAmount - a.discountAmount)
+    : [];
+
+  const eligibleCoupons = couponItems
+    .filter((item) => item.isEligible)
+    .sort((a, b) => b.appliedDiscountAmount - a.appliedDiscountAmount || b.finalDiscountRate - a.finalDiscountRate);
+  const ineligibleCoupons = couponItems
+    .filter((item) => !item.isEligible)
+    .sort((a, b) => a.requiredAmount - b.requiredAmount);
+  const bestCoupon = eligibleCoupons[0] || null;
+
+  return {
+    isAuthenticated: Boolean(benefit.isAuthenticated),
+    hasAvailableCoupon: Boolean(couponItems.length),
+    hasEligibleCoupon: Boolean(bestCoupon),
+    availableCouponCount: Number(benefit.availableCouponCount || couponItems.length),
+    eligibleCouponCount: Number(eligibleCoupons.length),
+    marketingCopy: benefit.marketingCopy || "",
+    bestCoupon,
+    couponItems: couponItems.slice(0, 4),
+    minRequiredAmount: Number(ineligibleCoupons[0]?.requiredAmount || 0),
+  };
+}
+
+function renderCouponBenefitBlock(preview) {
+  if (!preview.isAuthenticated) {
+    return `
+      <section class="pd-coupon-panel is-locked">
+        <p class="pd-coupon-kicker">회원 전용 혜택</p>
+        <h4>내 쿠폰으로 추가 할인받기</h4>
+        <p class="pd-coupon-copy">${escapeHtml(preview.marketingCopy)}</p>
+        <button class="ghost pd-coupon-login-btn" data-action="loginForCoupon">로그인하고 혜택 확인</button>
+      </section>
+    `;
+  }
+
+  if (!preview.hasAvailableCoupon) {
+    return `
+      <section class="pd-coupon-panel">
+        <p class="pd-coupon-kicker">내 쿠폰 혜택</p>
+        <h4>현재 사용 가능한 쿠폰이 없어요</h4>
+        <p class="pd-coupon-copy">${escapeHtml(preview.marketingCopy || "신규회원/이벤트 쿠폰을 확인해보세요.")}</p>
+      </section>
+    `;
+  }
+
+  const best = preview.bestCoupon;
+  return `
+    <section class="pd-coupon-panel ${best ? "is-available" : "is-pending"}">
+      <div class="pd-coupon-head">
+        <div>
+          <p class="pd-coupon-kicker">내 쿠폰 추가 할인</p>
+          <h4>${best ? "지금 결제 시 최대 추가 할인 가능" : "조금만 더 담으면 쿠폰 할인이 가능해요"}</h4>
+        </div>
+        <span class="pd-coupon-count">보유 ${preview.availableCouponCount}장</span>
+      </div>
+      ${
+        best
+          ? `
+            <p class="pd-coupon-final">
+              쿠폰 적용 예상가
+              <strong>${formatCurrency(best.finalPrice)}</strong>
+            </p>
+            <p class="pd-coupon-copy">
+              ${escapeHtml(best.name)} 적용 시 ${formatCurrency(best.appliedDiscountAmount)} 추가 할인
+              (${formatPercent(best.extraDiscountRate)}), 정가 대비 총 할인율 ${formatPercent(best.finalDiscountRate)}
+            </p>
+          `
+          : `
+            <p class="pd-coupon-copy">
+              현재 수량 기준 적용 가능한 쿠폰이 없습니다.
+              ${formatCurrency(preview.minRequiredAmount)} 더 담으면 쿠폰 할인이 적용돼요.
+            </p>
+          `
+      }
+      <div class="pd-coupon-list">
+        ${preview.couponItems
+          .map((item) => {
+            const statusLabel = item.isEligible ? "적용 가능" : `${formatCurrency(item.requiredAmount)} 추가 필요`;
+            const expiresLabel =
+              item.daysLeft === null
+                ? ""
+                : item.daysLeft < 0
+                  ? "만료"
+                  : item.daysLeft === 0
+                    ? "오늘 만료"
+                    : `${item.daysLeft}일 남음`;
+            return `
+              <article class="pd-coupon-item ${item.isEligible ? "eligible" : "ineligible"}">
+                <div>
+                  <p>${escapeHtml(item.name)}</p>
+                  <small>${escapeHtml(item.code)} · ${formatCurrency(item.discountAmount)} 할인</small>
+                </div>
+                <div class="pd-coupon-meta">
+                  ${item.expiresSoon ? '<span class="pd-coupon-chip is-urgent">곧 만료</span>' : ""}
+                  ${expiresLabel ? `<span class="pd-coupon-chip">${expiresLabel}</span>` : ""}
+                  <span class="pd-coupon-status">${statusLabel}</span>
+                </div>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    </section>
+  `;
+}
+
 function getImages() {
   const base = resolveProductImage(state.product.image, { useFallback: false });
   const fromProduct = Array.isArray(state.product.images) ? state.product.images : [];
@@ -142,9 +315,16 @@ function render() {
   state.imageIndex = Math.min(images.length - 1, Math.max(0, state.imageIndex));
   const currentImage = images[state.imageIndex] || resolveProductImage(null);
   const option = (state.meta.options && state.meta.options[0]) || { price: state.product.price };
-  const total = option.price * state.quantity;
-
-  const discountRate = Math.round((1 - state.product.price / state.product.originalPrice) * 100);
+  const unitPrice = Number(option.price || state.product.price || 0);
+  const unitOriginalPrice = Number(state.product.originalPrice || unitPrice || 0);
+  const total = unitPrice * state.quantity;
+  const originalTotal = unitOriginalPrice * state.quantity;
+  const couponPreview = buildCouponPreview(total, originalTotal);
+  const finalTotal = couponPreview.bestCoupon ? couponPreview.bestCoupon.finalPrice : total;
+  const discountRate =
+    state.product.originalPrice > 0
+      ? Math.max(0, Math.round((1 - state.product.price / state.product.originalPrice) * 100))
+      : 0;
   const reviewAvg = state.reviews.length
     ? (state.reviews.reduce((s, r) => s + r.score, 0) / state.reviews.length).toFixed(1)
     : Number(state.product.rating || 0).toFixed(1);
@@ -180,9 +360,15 @@ function render() {
         <p class="pd-one-line">${state.product.oneLine || state.product.description}</p>
         <div class="pd-rating">★ ${reviewAvg} (${state.product.reviews})</div>
         <div class="pd-price"><small>${formatCurrency(state.product.originalPrice)}</small><div><span>${discountRate}%</span><strong>${formatCurrency(state.product.price)}</strong></div></div>
+        ${renderCouponBenefitBlock(couponPreview)}
 
         <div class="pd-qty-row"><h4>수량</h4><div class="qty-controls"><button data-action="decreaseQty">-</button><span>${state.quantity}</span><button data-action="increaseQty">+</button></div></div>
-        <div class="pd-total-box"><p class="final">총 결제예상금액 <strong>${formatCurrency(total)}</strong></p></div>
+        <div class="pd-total-box">
+          <p><span>상품 금액(수량 반영)</span><b>${formatCurrency(total)}</b></p>
+          ${couponPreview.bestCoupon ? `<p><span>쿠폰 추가 할인</span><b class="pd-total-discount">-${formatCurrency(couponPreview.bestCoupon.appliedDiscountAmount)}</b></p>` : ""}
+          <p class="final"><span>총 결제예상금액</span><strong>${formatCurrency(finalTotal)}</strong></p>
+          <small>쿠폰 할인은 주문서에서 최종 적용됩니다.</small>
+        </div>
         <div class="pd-static-cta">
           <button class="ghost" data-action="toggleWish">${state.wished ? "찜 해제" : "찜하기"}</button>
           <button class="ghost" data-action="addCart">장바구니담기</button>
@@ -302,6 +488,10 @@ document.addEventListener("click", async (e) => {
   if (action === "nextReview") state.reviewPage += 1;
   if (action === "openPolicy") state.policyOpen = true;
   if (action === "closePolicy") state.policyOpen = false;
+  if (action === "loginForCoupon") {
+    location.href = "/pages/login.html";
+    return;
+  }
 
   if (action === "addCart") {
     try {
