@@ -20,12 +20,38 @@ const DEFAULT_ACCOUNT = {
   bank_account_no: "110-555-012345",
   account_holder: "소살리토",
   guide_message: "입금 후 관리자 확인이 완료되면 결제완료 처리됩니다.",
+  verification_notice: "입금자명은 주문자명과 동일하게 입력해 주세요.",
+  cash_receipt_guide: "결제완료 후 현금영수증 발급을 요청할 수 있습니다.",
+  business_info: {
+    name: "주식회사 네로",
+    ceo_name: "한동균, 박호연",
+    business_no: "123-45-67890",
+    ecommerce_no: "2026-서울마포-0001",
+    address: "서울특별시 중구 퇴계로36길 2",
+  },
+  support_info: {
+    phone: "1588-1234",
+    email: "cs@nero.ai.kr",
+    hours: "평일 10:00 - 18:00 / 점심 12:30 - 13:30",
+  },
+  delivery_refund_policy: {
+    default_shipping_fee: 3000,
+    free_shipping_threshold: 30000,
+    return_shipping_fee: 3000,
+    exchange_shipping_fee: 6000,
+    return_address: "서울특별시 중구 퇴계로36길 2 물류센터",
+  },
+  policy_links: {
+    terms: "/pages/terms.html",
+    privacy: "/pages/privacy.html",
+    guide: "/pages/guide.html",
+    commerce_notice: "/pages/commerce-notice.html",
+  },
 };
 
 const state = {
   user: null,
   mode: "cart",
-  method: "NAVERPAY",
   loading: false,
   buyNow: {
     productId: Number(params.get("productId") || 0),
@@ -45,9 +71,9 @@ const el = {
   form: document.getElementById("checkoutForm"),
   summary: document.getElementById("checkoutSummary"),
   submitBtn: document.getElementById("checkoutSubmitBtn"),
-  methodButtons: Array.from(document.querySelectorAll("[data-method]")),
-  methodPanels: Array.from(document.querySelectorAll("[data-method-panel]")),
   bankAccount: document.getElementById("checkoutBankAccount"),
+  policyNotice: document.getElementById("checkoutPolicyNotice"),
+  policyAgree: document.getElementById("checkoutPolicyAgree"),
   recipient: document.getElementById("checkoutRecipient"),
   phone: document.getElementById("checkoutPhone"),
   postalCode: document.getElementById("checkoutPostalCode"),
@@ -154,40 +180,51 @@ function renderSummary() {
 
 function renderBankAccount() {
   const account = state.bankAccount || DEFAULT_ACCOUNT;
+  const business = account.business_info || DEFAULT_ACCOUNT.business_info;
+  const support = account.support_info || DEFAULT_ACCOUNT.support_info;
   el.bankAccount.innerHTML = `
     <strong>입금 계좌</strong>
     <p>${escapeHtml(account.bank_name)} ${escapeHtml(account.bank_account_no)}</p>
     <small>예금주 ${escapeHtml(account.account_holder)}</small>
     <small>${escapeHtml(account.guide_message || DEFAULT_ACCOUNT.guide_message)}</small>
+    <small>${escapeHtml(account.verification_notice || DEFAULT_ACCOUNT.verification_notice)}</small>
+    <small>${escapeHtml(account.cash_receipt_guide || DEFAULT_ACCOUNT.cash_receipt_guide)}</small>
+    <small>사업자정보: ${escapeHtml(business.name)} / ${escapeHtml(business.business_no)} / 통신판매업 ${escapeHtml(business.ecommerce_no)}</small>
+    <small>고객센터: ${escapeHtml(support.phone)} (${escapeHtml(support.hours)})</small>
+    <small>이메일: ${escapeHtml(support.email)}</small>
   `;
 }
 
-function renderMethod() {
-  el.methodButtons.forEach((button) => {
-    const active = button.dataset.method === state.method;
-    button.classList.toggle("is-active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-  el.methodPanels.forEach((panel) => {
-    const active = panel.dataset.methodPanel === state.method;
-    panel.classList.toggle("is-active", active);
-    panel.hidden = !active;
-  });
-
+function renderSubmitState() {
   if (state.loading) {
     el.submitBtn.textContent = "처리 중...";
     el.submitBtn.disabled = true;
     return;
   }
-
-  if (state.method === "NAVERPAY") {
-    el.submitBtn.textContent = "네이버페이 결제하기";
-  } else if (state.method === "TRANSFER") {
-    el.submitBtn.textContent = "계좌이체 결제하기";
-  } else {
-    el.submitBtn.textContent = "무통장입금 접수하기";
-  }
+  el.submitBtn.textContent = "계좌이체 입금요청 접수하기";
   el.submitBtn.disabled = false;
+}
+
+function renderPolicyNotice() {
+  if (!el.policyNotice) return;
+  const account = state.bankAccount || DEFAULT_ACCOUNT;
+  const policy = account.delivery_refund_policy || DEFAULT_ACCOUNT.delivery_refund_policy;
+  const links = account.policy_links || DEFAULT_ACCOUNT.policy_links;
+  el.policyNotice.innerHTML = `
+    <h5>결제 전 확인 안내</h5>
+    <ul>
+      <li>기본 배송비 ${formatCurrency(policy.default_shipping_fee)} / ${formatCurrency(policy.free_shipping_threshold)} 이상 무료배송</li>
+      <li>반품 배송비 ${formatCurrency(policy.return_shipping_fee)}, 교환 배송비 ${formatCurrency(policy.exchange_shipping_fee)}</li>
+      <li>반품지: ${escapeHtml(policy.return_address || "-")}</li>
+      <li>정확한 입금 확인을 위해 입금자명·결제금액을 주문정보와 동일하게 입력해 주세요.</li>
+    </ul>
+    <p>
+      <a href="${escapeHtml(links.terms || "/pages/terms.html")}" target="_blank" rel="noopener">이용약관</a>
+      <a href="${escapeHtml(links.privacy || "/pages/privacy.html")}" target="_blank" rel="noopener">개인정보처리방침</a>
+      <a href="${escapeHtml(links.guide || "/pages/guide.html")}" target="_blank" rel="noopener">배송/교환/환불 안내</a>
+      <a href="${escapeHtml(links.commerce_notice || "/pages/commerce-notice.html")}" target="_blank" rel="noopener">전자상거래 고지</a>
+    </p>
+  `;
 }
 
 function getShippingPayload() {
@@ -204,6 +241,9 @@ function getShippingPayload() {
 function validateShippingPayload(payload) {
   if (!payload.recipient || !payload.phone || !payload.postalCode || !payload.roadAddress) {
     throw new Error("받는 분/연락처/우편번호/도로명 주소는 필수입니다.");
+  }
+  if (!el.policyAgree?.checked) {
+    throw new Error("결제/배송/환불 안내 동의가 필요합니다.");
   }
 }
 
@@ -264,7 +304,7 @@ async function submitBankTransfer() {
   const transferNote = el.transferNote.value.trim();
 
   if (!depositorName) {
-    throw new Error("무통장입금의 입금자명을 입력해주세요.");
+    throw new Error("계좌이체 입금자명을 입력해주세요.");
   }
 
   const orderPayload = {
@@ -289,7 +329,7 @@ async function submitBankTransfer() {
 
   alert(
     [
-      "무통장입금 요청이 접수되었습니다.",
+      "계좌이체 입금요청이 접수되었습니다.",
       `주문번호: ${transfer.orderNo}`,
       `입금계좌: ${transfer.bankName} ${transfer.bankAccountNo} (${transfer.accountHolder})`,
       "입금 확인 후 결제완료 처리됩니다.",
@@ -298,39 +338,20 @@ async function submitBankTransfer() {
   location.href = "/pages/mypage.html?tab=orders";
 }
 
-el.methodButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    if (state.loading) return;
-    const method = button.dataset.method;
-    if (!method) return;
-    state.method = method;
-    renderMethod();
-  });
-});
-
 el.form?.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (state.loading) return;
 
   try {
-    if (state.method === "NAVERPAY") {
-      alert("네이버페이 간편결제는 현재 준비 중입니다.");
-      return;
-    }
-    if (state.method === "TRANSFER") {
-      alert("계좌이체 결제는 현재 준비 중입니다.");
-      return;
-    }
-
     state.loading = true;
-    renderMethod();
+    renderSubmitState();
     await submitBankTransfer();
   } catch (error) {
     console.error(error);
     alert(error.message || "결제 처리에 실패했습니다.");
   } finally {
     state.loading = false;
-    renderMethod();
+    renderSubmitState();
   }
 });
 
@@ -354,7 +375,8 @@ el.form?.addEventListener("submit", async (event) => {
     }
     renderSummary();
     renderBankAccount();
-    renderMethod();
+    renderPolicyNotice();
+    renderSubmitState();
     await syncHeader();
   } catch (error) {
     console.error(error);

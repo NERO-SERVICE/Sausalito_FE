@@ -10,11 +10,11 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/checkout-edKAweHq.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/footer-JaqrUwnY.js">
-    <link rel="modulepreload" crossorigin href="/assets/cart-service-ZWVVs49V.js">
+    <script type="module" crossorigin src="/assets/checkout-B-ytrzlX.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-Ci8R9ufS.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-BB91gN4o.js">
     <link rel="modulepreload" crossorigin href="/assets/store-data-Deux6dsM.js">
-    <link rel="stylesheet" crossorigin href="/assets/footer-B33VDW-R.css">
+    <link rel="stylesheet" crossorigin href="/assets/footer-Bfhw9ZR8.css">
   </head>
   <body>
     <div id="siteHeaderMount"></div>
@@ -60,43 +60,30 @@
 
             <section class="checkout-method-section">
               <h4>결제 수단</h4>
-              <div class="checkout-method-tabs">
-                <button type="button" data-method="NAVERPAY" class="checkout-method-btn is-active">네이버페이 간편결제</button>
-                <button type="button" data-method="TRANSFER" class="checkout-method-btn">계좌이체</button>
-                <button type="button" data-method="BANK_TRANSFER" class="checkout-method-btn">무통장입금</button>
+              <div class="checkout-method-single">
+                <strong>계좌이체</strong>
+                <p class="checkout-method-desc">입금 확인 후 관리자 검수 절차를 거쳐 결제완료 처리됩니다.</p>
               </div>
-
-              <div class="checkout-method-panel is-active" data-method-panel="NAVERPAY">
-                <p class="checkout-method-title">네이버페이 간편결제</p>
-                <p class="checkout-method-desc">원클릭 간편결제 연동 화면입니다. 현재는 시뮬레이션 UI만 제공됩니다.</p>
+              <div class="checkout-bank-account" id="checkoutBankAccount"></div>
+              <div class="checkout-grid">
+                <label>
+                  <span>입금자명</span>
+                  <input type="text" id="checkoutDepositorName" maxlength="100" />
+                </label>
+                <label>
+                  <span>입금자 연락처</span>
+                  <input type="text" id="checkoutDepositorPhone" maxlength="20" />
+                </label>
+                <label class="checkout-col-2">
+                  <span>입금 메모</span>
+                  <input type="text" id="checkoutTransferNote" maxlength="500" />
+                </label>
               </div>
-
-              <div class="checkout-method-panel" data-method-panel="TRANSFER" hidden>
-                <p class="checkout-method-title">계좌이체</p>
-                <p class="checkout-method-desc">
-                  은행계좌를 통한 즉시이체 결제 방식입니다. 현재는 시뮬레이션 UI만 제공됩니다.
-                </p>
-              </div>
-
-              <div class="checkout-method-panel" data-method-panel="BANK_TRANSFER" hidden>
-                <p class="checkout-method-title">무통장입금</p>
-                <p class="checkout-method-desc">입금 후 관리자가 확인하면 결제완료로 처리됩니다.</p>
-                <div class="checkout-bank-account" id="checkoutBankAccount"></div>
-                <div class="checkout-grid">
-                  <label>
-                    <span>입금자명</span>
-                    <input type="text" id="checkoutDepositorName" maxlength="100" />
-                  </label>
-                  <label>
-                    <span>입금자 연락처</span>
-                    <input type="text" id="checkoutDepositorPhone" maxlength="20" />
-                  </label>
-                  <label class="checkout-col-2">
-                    <span>입금 메모</span>
-                    <input type="text" id="checkoutTransferNote" maxlength="500" />
-                  </label>
-                </div>
-              </div>
+              <div class="checkout-policy-notice" id="checkoutPolicyNotice"></div>
+              <label class="checkout-agree">
+                <input type="checkbox" id="checkoutPolicyAgree" required />
+                <span>주문 정보와 결제/배송/환불 안내를 확인했으며 이에 동의합니다.</span>
+              </label>
             </section>
 
             <div class="checkout-submit-row">

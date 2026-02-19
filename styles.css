@@ -2569,6 +2569,42 @@ button,input,select,textarea { font: inherit; }
 .pd-accordion-body { display: none; padding: 12px; border-top: 1px solid var(--line); background: #f8fafc; }
 .pd-accordion-body.open { display: block; }
 
+.pd-payment-policy-box {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.pd-payment-policy-box h4 {
+  margin: 0;
+}
+
+.pd-payment-policy-box ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+}
+
+.pd-payment-policy-box p {
+  margin: 10px 0 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pd-payment-policy-box a {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-size: 0.86rem;
+}
+
+.pd-payment-policy-box a:hover {
+  text-decoration: underline;
+}
+
 .pd-floating-cta {
   position: fixed;
   left: 0;
@@ -3022,6 +3058,19 @@ button,input,select,textarea { font: inherit; }
   font-size: 1rem;
 }
 
+.checkout-method-single {
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.checkout-method-single strong {
+  color: #0f172a;
+}
+
 .checkout-method-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3093,6 +3142,60 @@ button,input,select,textarea { font: inherit; }
 
 .checkout-bank-account small {
   color: #475569;
+}
+
+.checkout-policy-notice {
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.checkout-policy-notice h5 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.88rem;
+}
+
+.checkout-policy-notice ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.checkout-policy-notice p {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkout-policy-notice p a {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+
+.checkout-policy-notice p a:hover {
+  text-decoration: underline;
+}
+
+.checkout-agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #334155;
+  font-size: 0.82rem;
+}
+
+.checkout-agree input {
+  margin-top: 2px;
 }
 
 .checkout-submit-row {

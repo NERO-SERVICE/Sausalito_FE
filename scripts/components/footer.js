@@ -8,6 +8,7 @@ export function mountSiteFooter() {
         <nav class="site-footer-links">
           <a href="/pages/privacy.html">개인정보처리방침</a>
           <a href="/pages/terms.html">이용약관</a>
+          <a href="/pages/commerce-notice.html">전자상거래 고지</a>
           <a href="/pages/guide.html">이용안내</a>
         </nav>
         <div class="site-footer-info">

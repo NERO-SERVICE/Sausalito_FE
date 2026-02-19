@@ -396,6 +396,18 @@ function render() {
           <button class="pd-accordion-head" data-action="toggleOpen" data-key="inquiry">상품문의 <span>${state.open.inquiry ? "−" : "+"}</span></button>
           <div class="pd-accordion-body ${state.open.inquiry ? "open" : ""}"><p>평일 10:00~18:00, 고객센터를 이용해주세요.</p></div>
         </div>
+        <section class="pd-payment-policy-box">
+          <h4>결제/환불 안내</h4>
+          <ul>
+            <li>현재 결제수단은 계좌이체입니다.</li>
+            <li>입금 확인 후 결제완료 처리되며, 입금자명은 주문자명과 동일해야 빠르게 확인됩니다.</li>
+            <li>배송/교환/반품 상세정책은 하단 고지 페이지에서 확인할 수 있습니다.</li>
+          </ul>
+          <p>
+            <a href="/pages/guide.html" target="_blank" rel="noopener">이용안내</a>
+            <a href="/pages/commerce-notice.html" target="_blank" rel="noopener">전자상거래 고지</a>
+          </p>
+        </section>
       </section>
       <section class="pd-section-card pd-section" id="section-review">
         <h3 class="pd-section-label">리뷰</h3>
