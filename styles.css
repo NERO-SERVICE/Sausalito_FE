@@ -2912,33 +2912,69 @@ button,input,select,textarea { font: inherit; }
   cursor: pointer;
 }
 
-.signup-form {
+.signup-join-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 14px;
 }
 
-.signup-form label {
-  display: grid;
-  gap: 5px;
+.signup-form-table {
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
 }
 
-.signup-form label > span {
-  color: #334155;
-  font-size: 0.82rem;
-  font-weight: 600;
+.signup-form-row {
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  border-top: 1px solid #e2e8f0;
+}
+
+.signup-form-row:first-child {
+  border-top: 0;
+}
+
+.signup-form-th {
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 12px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signup-form-td {
+  padding: 10px 12px;
+  display: grid;
+  align-items: center;
+}
+
+.signup-form-td input {
+  border: 1px solid #cfd7e5;
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  background: #fff;
+}
+
+.signup-inline-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.signup-postcode-btn {
+  min-height: 38px;
+  min-width: 82px;
 }
 
 .signup-required-guide {
   margin: 0;
   font-size: 0.86rem;
   color: #475569;
-}
-
-.signup-label-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .signup-required-chip {
@@ -2957,19 +2993,98 @@ button,input,select,textarea { font: inherit; }
   letter-spacing: 0.01em;
 }
 
-.signup-form input,
-.signup-form textarea {
-  border: 1px solid #cfd7e5;
+.signup-agreement-box {
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.signup-agreement-all {
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  min-height: 38px;
+  background: #f8fafc;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 0 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.signup-agreement-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.signup-agreement-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
   background: #fff;
 }
 
-.signup-form textarea {
-  min-height: 84px;
+.signup-agreement-label {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 0.87rem;
+  color: #0f172a;
+}
+
+.signup-agreement-label > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup-agreement-label input {
+  width: 16px;
+  height: 16px;
+}
+
+.signup-agreement-detail {
+  border-top: 1px solid #e2e8f0;
+}
+
+.signup-agreement-detail summary {
+  cursor: pointer;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.signup-agreement-content {
+  border-top: 1px solid #eef2f7;
   padding: 10px;
-  resize: vertical;
+  display: grid;
+  gap: 6px;
+  background: #fcfdff;
+}
+
+.signup-agreement-content p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.signup-address-guide {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .signup-col-2 {
@@ -2978,6 +3093,7 @@ button,input,select,textarea { font: inherit; }
 
 .signup-submit {
   width: 100%;
+  min-height: 44px;
 }
 
 .signup-notice {
@@ -3101,8 +3217,9 @@ button,input,select,textarea { font: inherit; }
   .review-toolbar { grid-template-columns: 1fr; }
   .shop-grid,
   .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .signup-form { grid-template-columns: 1fr; }
-  .signup-col-2 { grid-column: auto; }
+  .signup-form-row { grid-template-columns: 1fr; }
+  .signup-form-th { border-right: 0; border-bottom: 1px solid #e2e8f0; }
+  .signup-inline-group { grid-template-columns: 1fr; }
   .mypage-columns-2 { grid-template-columns: 1fr; }
   .mypage-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body:not(.admin-desktop-only) .admin-head { align-items: flex-start; flex-direction: column; }

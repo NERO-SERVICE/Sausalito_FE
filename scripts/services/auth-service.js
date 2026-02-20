@@ -45,6 +45,12 @@ export async function register({
   postalCode,
   roadAddress,
   detailAddress = "",
+  agreeTerms,
+  agreePrivacy,
+  agreeAgeOver14,
+  agreeHealthFunctionalFood,
+  agreeSmsMarketing = false,
+  agreeEmailMarketing = false,
 }) {
   const data = await apiRegister({
     email,
@@ -57,6 +63,12 @@ export async function register({
     postalCode,
     roadAddress,
     detailAddress,
+    agreeTerms,
+    agreePrivacy,
+    agreeAgeOver14,
+    agreeHealthFunctionalFood,
+    agreeSmsMarketing,
+    agreeEmailMarketing,
   });
   const tokens = data?.tokens || null;
   const user = data?.user || null;
