@@ -354,6 +354,41 @@ function normalizeDetailMeta(raw) {
   };
 }
 
+function defaultBrandPage() {
+  return {
+    hero: {
+      eyebrow: "ABOUT SAUSALITO",
+      title: "건강한 아침을 설계하는 브랜드",
+      description:
+        "우리는 복잡한 일상을 사는 사람들의 루틴에 가장 간결한 웰니스 해답을 제공합니다. 매일의 선택이 몸의 컨디션을 바꾼다고 믿습니다.",
+    },
+    sections: [],
+  };
+}
+
+function normalizeBrandPage(raw = {}) {
+  const fallback = defaultBrandPage();
+  const hero = raw.hero || {};
+  const sections = Array.isArray(raw.sections) ? raw.sections : [];
+
+  return {
+    hero: {
+      eyebrow: hero.hero_eyebrow || hero.eyebrow || fallback.hero.eyebrow,
+      title: hero.hero_title || hero.title || fallback.hero.title,
+      description: hero.hero_description || hero.description || fallback.hero.description,
+    },
+    sections: sections.map((section) => ({
+      id: Number(section.id || 0),
+      eyebrow: section.eyebrow || "",
+      title: section.title || "",
+      description: section.description || "",
+      image: section.image || "",
+      imageAlt: section.image_alt || section.imageAlt || "",
+      sortOrder: Number(section.sort_order ?? section.sortOrder ?? 0),
+    })),
+  };
+}
+
 function normalizeReview(raw = {}) {
   const images = Array.isArray(raw.images)
     ? raw.images
@@ -628,6 +663,31 @@ function normalizeAdminBanner(raw = {}) {
   };
 }
 
+function normalizeAdminBrandPageSetting(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    heroEyebrow: raw.hero_eyebrow || raw.heroEyebrow || "ABOUT SAUSALITO",
+    heroTitle: raw.hero_title || raw.heroTitle || "",
+    heroDescription: raw.hero_description || raw.heroDescription || "",
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
+function normalizeAdminBrandSection(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    eyebrow: raw.eyebrow || "",
+    title: raw.title || "",
+    description: raw.description || "",
+    imageAlt: raw.image_alt || raw.imageAlt || "",
+    sortOrder: Number(raw.sort_order ?? raw.sortOrder ?? 0),
+    isActive: Boolean(raw.is_active ?? raw.isActive),
+    imageUrl: raw.image_url || raw.imageUrl || "",
+    createdAt: raw.created_at || raw.createdAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
 function normalizeAdminManagedProduct(raw = {}) {
   return {
     id: Number(raw.id || 0),
@@ -831,11 +891,32 @@ export async function fetchReviewsByProduct(id) {
   return fetchReviewsWithPagination({ productId: id, sort: "latest", pageSize: 100 });
 }
 
-export async function fetchHomeBanners() {
+export async function fetchHomeBanners(limit = 20) {
   return apiRequest("/banners/home", {
+    query: {
+      limit,
+    },
     auth: false,
     retryOnAuth: false,
   });
+}
+
+export async function fetchBrandBanners(limit = 2) {
+  return apiRequest("/banners/brand", {
+    query: {
+      limit,
+    },
+    auth: false,
+    retryOnAuth: false,
+  });
+}
+
+export async function fetchBrandPage() {
+  const data = await apiRequest("/brand/page", {
+    auth: false,
+    retryOnAuth: false,
+  });
+  return normalizeBrandPage(data || {});
 }
 
 export async function fetchFeaturedReviews(limit = 6) {
@@ -1345,6 +1426,81 @@ export async function updateAdminManagedBanner(
 
 export async function deleteAdminManagedBanner(bannerId) {
   return apiRequest(`/admin/banners/home/manage/${bannerId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAdminBrandPageSetting() {
+  const data = await apiRequest("/admin/brand/page");
+  return normalizeAdminBrandPageSetting(data || {});
+}
+
+export async function updateAdminBrandPageSetting({ heroEyebrow, heroTitle, heroDescription } = {}) {
+  const data = await apiRequest("/admin/brand/page", {
+    method: "PATCH",
+    body: {
+      hero_eyebrow: heroEyebrow,
+      hero_title: heroTitle,
+      hero_description: heroDescription,
+    },
+  });
+  return normalizeAdminBrandPageSetting(data || {});
+}
+
+export async function fetchAdminBrandSections() {
+  const data = await apiRequest("/admin/brand/sections");
+  return Array.isArray(data) ? data.map(normalizeAdminBrandSection) : [];
+}
+
+export async function createAdminBrandSection({
+  eyebrow,
+  title,
+  description,
+  imageAlt,
+  sortOrder,
+  isActive,
+  imageFile,
+} = {}) {
+  const formData = new FormData();
+  if (eyebrow !== undefined) formData.append("eyebrow", eyebrow);
+  if (title !== undefined) formData.append("title", title);
+  if (description !== undefined) formData.append("description", description);
+  if (imageAlt !== undefined) formData.append("image_alt", imageAlt);
+  if (sortOrder !== undefined) formData.append("sort_order", String(sortOrder));
+  if (isActive !== undefined) formData.append("is_active", String(Boolean(isActive)));
+  if (imageFile) formData.append("image", imageFile);
+
+  const data = await apiRequest("/admin/brand/sections", {
+    method: "POST",
+    body: formData,
+    isForm: true,
+  });
+  return normalizeAdminBrandSection(data || {});
+}
+
+export async function updateAdminBrandSection(
+  sectionId,
+  { eyebrow, title, description, imageAlt, sortOrder, isActive, imageFile } = {},
+) {
+  const formData = new FormData();
+  if (eyebrow !== undefined) formData.append("eyebrow", eyebrow);
+  if (title !== undefined) formData.append("title", title);
+  if (description !== undefined) formData.append("description", description);
+  if (imageAlt !== undefined) formData.append("image_alt", imageAlt);
+  if (sortOrder !== undefined) formData.append("sort_order", String(sortOrder));
+  if (isActive !== undefined) formData.append("is_active", String(Boolean(isActive)));
+  if (imageFile) formData.append("image", imageFile);
+
+  const data = await apiRequest(`/admin/brand/sections/${sectionId}`, {
+    method: "PATCH",
+    body: formData,
+    isForm: true,
+  });
+  return normalizeAdminBrandSection(data || {});
+}
+
+export async function deleteAdminBrandSection(sectionId) {
+  return apiRequest(`/admin/brand/sections/${sectionId}`, {
     method: "DELETE",
   });
 }

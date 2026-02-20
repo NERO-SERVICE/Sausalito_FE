@@ -78,7 +78,12 @@ function renderHero() {
     .map(
       (banner, index) => `
       <article class="home-hero-slide ${index === 0 ? "active" : ""}">
-        <img src="${resolveBannerImage(banner.image)}" alt="${banner.title}" />
+        <img
+          src="${resolveBannerImage(banner.image)}"
+          alt="${banner.title}"
+          loading="${index === 0 ? "eager" : "lazy"}"
+          decoding="async"
+        />
         <div class="home-hero-overlay">
           <div class="home-hero-copy">
             <p>${banner.subtitle}</p>

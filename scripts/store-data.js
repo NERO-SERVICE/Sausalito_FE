@@ -33,7 +33,7 @@ function getImagePathList(image) {
   if (!image) return [];
   if (typeof image === "string") return [image];
   if (typeof image !== "object") return [];
-  return [image.png, image.jpg, image.jpeg, image.webp].filter(Boolean);
+  return [image.gif, image.webp, image.png, image.jpg, image.jpeg].filter(Boolean);
 }
 
 export function resolveProductImage(image, { useFallback = true } = {}) {
@@ -47,6 +47,7 @@ export function resolveProductImageFallback(image, { useFallback = true } = {}) 
 }
 
 export function resolveBannerImage(image) {
-  if (typeof image === "string" && image.trim()) return image;
+  const primary = getImagePathList(image)[0];
+  if (typeof primary === "string" && primary.trim()) return primary;
   return BANNER_IMAGE_PLACEHOLDER;
 }
