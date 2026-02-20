@@ -25,55 +25,65 @@
         <section class="signup-section">
           <h3>간편 회원가입</h3>
           <p>카카오 계정으로 3초 만에 회원가입을 진행할 수 있어요.</p>
-          <button class="signup-kakao-btn" type="button" id="kakaoSignupBtn">카카오로 간편 회원가입</button>
+          <button class="signup-kakao-btn" type="button" id="kakaoSignupBtn" aria-label="카카오로 간편 회원가입">
+            <picture>
+              <source media="(min-width: 420px)" srcset="../dist/assets/kakao_login/start/kakao_login_large_wide.png" />
+              <source media="(min-width: 360px)" srcset="../dist/assets/kakao_login/start/kakao_login_medium_wide.png" />
+              <source media="(min-width: 320px)" srcset="../dist/assets/kakao_login/start/kakao_login_large_narrow.png" />
+              <img src="../dist/assets/kakao_login/start/kakao_login_medium_narrow.png" alt="카카오로 간편 회원가입" loading="lazy" decoding="async" />
+            </picture>
+          </button>
         </section>
 
         <section class="signup-section">
           <div class="signup-section-head">
             <h3>일반 회원가입</h3>
-            <button class="ghost signup-toggle-btn" type="button" id="openNormalSignupBtn">일반 회원가입</button>
+            <button class="ghost signup-toggle-btn" type="button" id="openNormalSignupBtn">일반 회원가입 입력하기</button>
           </div>
+          <p class="signup-required-guide">
+            주문/배송 처리를 위해 아래 항목은 모두 필수 입력 정보입니다.
+          </p>
 
           <form id="signupForm" class="signup-form" hidden>
             <label>
-              <span>이메일(로그인 ID)</span>
+              <span class="signup-label-row">이메일(로그인 ID) <em class="signup-required-chip">필수</em></span>
               <input type="email" name="email" placeholder="example@domain.com" required />
             </label>
             <label>
-              <span>연락처</span>
+              <span class="signup-label-row">연락처 <em class="signup-required-chip">필수</em></span>
               <input type="tel" name="phone" placeholder="01012345678" required />
             </label>
             <label>
-              <span>비밀번호</span>
+              <span class="signup-label-row">비밀번호 <em class="signup-required-chip">필수</em></span>
               <input type="password" name="password" placeholder="8자 이상" minlength="8" required />
             </label>
             <label>
-              <span>비밀번호 확인</span>
+              <span class="signup-label-row">비밀번호 확인 <em class="signup-required-chip">필수</em></span>
               <input type="password" name="passwordConfirm" placeholder="비밀번호 재입력" minlength="8" required />
             </label>
             <label>
-              <span>주문자 이름</span>
+              <span class="signup-label-row">주문자 이름 <em class="signup-required-chip">필수</em></span>
               <input type="text" name="name" placeholder="홍길동" maxlength="100" required />
             </label>
             <label>
-              <span>수령인 이름</span>
+              <span class="signup-label-row">수령인 이름 <em class="signup-required-chip">필수</em></span>
               <input type="text" name="recipient" placeholder="홍길동" maxlength="100" required />
             </label>
             <label>
-              <span>수령인 연락처</span>
-              <input type="tel" name="recipientPhone" placeholder="미입력 시 주문자 연락처 사용" maxlength="20" />
+              <span class="signup-label-row">수령인 연락처 <em class="signup-required-chip">필수</em></span>
+              <input type="tel" name="recipientPhone" placeholder="01012345678" maxlength="20" required />
             </label>
             <label>
-              <span>우편번호</span>
+              <span class="signup-label-row">우편번호 <em class="signup-required-chip">필수</em></span>
               <input type="text" name="postalCode" placeholder="04524" maxlength="10" required />
             </label>
             <label class="signup-col-2">
-              <span>도로명 주소</span>
+              <span class="signup-label-row">도로명 주소 <em class="signup-required-chip">필수</em></span>
               <input type="text" name="roadAddress" placeholder="서울특별시 중구 세종대로 110" maxlength="255" required />
             </label>
             <label class="signup-col-2">
-              <span>상세 주소</span>
-              <textarea name="detailAddress" placeholder="101동 1101호" maxlength="255"></textarea>
+              <span class="signup-label-row">상세 주소 <em class="signup-required-chip">필수</em></span>
+              <textarea name="detailAddress" placeholder="101동 1101호" maxlength="255" required></textarea>
             </label>
             <button class="primary signup-submit signup-col-2" type="submit">일반 회원가입 완료</button>
           </form>

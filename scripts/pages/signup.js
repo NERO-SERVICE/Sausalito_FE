@@ -41,7 +41,7 @@ function toggleNormalSignupForm() {
   if (!form) return;
   const shouldOpen = form.hidden;
   form.hidden = !shouldOpen;
-  openNormalSignupBtn.textContent = shouldOpen ? "일반 회원가입 닫기" : "일반 회원가입";
+  openNormalSignupBtn.textContent = shouldOpen ? "입력 폼 닫기" : "일반 회원가입 입력하기";
   if (shouldOpen) {
     const firstInput = form.querySelector("input[name='email']");
     firstInput?.focus();

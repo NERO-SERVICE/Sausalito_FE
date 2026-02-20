@@ -2756,9 +2756,97 @@ button,input,select,textarea { font: inherit; }
   100% { transform: translateY(0) scale(1); }
 }
 
-.form-grid { display: grid; gap: 10px; }
-.auth-card { max-width: 520px; margin: 0 auto; }
-.auth-card h2 { margin-bottom: 10px; }
+.auth-main {
+  width: min(560px, 92vw);
+  margin: 28px auto 84px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.auth-card {
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.auth-step {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fcfdff;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.auth-step h2,
+.auth-step h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.auth-step p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.auth-kakao-btn {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.auth-kakao-btn picture,
+.signup-kakao-btn picture {
+  display: block;
+  width: 100%;
+}
+
+.auth-kakao-btn img,
+.signup-kakao-btn img {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  display: block;
+  height: auto;
+}
+
+.auth-kakao-btn:disabled,
+.signup-kakao-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.auth-signup-link {
+  width: 100%;
+  text-decoration: none;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-notice {
+  margin: 0;
+  color: #475569;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.auth-notice.is-error {
+  color: #b91c1c;
+}
+
+.auth-notice.is-success {
+  color: #166534;
+}
 
 .signup-main {
   width: min(760px, 92vw);
@@ -2818,24 +2906,10 @@ button,input,select,textarea { font: inherit; }
 
 .signup-kakao-btn {
   width: 100%;
-  min-height: 46px;
-  border-radius: 10px;
-  border: 1px solid #facc15;
-  background: #fee500;
-  color: #3c1e1e;
-  font-weight: 800;
+  border: 0;
+  background: transparent;
+  padding: 0;
   cursor: pointer;
-  transition: 0.16s ease;
-}
-
-.signup-kakao-btn:hover:not(:disabled) {
-  border-color: #eab308;
-  background: #fde047;
-}
-
-.signup-kakao-btn:disabled {
-  opacity: 0.75;
-  cursor: wait;
 }
 
 .signup-form {
@@ -2853,6 +2927,34 @@ button,input,select,textarea { font: inherit; }
   color: #334155;
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.signup-required-guide {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #475569;
+}
+
+.signup-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signup-required-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .signup-form input,
@@ -2987,6 +3089,9 @@ button,input,select,textarea { font: inherit; }
   .home-hero-track,
   .home-hero-slide img { min-height: 360px; height: 360px; }
   .home-hero-overlay { padding: 24px 16px; }
+  .auth-main { width: min(560px, 94vw); }
+  .auth-card { padding: 16px; }
+  .auth-step { padding: 12px; }
   .brand-detail-copy-block { padding: 18px 14px 22px; }
   .brand-detail-image { min-height: 156px; }
   .brand-story-card { grid-template-columns: 1fr; }
