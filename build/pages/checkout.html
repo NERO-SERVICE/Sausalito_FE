@@ -10,11 +10,11 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="/assets/checkout-DFywbDmY.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/footer-DPUzFHOv.js">
-    <link rel="modulepreload" crossorigin href="/assets/cart-service-BtLmCwEa.js">
+    <script type="module" crossorigin src="/assets/checkout-DRNgyuQm.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-gm66ePvf.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-KwMGSYam.js">
     <link rel="modulepreload" crossorigin href="/assets/store-data-Djz9-Ys0.js">
-    <link rel="stylesheet" crossorigin href="/assets/footer-Dk8cPGvd.css">
+    <link rel="stylesheet" crossorigin href="/assets/footer-BN_95l7V.css">
   </head>
   <body>
     <div id="siteHeaderMount"></div>
@@ -22,73 +22,108 @@
     <main class="checkout-main">
       <section class="checkout-head">
         <h2>주문/결제</h2>
-        <p>배송 정보와 결제수단을 확인 후 결제를 완료하세요.</p>
+        <p>주문 정보를 확인하고 계좌이체 입금요청을 접수하면 관리자가 확인 후 결제완료 처리합니다.</p>
+        <ol class="checkout-step">
+          <li class="is-active">01 주문서작성</li>
+          <li>02 입금확인</li>
+          <li>03 결제완료</li>
+        </ol>
       </section>
 
       <section class="checkout-layout">
         <article class="checkout-card">
-          <div class="checkout-card-head">
-            <h3>배송지 정보</h3>
-          </div>
           <form id="checkoutForm" class="checkout-form">
-            <div class="checkout-grid">
-              <label>
-                <span>받는 분</span>
-                <input type="text" id="checkoutRecipient" required maxlength="100" />
-              </label>
-              <label>
-                <span>연락처</span>
-                <input type="text" id="checkoutPhone" required maxlength="20" placeholder="01012345678" />
-              </label>
-              <label>
-                <span>우편번호</span>
-                <input type="text" id="checkoutPostalCode" required maxlength="10" />
-              </label>
-              <label class="checkout-col-2">
-                <span>도로명 주소</span>
-                <input type="text" id="checkoutRoadAddress" required maxlength="255" />
-              </label>
-              <label class="checkout-col-2">
-                <span>지번 주소</span>
-                <input type="text" id="checkoutJibunAddress" maxlength="255" />
-              </label>
-              <label class="checkout-col-2">
-                <span>상세 주소</span>
-                <input type="text" id="checkoutDetailAddress" maxlength="255" />
-              </label>
-            </div>
+            <section class="checkout-section">
+              <div class="checkout-section-head">
+                <h3>주문자 정보</h3>
+              </div>
+              <div class="checkout-orderer-box">
+                <p class="checkout-orderer-row"><b>주문자</b><span id="checkoutOrdererName">-</span></p>
+                <p class="checkout-orderer-row"><b>이메일</b><span id="checkoutOrdererEmail">-</span></p>
+                <p class="checkout-orderer-row"><b>연락처</b><span id="checkoutOrdererPhone">-</span></p>
+              </div>
+            </section>
 
-            <section class="checkout-method-section">
-              <h4>결제 수단</h4>
+            <section class="checkout-section">
+              <div class="checkout-section-head">
+                <h3>배송지 정보</h3>
+                <button class="ghost checkout-load-default-btn" type="button" id="checkoutLoadDefaultAddressBtn">기본 배송지 불러오기</button>
+              </div>
+              <div class="checkout-address-table">
+                <label class="checkout-address-row">
+                  <span class="checkout-address-th">받는 분</span>
+                  <span class="checkout-address-td">
+                    <input type="text" id="checkoutRecipient" required maxlength="100" placeholder="수령인 이름" />
+                  </span>
+                </label>
+                <label class="checkout-address-row">
+                  <span class="checkout-address-th">연락처</span>
+                  <span class="checkout-address-td">
+                    <input type="text" id="checkoutPhone" required maxlength="20" placeholder="01012345678" />
+                  </span>
+                </label>
+                <div class="checkout-address-row">
+                  <span class="checkout-address-th">우편번호</span>
+                  <div class="checkout-address-td checkout-address-inline">
+                    <input type="text" id="checkoutPostalCode" required maxlength="10" placeholder="주소검색으로 자동 입력" readonly />
+                    <button class="ghost checkout-search-postcode-btn" type="button" id="checkoutSearchPostcodeBtn">주소검색</button>
+                  </div>
+                </div>
+                <div class="checkout-address-row">
+                  <span class="checkout-address-th">도로명 주소</span>
+                  <div class="checkout-address-td">
+                    <input type="text" id="checkoutRoadAddress" required maxlength="255" placeholder="주소검색으로 자동 입력" readonly />
+                  </div>
+                </div>
+                <label class="checkout-address-row">
+                  <span class="checkout-address-th">지번 주소</span>
+                  <span class="checkout-address-td">
+                    <input type="text" id="checkoutJibunAddress" maxlength="255" placeholder="자동 입력(선택)" />
+                  </span>
+                </label>
+                <label class="checkout-address-row">
+                  <span class="checkout-address-th">상세 주소</span>
+                  <span class="checkout-address-td">
+                    <input type="text" id="checkoutDetailAddress" maxlength="255" placeholder="동/호수 및 상세 위치" />
+                  </span>
+                </label>
+              </div>
+              <label class="checkout-save-default">
+                <input type="checkbox" id="checkoutSaveDefaultAddress" checked />
+                <span>이번 배송지를 기본 배송지로 저장</span>
+              </label>
+            </section>
+
+            <section class="checkout-section checkout-method-section">
+              <h3>결제수단</h3>
               <div class="checkout-method-single">
                 <strong>계좌이체</strong>
-                <p class="checkout-method-desc">입금 확인 후 관리자 검수 절차를 거쳐 결제완료 처리됩니다.</p>
+                <p class="checkout-method-desc">현재 결제수단은 계좌이체만 지원합니다. 입금 확인 후 결제완료 처리됩니다.</p>
               </div>
               <div class="checkout-bank-account" id="checkoutBankAccount"></div>
               <div class="checkout-grid">
                 <label>
                   <span>입금자명</span>
-                  <input type="text" id="checkoutDepositorName" maxlength="100" />
+                  <input type="text" id="checkoutDepositorName" maxlength="100" placeholder="홍길동" />
                 </label>
                 <label>
                   <span>입금자 연락처</span>
-                  <input type="text" id="checkoutDepositorPhone" maxlength="20" />
+                  <input type="text" id="checkoutDepositorPhone" maxlength="20" placeholder="01012345678" />
                 </label>
                 <label class="checkout-col-2">
                   <span>입금 메모</span>
-                  <input type="text" id="checkoutTransferNote" maxlength="500" />
+                  <input type="text" id="checkoutTransferNote" maxlength="500" placeholder="요청사항이 있다면 입력해 주세요." />
                 </label>
               </div>
               <div class="checkout-policy-notice" id="checkoutPolicyNotice"></div>
               <label class="checkout-agree">
                 <input type="checkbox" id="checkoutPolicyAgree" required />
-                <span>주문 정보와 결제/배송/환불 안내를 확인했으며 이에 동의합니다.</span>
+                <span>주문 내용, 배송/교환/환불 정책, 개인정보처리방침을 확인했으며 결제 진행에 동의합니다.</span>
               </label>
+              <div class="checkout-submit-row">
+                <button class="primary" type="submit" id="checkoutSubmitBtn">계좌이체 입금요청 접수하기</button>
+              </div>
             </section>
-
-            <div class="checkout-submit-row">
-              <button class="primary" type="submit" id="checkoutSubmitBtn">결제하기</button>
-            </div>
           </form>
         </article>
 

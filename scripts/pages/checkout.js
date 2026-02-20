@@ -6,6 +6,7 @@ import {
   createBankTransferRequest,
   createOrder,
   fetchBankTransferAccountInfo,
+  fetchMyDefaultAddress,
   fetchProductById,
 } from "../services/api.js";
 import { formatCurrency, resolveProductImage } from "../store-data.js";
@@ -14,6 +15,9 @@ const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
 mountSiteFooter();
 
 const params = new URLSearchParams(location.search);
+
+const KAKAO_POSTCODE_SCRIPT_URL = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+const KAKAO_POSTCODE_SCRIPT_ID = "kakaoCheckoutPostcodeScript";
 
 const DEFAULT_ACCOUNT = {
   bank_name: "신한은행",
@@ -51,6 +55,7 @@ const DEFAULT_ACCOUNT = {
 
 const state = {
   user: null,
+  defaultAddress: null,
   mode: "cart",
   loading: false,
   buyNow: {
@@ -74,6 +79,12 @@ const el = {
   bankAccount: document.getElementById("checkoutBankAccount"),
   policyNotice: document.getElementById("checkoutPolicyNotice"),
   policyAgree: document.getElementById("checkoutPolicyAgree"),
+  ordererName: document.getElementById("checkoutOrdererName"),
+  ordererEmail: document.getElementById("checkoutOrdererEmail"),
+  ordererPhone: document.getElementById("checkoutOrdererPhone"),
+  loadDefaultAddressBtn: document.getElementById("checkoutLoadDefaultAddressBtn"),
+  searchPostcodeBtn: document.getElementById("checkoutSearchPostcodeBtn"),
+  saveDefaultAddress: document.getElementById("checkoutSaveDefaultAddress"),
   recipient: document.getElementById("checkoutRecipient"),
   phone: document.getElementById("checkoutPhone"),
   postalCode: document.getElementById("checkoutPostalCode"),
@@ -84,6 +95,8 @@ const el = {
   depositorPhone: document.getElementById("checkoutDepositorPhone"),
   transferNote: document.getElementById("checkoutTransferNote"),
 };
+
+let postcodeScriptPromise = null;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -172,7 +185,7 @@ function renderSummary() {
       <div class="checkout-total-box">
         <p><span>상품금액</span><strong>${formatCurrency(state.summary.subtotal)}</strong></p>
         <p><span>배송비</span><strong>${formatCurrency(state.summary.shipping)}</strong></p>
-        <p class="final"><span>총 결제금액</span><strong>${formatCurrency(state.summary.total)}</strong></p>
+        <p class="final"><span>총 결제예정금액</span><strong>${formatCurrency(state.summary.total)}</strong></p>
       </div>
     </section>
   `;
@@ -227,6 +240,45 @@ function renderPolicyNotice() {
   `;
 }
 
+function renderOrdererProfile() {
+  if (el.ordererName) el.ordererName.textContent = state.user?.name || "-";
+  if (el.ordererEmail) el.ordererEmail.textContent = state.user?.email || "-";
+  if (el.ordererPhone) el.ordererPhone.textContent = state.user?.phone || "-";
+}
+
+function fillShippingFields(address = {}) {
+  el.recipient.value = String(address.recipient || "").trim();
+  el.phone.value = String(address.phone || "").trim();
+  el.postalCode.value = String(address.postalCode || "").trim();
+  el.roadAddress.value = String(address.roadAddress || "").trim();
+  el.jibunAddress.value = String(address.jibunAddress || "").trim();
+  el.detailAddress.value = String(address.detailAddress || "").trim();
+}
+
+function hydrateDefaultProfile() {
+  renderOrdererProfile();
+
+  if (state.defaultAddress) {
+    fillShippingFields(state.defaultAddress);
+  } else {
+    fillShippingFields({
+      recipient: state.user?.name || "",
+      phone: state.user?.phone || "",
+      postalCode: "",
+      roadAddress: "",
+      jibunAddress: "",
+      detailAddress: "",
+    });
+  }
+
+  if (!el.depositorName.value) {
+    el.depositorName.value = state.user?.name || el.recipient.value;
+  }
+  if (!el.depositorPhone.value) {
+    el.depositorPhone.value = state.user?.phone || el.phone.value;
+  }
+}
+
 function getShippingPayload() {
   return {
     recipient: el.recipient.value.trim(),
@@ -235,6 +287,7 @@ function getShippingPayload() {
     roadAddress: el.roadAddress.value.trim(),
     jibunAddress: el.jibunAddress.value.trim(),
     detailAddress: el.detailAddress.value.trim(),
+    saveAsDefaultAddress: Boolean(el.saveDefaultAddress?.checked),
   };
 }
 
@@ -245,17 +298,6 @@ function validateShippingPayload(payload) {
   if (!el.policyAgree?.checked) {
     throw new Error("결제/배송/환불 안내 동의가 필요합니다.");
   }
-}
-
-function hydrateDefaultProfile() {
-  el.recipient.value = state.user?.name || "";
-  el.phone.value = state.user?.phone || "";
-  el.postalCode.value = "04524";
-  el.roadAddress.value = "서울특별시 중구 세종대로 110";
-  el.jibunAddress.value = "";
-  el.detailAddress.value = "";
-  el.depositorName.value = state.user?.name || "";
-  el.depositorPhone.value = state.user?.phone || "";
 }
 
 async function syncHeader() {
@@ -295,12 +337,97 @@ async function initOrderSummary() {
   state.summary = buildCartSummary(cart);
 }
 
+function loadKakaoPostcodeScript() {
+  if (window.daum?.Postcode) return Promise.resolve();
+  if (postcodeScriptPromise) return postcodeScriptPromise;
+
+  postcodeScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.getElementById(KAKAO_POSTCODE_SCRIPT_ID);
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener("error", () => reject(new Error("주소검색 스크립트를 불러오지 못했습니다.")), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = KAKAO_POSTCODE_SCRIPT_ID;
+    script.src = KAKAO_POSTCODE_SCRIPT_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("주소검색 스크립트를 불러오지 못했습니다."));
+    document.head.appendChild(script);
+  });
+
+  return postcodeScriptPromise;
+}
+
+function composeRoadAddress(data) {
+  const base = String(data?.roadAddress || data?.address || "").trim();
+  if (!base) return "";
+
+  const extras = [];
+  const legalDong = String(data?.bname || "").trim();
+  if (legalDong && /[동로가]$/.test(legalDong)) extras.push(legalDong);
+
+  const buildingName = String(data?.buildingName || "").trim();
+  if (buildingName && String(data?.apartment || "").toUpperCase() === "Y") {
+    extras.push(buildingName);
+  }
+
+  if (!extras.length) return base;
+  return `${base} (${extras.join(", ")})`;
+}
+
+async function openPostcodeSearch() {
+  await loadKakaoPostcodeScript();
+  if (!window.daum?.Postcode) {
+    throw new Error("주소검색 객체를 찾을 수 없습니다.");
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      new window.daum.Postcode({
+        oncomplete(data) {
+          resolve(data || null);
+        },
+        onclose() {
+          resolve(null);
+        },
+      }).open();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function loadMyDefaultAddress({ showAlertIfEmpty = false } = {}) {
+  const address = await fetchMyDefaultAddress();
+  state.defaultAddress = address || null;
+  if (!state.defaultAddress) {
+    if (showAlertIfEmpty) {
+      alert("등록된 기본 배송지가 없습니다. 배송지 정보를 입력해 주세요.");
+    }
+    return;
+  }
+
+  fillShippingFields({
+    recipient: state.defaultAddress.recipient,
+    phone: state.defaultAddress.phone,
+    postalCode: state.defaultAddress.postalCode,
+    roadAddress: state.defaultAddress.roadAddress,
+    detailAddress: state.defaultAddress.detailAddress,
+    jibunAddress: "",
+  });
+}
+
 async function submitBankTransfer() {
   const shippingPayload = getShippingPayload();
   validateShippingPayload(shippingPayload);
 
   const depositorName = el.depositorName.value.trim();
-  const depositorPhone = el.depositorPhone.value.trim();
+  const depositorPhone = el.depositorPhone.value.trim() || shippingPayload.phone;
   const transferNote = el.transferNote.value.trim();
 
   if (!depositorName) {
@@ -355,6 +482,42 @@ el.form?.addEventListener("submit", async (event) => {
   }
 });
 
+el.loadDefaultAddressBtn?.addEventListener("click", async () => {
+  try {
+    el.loadDefaultAddressBtn.disabled = true;
+    await loadMyDefaultAddress({ showAlertIfEmpty: true });
+  } catch (error) {
+    console.error(error);
+    alert("기본 배송지 정보를 불러오지 못했습니다.");
+  } finally {
+    el.loadDefaultAddressBtn.disabled = false;
+  }
+});
+
+el.searchPostcodeBtn?.addEventListener("click", async () => {
+  try {
+    el.searchPostcodeBtn.disabled = true;
+    const data = await openPostcodeSearch();
+    if (!data) return;
+
+    const zonecode = String(data.zonecode || "").trim();
+    const roadAddress = composeRoadAddress(data);
+    const jibunAddress = String(data.jibunAddress || data.autoJibunAddress || "").trim();
+
+    el.postalCode.value = zonecode;
+    el.roadAddress.value = roadAddress;
+    el.jibunAddress.value = jibunAddress;
+    el.detailAddress.focus();
+  } catch (error) {
+    console.error(error);
+    el.postalCode.removeAttribute("readonly");
+    el.roadAddress.removeAttribute("readonly");
+    alert("주소검색 연결에 실패했습니다. 우편번호와 주소를 직접 입력해 주세요.");
+  } finally {
+    el.searchPostcodeBtn.disabled = false;
+  }
+});
+
 (async function init() {
   const user = (await syncCurrentUser()) || getUser();
   if (!user) {
@@ -364,15 +527,18 @@ el.form?.addEventListener("submit", async (event) => {
   }
 
   state.user = user;
-  hydrateDefaultProfile();
+  renderOrdererProfile();
 
   try {
     await initOrderSummary();
-    try {
-      state.bankAccount = await fetchBankTransferAccountInfo();
-    } catch {
-      state.bankAccount = DEFAULT_ACCOUNT;
-    }
+    const [bankAccountResult, defaultAddressResult] = await Promise.allSettled([
+      fetchBankTransferAccountInfo(),
+      fetchMyDefaultAddress(),
+    ]);
+    state.bankAccount = bankAccountResult.status === "fulfilled" ? bankAccountResult.value : DEFAULT_ACCOUNT;
+    state.defaultAddress = defaultAddressResult.status === "fulfilled" ? defaultAddressResult.value : null;
+
+    hydrateDefaultProfile();
     renderSummary();
     renderBankAccount();
     renderPolicyNotice();

@@ -430,6 +430,28 @@ function normalizeOrderSummary(raw = {}) {
   };
 }
 
+function normalizeDefaultAddress(raw = {}) {
+  if (!raw || typeof raw !== "object") return null;
+  const recipient = raw.recipient || "";
+  const phone = raw.phone || "";
+  const postalCode = raw.postal_code || raw.postalCode || "";
+  const roadAddress = raw.road_address || raw.roadAddress || "";
+  const detailAddress = raw.detail_address || raw.detailAddress || "";
+  const hasAddressData = Boolean(recipient || phone || postalCode || roadAddress || detailAddress);
+  if (!hasAddressData) return null;
+
+  return {
+    id: raw.id || null,
+    recipient,
+    phone,
+    postalCode,
+    roadAddress,
+    detailAddress,
+    isDefault: Boolean(raw.is_default ?? raw.isDefault ?? true),
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
 function normalizeBankTransferRequest(raw = {}) {
   const accountInfo = raw.account_info || raw.accountInfo || {};
   return {
@@ -959,6 +981,11 @@ export async function fetchMyOrders() {
   return Array.isArray(data) ? data.map(normalizeOrderSummary) : [];
 }
 
+export async function fetchMyDefaultAddress() {
+  const data = await apiRequest("/users/me/default-address");
+  return normalizeDefaultAddress(data || {});
+}
+
 export async function updateMyProfile({ name, phone }) {
   return apiRequest("/users/me", {
     method: "PATCH",
@@ -1020,6 +1047,7 @@ export async function createOrder({
   roadAddress,
   jibunAddress = "",
   detailAddress = "",
+  saveAsDefaultAddress = true,
   buyNowProductId,
   buyNowOptionId,
   buyNowQuantity,
@@ -1031,6 +1059,7 @@ export async function createOrder({
     road_address: roadAddress,
     jibun_address: jibunAddress,
     detail_address: detailAddress,
+    save_as_default_address: Boolean(saveAsDefaultAddress),
   };
   if (buyNowProductId !== undefined && buyNowProductId !== null) {
     body.buy_now_product_id = Number(buyNowProductId);
