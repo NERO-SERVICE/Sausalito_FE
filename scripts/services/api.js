@@ -986,11 +986,48 @@ export async function fetchMyDefaultAddress() {
   return normalizeDefaultAddress(data || {});
 }
 
-export async function updateMyProfile({ name, phone }) {
+export async function updateMyProfile({
+  email,
+  name,
+  phone,
+  smsMarketingOptIn,
+  emailMarketingOptIn,
+} = {}) {
+  const body = {};
+  if (email !== undefined) body.email = email;
+  if (name !== undefined) body.name = name;
+  if (phone !== undefined) body.phone = phone;
+  if (smsMarketingOptIn !== undefined) {
+    body.sms_marketing_opt_in = Boolean(smsMarketingOptIn);
+  }
+  if (emailMarketingOptIn !== undefined) {
+    body.email_marketing_opt_in = Boolean(emailMarketingOptIn);
+  }
+
   return apiRequest("/users/me", {
     method: "PATCH",
-    body: { name, phone },
+    body,
   });
+}
+
+export async function updateMyDefaultAddress({
+  recipient,
+  phone,
+  postalCode,
+  roadAddress,
+  detailAddress = "",
+} = {}) {
+  const data = await apiRequest("/users/me/default-address", {
+    method: "PATCH",
+    body: {
+      recipient,
+      phone,
+      postal_code: postalCode,
+      road_address: roadAddress,
+      detail_address: detailAddress,
+    },
+  });
+  return normalizeDefaultAddress(data || {});
 }
 
 export async function changeMyPassword({ oldPassword, newPassword, newPasswordConfirm }) {

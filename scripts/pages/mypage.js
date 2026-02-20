@@ -10,7 +10,7 @@ mountSiteFooter();
 
 const SECTION_META = {
   dashboard: {
-    title: "마이쇼핑 홈",
+    title: "마이페이지 홈",
     description: "총 주문/혜택/진행현황을 한눈에 확인하세요.",
   },
   orders: {
@@ -42,6 +42,7 @@ const el = {
   sections: Array.from(document.querySelectorAll("[data-section]")),
   kpi: document.getElementById("myshopKpi"),
   orderStage: document.getElementById("myshopOrderStage"),
+  claimStage: document.getElementById("myshopClaimStage"),
   orderStatusFilter: document.getElementById("myshopOrderStatusFilter"),
   orderRangeFilter: document.getElementById("myshopOrderRangeFilter"),
   orderTable: document.getElementById("myshopOrderTable"),
@@ -107,11 +108,17 @@ function deriveOrderProgressStatus(order) {
   return "주문접수";
 }
 
+function hasExchangeStatus(order) {
+  const status = String(order.status || "").toUpperCase();
+  return status.includes("EXCHANGE");
+}
+
 function getOrderStatusLabel(order) {
   const progress = deriveOrderProgressStatus(order);
   if (progress === "입금전" || progress === "배송준비중" || progress === "배송중" || progress === "배송완료") {
     return progress;
   }
+  if (hasExchangeStatus(order)) return "교환";
   if (order.status === "FAILED" || order.paymentStatus === "FAILED") return "결제실패";
   if (order.status === "PAID") return "결제완료";
   if (order.status === "CANCELED") return "주문취소";
@@ -143,6 +150,7 @@ function matchesOrderStatusFilter(order, filter) {
 function mapClaimType(order) {
   if (order.status === "CANCELED") return "CANCEL";
   if (order.status === "REFUNDED" || order.status === "PARTIAL_REFUNDED") return "RETURN";
+  if (hasExchangeStatus(order)) return "EXCHANGE";
   return "";
 }
 
@@ -223,6 +231,29 @@ function renderOrderStage() {
   `;
 }
 
+function renderClaimStage() {
+  if (!el.claimStage) return;
+
+  const counts = {
+    cancel: 0,
+    exchange: 0,
+    returned: 0,
+  };
+
+  state.orders.forEach((order) => {
+    const claimType = mapClaimType(order);
+    if (claimType === "CANCEL") counts.cancel += 1;
+    if (claimType === "EXCHANGE") counts.exchange += 1;
+    if (claimType === "RETURN") counts.returned += 1;
+  });
+
+  el.claimStage.innerHTML = `
+    <article><p>취소</p><strong>${counts.cancel}</strong></article>
+    <article><p>교환</p><strong>${counts.exchange}</strong></article>
+    <article><p>반품</p><strong>${counts.returned}</strong></article>
+  `;
+}
+
 function renderOrderTable() {
   const statusFilter = el.orderStatusFilter.value;
   const rangeFilter = el.orderRangeFilter.value;
@@ -280,7 +311,6 @@ function renderClaimTable() {
 
   const filtered = rows.filter((row) => {
     if (statusFilter === "ALL") return true;
-    if (statusFilter === "EXCHANGE") return false;
     return row.claimType === statusFilter;
   });
 
@@ -365,6 +395,7 @@ function renderAll() {
   el.sidebarGreeting.textContent = `${profile.name || profile.email || "회원"}님의 쇼핑 정보를 확인하세요.`;
   renderKpi();
   renderOrderStage();
+  renderClaimStage();
   renderOrderTable();
   renderClaimTable();
   renderCouponTable();

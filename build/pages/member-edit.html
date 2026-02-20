@@ -4,87 +4,142 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>소살리토 | 회원정보수정</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <script type="module" crossorigin src="/assets/memberEdit-zzBF0Bfo.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/footer-gm66ePvf.js">
-    <link rel="modulepreload" crossorigin href="/assets/cart-service-KwMGSYam.js">
-    <link rel="stylesheet" crossorigin href="/assets/footer-BN_95l7V.css">
+    <script type="module" crossorigin src="/assets/memberEdit-SmXDpZVF.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-if3gKH-v.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-BMGGvDEV.js">
+    <link rel="stylesheet" crossorigin href="/assets/footer-CV19Wrio.css">
   </head>
   <body>
     <div id="siteHeaderMount"></div>
 
     <main class="myshop-shell member-edit-shell">
       <aside class="myshop-sidebar">
-        <h2>마이쇼핑</h2>
+        <h2>마이페이지</h2>
         <nav class="myshop-nav">
-          <a href="/pages/mypage.html?tab=dashboard">마이쇼핑 홈</a>
+          <a href="/pages/mypage.html?tab=dashboard">마이페이지 홈</a>
           <a href="/pages/mypage.html?tab=orders">주문내역조회</a>
           <a href="/pages/mypage.html?tab=claims">취소/반품/교환내역</a>
           <a href="/pages/mypage.html?tab=coupons">쿠폰내역</a>
           <a href="/pages/member-edit.html" class="is-active">회원정보수정</a>
+          <a href="/pages/change-password.html">비밀번호 변경</a>
         </nav>
       </aside>
 
       <section class="myshop-content">
+        <div class="mypage-path">
+          <span>홈</span>
+          <span>마이페이지</span>
+          <span>회원정보수정</span>
+        </div>
+
         <header class="myshop-content-head">
           <div>
             <h3>회원정보수정</h3>
-            <p>회원정보 변경, 비밀번호 변경, 회원 탈퇴를 이 화면에서 관리할 수 있습니다.</p>
+            <p>주문/배송에 필요한 회원 기본정보를 관리합니다.</p>
           </div>
         </header>
 
-        <section class="myshop-panel">
-          <h4>기본 정보 수정</h4>
+        <section class="myshop-panel member-profile-panel">
+          <div class="member-panel-title">
+            <h4>기본정보</h4>
+            <p class="member-required-guide">필수입력사항</p>
+          </div>
+
           <form id="memberProfileForm" class="member-edit-form">
-            <label>
-              <span>이메일</span>
-              <input type="email" id="memberEditEmail" readonly />
-            </label>
-            <label>
-              <span>이름</span>
-              <input type="text" id="memberEditName" required maxlength="100" />
-            </label>
-            <label>
-              <span>연락처</span>
-              <input type="text" id="memberEditPhone" maxlength="20" placeholder="01012345678" />
-            </label>
-            <div class="member-edit-submit">
-              <button class="primary" type="submit">정보 저장</button>
+            <div class="member-edit-table-wrap">
+              <table class="member-edit-table">
+                <tbody>
+                  <tr>
+                    <th scope="row">이메일</th>
+                    <td>
+                      <input type="email" id="memberEditEmail" required />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">이름 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditName" required maxlength="100" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">연락처 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditPhone" required maxlength="20" placeholder="01012345678" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">수령인 이름 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditRecipient" required maxlength="100" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">수령인 연락처 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditRecipientPhone" required maxlength="20" placeholder="01012345678" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">우편번호 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditPostalCode" required maxlength="10" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">도로명 주소 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditRoadAddress" required maxlength="255" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">상세 주소 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditDetailAddress" required maxlength="255" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">SMS 수신동의</th>
+                    <td>
+                      <label class="member-inline-checkbox">
+                        <input type="checkbox" id="memberEditSmsMarketing" />
+                        <span>이벤트/혜택 SMS 수신 동의</span>
+                      </label>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">이메일 수신동의</th>
+                    <td>
+                      <label class="member-inline-checkbox">
+                        <input type="checkbox" id="memberEditEmailMarketing" />
+                        <span>이벤트/혜택 이메일 수신 동의</span>
+                      </label>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="member-edit-action-row">
+              <button type="button" id="memberWithdrawRevealBtn" class="member-withdraw-trigger">회원탈퇴</button>
+              <button class="primary" type="submit">회원정보수정</button>
             </div>
           </form>
         </section>
 
-        <section class="myshop-panel">
-          <h4>비밀번호 변경</h4>
-          <form id="memberPasswordForm" class="member-edit-form">
-            <label>
-              <span>현재 비밀번호</span>
-              <input type="password" id="memberOldPassword" required />
-            </label>
-            <label>
-              <span>새 비밀번호</span>
-              <input type="password" id="memberNewPassword" required />
-            </label>
-            <label>
-              <span>새 비밀번호 확인</span>
-              <input type="password" id="memberNewPasswordConfirm" required />
-            </label>
-            <div class="member-edit-submit">
-              <button class="primary" type="submit">비밀번호 변경</button>
+        <div id="memberWithdrawConfirmModal" class="member-confirm-modal" hidden>
+          <div class="member-confirm-backdrop" id="memberWithdrawModalClose"></div>
+          <div class="member-confirm-box" role="dialog" aria-modal="true" aria-labelledby="memberWithdrawConfirmTitle">
+            <h4 id="memberWithdrawConfirmTitle">회원탈퇴 안내</h4>
+            <p>회원을 정말 탈퇴하시겠습니까?</p>
+            <div class="member-confirm-actions">
+              <button type="button" class="ghost" id="memberWithdrawCancelBtn">취소</button>
+              <button type="button" class="danger" id="memberWithdrawApproveBtn">확인</button>
             </div>
-          </form>
-        </section>
+          </div>
+        </div>
 
-        <section class="myshop-panel member-withdraw-panel">
-          <h4>회원 탈퇴</h4>
-          <p class="member-withdraw-copy">
-            탈퇴 시 계정은 비활성화되며, 동일한 이메일로 즉시 재가입이 불가할 수 있습니다.
-          </p>
+        <section class="myshop-panel member-withdraw-panel" id="memberWithdrawPanel" hidden>
+          <h4>회원 탈퇴 진행</h4>
+          <p class="member-withdraw-copy">탈퇴 시 계정은 비활성화되며 보유 혜택 정보가 삭제될 수 있습니다.</p>
           <form id="memberWithdrawForm" class="member-edit-form">
             <label>
               <span>비밀번호 확인</span>

@@ -25,6 +25,7 @@ export default defineConfig({
         cart: resolve(__dirname, "pages/cart.html"),
         mypage: resolve(__dirname, "pages/mypage.html"),
         memberEdit: resolve(__dirname, "pages/member-edit.html"),
+        changePassword: resolve(__dirname, "pages/change-password.html"),
       },
     },
   },

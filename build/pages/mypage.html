@@ -4,50 +4,61 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>소살리토 | 마이페이지</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <script type="module" crossorigin src="/assets/mypage-BCVU-2Dq.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/footer-gm66ePvf.js">
-    <link rel="modulepreload" crossorigin href="/assets/cart-service-KwMGSYam.js">
+    <script type="module" crossorigin src="/assets/mypage-OZFmIYe_.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-if3gKH-v.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-BMGGvDEV.js">
     <link rel="modulepreload" crossorigin href="/assets/store-data-Djz9-Ys0.js">
-    <link rel="stylesheet" crossorigin href="/assets/footer-BN_95l7V.css">
+    <link rel="stylesheet" crossorigin href="/assets/footer-CV19Wrio.css">
   </head>
   <body>
     <div id="siteHeaderMount"></div>
 
     <main class="myshop-shell">
       <aside class="myshop-sidebar">
-        <h2>마이쇼핑</h2>
+        <h2>마이페이지</h2>
         <p id="myshopSidebarGreeting">고객님의 쇼핑 활동을 확인하세요.</p>
         <nav class="myshop-nav" id="myshopNav">
-          <a href="/pages/mypage.html?tab=dashboard" data-section-link="dashboard" class="is-active">마이쇼핑 홈</a>
+          <a href="/pages/mypage.html?tab=dashboard" data-section-link="dashboard" class="is-active">마이페이지 홈</a>
           <a href="/pages/mypage.html?tab=orders" data-section-link="orders">주문내역조회</a>
           <a href="/pages/mypage.html?tab=claims" data-section-link="claims">취소/반품/교환내역</a>
           <a href="/pages/mypage.html?tab=coupons" data-section-link="coupons">쿠폰내역</a>
           <a href="/pages/member-edit.html">회원정보수정</a>
+          <a href="/pages/change-password.html">비밀번호 변경</a>
         </nav>
       </aside>
 
       <section class="myshop-content">
+        <div class="mypage-path">
+          <span>홈</span>
+          <span>마이페이지</span>
+        </div>
+
         <header class="myshop-content-head">
           <div>
-            <h3 id="myshopSectionTitle">마이쇼핑 홈</h3>
+            <h3 id="myshopSectionTitle">마이페이지 홈</h3>
             <p id="myshopSectionDescription">회원님의 주문/혜택 정보를 확인하세요.</p>
           </div>
-          <a class="ghost" href="/pages/member-edit.html">회원정보수정</a>
+          <div class="myshop-head-actions">
+            <a class="ghost" href="/pages/member-edit.html">회원정보수정</a>
+            <a class="ghost" href="/pages/change-password.html">비밀번호 변경</a>
+          </div>
         </header>
 
         <section class="myshop-section" data-section="dashboard">
-          <div class="myshop-kpi-grid" id="myshopKpi"></div>
+          <article class="myshop-panel myshop-panel-emphasis">
+            <div class="myshop-panel-head">
+              <h4>쇼핑 혜택 요약</h4>
+            </div>
+            <div class="myshop-kpi-grid" id="myshopKpi"></div>
+          </article>
+
           <article class="myshop-panel">
             <div class="myshop-panel-head">
-              <h4>나의 주문처리현황</h4>
+              <h4>나의 주문처리 현황</h4>
+              <p class="myshop-panel-meta">최근 3개월 기준</p>
             </div>
             <div class="myshop-order-stage" id="myshopOrderStage"></div>
+            <div class="myshop-claim-stage" id="myshopClaimStage"></div>
           </article>
         </section>
 

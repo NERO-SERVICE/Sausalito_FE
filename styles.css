@@ -3707,57 +3707,104 @@ button,input,select,textarea { font: inherit; }
 
 .myshop-shell {
   width: min(1240px, 94vw);
-  margin: 26px auto 84px;
+  margin: 24px auto 84px;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 26px;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.myshop-sidebar {
+  position: sticky;
+  top: calc(var(--header-height) + 16px);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 14px;
 }
 
 .myshop-sidebar h2 {
   margin: 0;
-  font-size: 1.14rem;
+  font-size: 1.12rem;
 }
 
 .myshop-sidebar p {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   color: #64748b;
-  font-size: 0.84rem;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .myshop-nav {
   margin-top: 14px;
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .myshop-nav a {
   display: block;
-  padding: 8px 6px;
-  color: #475569;
+  padding: 10px 8px;
+  color: #334155;
   text-decoration: none;
   border-radius: 6px;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
+  font-weight: 500;
   transition: color 0.16s ease, background-color 0.16s ease;
 }
 
 .myshop-nav a:hover {
-  background: #f1f5f9;
+  background: #f8fafc;
   color: #0f172a;
 }
 
 .myshop-nav a.is-active {
   color: #0f172a;
   font-weight: 700;
-  background: #eef2ff;
+  background: #f1f5f9;
 }
 
 .myshop-content {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+}
+
+.mypage-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.mypage-path span {
+  position: relative;
+  color: #64748b;
+  font-size: 0.77rem;
+  padding-right: 12px;
+}
+
+.mypage-path span::after {
+  content: ">";
+  position: absolute;
+  right: 0;
+  top: 0;
+  color: #94a3b8;
+}
+
+.mypage-path span:last-child {
+  color: #0f172a;
+  font-weight: 600;
+  padding-right: 0;
+}
+
+.mypage-path span:last-child::after {
+  content: "";
 }
 
 .myshop-content-head {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -3766,17 +3813,24 @@ button,input,select,textarea { font: inherit; }
 
 .myshop-content-head h3 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.28rem;
 }
 
 .myshop-content-head p {
   margin: 6px 0 0;
   color: #64748b;
+  font-size: 0.86rem;
+}
+
+.myshop-head-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .myshop-section {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .myshop-kpi-grid {
@@ -3786,30 +3840,37 @@ button,input,select,textarea { font: inherit; }
 }
 
 .myshop-kpi-grid article {
-  border: 1px solid #dbe3ef;
+  border: 1px solid #d7dfe9;
   border-radius: 10px;
-  background: #fff;
+  background: #fcfdff;
   padding: 14px;
+  min-height: 94px;
+  display: grid;
+  align-content: center;
 }
 
 .myshop-kpi-grid p {
   margin: 0;
-  color: #64748b;
-  font-size: 0.84rem;
+  color: #475569;
+  font-size: 0.8rem;
 }
 
 .myshop-kpi-grid strong {
   display: block;
-  margin-top: 8px;
+  margin-top: 10px;
   color: #0f172a;
-  font-size: 1.2rem;
+  font-size: 1.16rem;
 }
 
 .myshop-panel {
-  border: 1px solid #dbe3ef;
-  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   background: #fff;
   padding: 14px;
+}
+
+.myshop-panel-emphasis {
+  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 72%);
 }
 
 .myshop-panel-head {
@@ -3817,11 +3878,19 @@ button,input,select,textarea { font: inherit; }
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .myshop-panel-head h4 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1rem;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+.myshop-panel-meta {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
 }
 
 .myshop-filter-row {
@@ -3842,14 +3911,14 @@ button,input,select,textarea { font: inherit; }
   margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .myshop-order-stage article {
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dbe3ef;
   border-radius: 8px;
   background: #f8fafc;
-  padding: 12px 10px;
+  padding: 11px 10px;
   text-align: center;
 }
 
@@ -3863,6 +3932,34 @@ button,input,select,textarea { font: inherit; }
   display: block;
   margin-top: 8px;
   font-size: 1.16rem;
+  color: #0f172a;
+}
+
+.myshop-claim-stage {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.myshop-claim-stage article {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+  text-align: center;
+}
+
+.myshop-claim-stage p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.myshop-claim-stage strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 1.02rem;
   color: #0f172a;
 }
 
@@ -3882,9 +3979,10 @@ button,input,select,textarea { font: inherit; }
 .myshop-table th,
 .myshop-table td {
   border-bottom: 1px solid #e2e8f0;
-  padding: 10px;
+  padding: 10px 11px;
   text-align: left;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
+  white-space: nowrap;
 }
 
 .myshop-table th {
@@ -3907,11 +4005,88 @@ button,input,select,textarea { font: inherit; }
 }
 
 .member-edit-shell .myshop-content {
-  gap: 14px;
+  gap: 10px;
+}
+
+.member-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.member-panel-title h4 {
+  margin: 0;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  font-size: 1.02rem;
+}
+
+.member-required-guide {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.member-required-chip {
+  color: #dc2626;
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.member-edit-table-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.member-edit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.member-edit-table th,
+.member-edit-table td {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.member-edit-table tr:last-child th,
+.member-edit-table tr:last-child td {
+  border-bottom: none;
+}
+
+.member-edit-table th {
+  width: 180px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px;
+}
+
+.member-edit-table td {
+  padding: 10px;
+}
+
+.member-edit-table input[type="text"],
+.member-edit-table input[type="email"],
+.member-edit-table input[type="tel"],
+.member-edit-table input[type="password"] {
+  width: 100%;
+  border: 1px solid #cfd7e5;
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.member-edit-table input[readonly] {
+  background: #f8fafc;
 }
 
 .member-edit-form {
-  margin-top: 10px;
   display: grid;
   gap: 10px;
 }
@@ -3946,6 +4121,93 @@ button,input,select,textarea { font: inherit; }
   justify-content: flex-end;
 }
 
+.member-edit-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.member-withdraw-trigger {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  opacity: 0.82;
+  padding: 0 2px;
+}
+
+.member-withdraw-trigger:hover {
+  opacity: 1;
+  color: #1e293b;
+}
+
+.member-inline-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.member-inline-checkbox input {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  border: none;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: #0f172a;
+}
+
+.member-confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+}
+
+.member-confirm-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.member-confirm-box {
+  position: relative;
+  width: min(420px, 90vw);
+  margin: 20vh auto 0;
+  border-radius: 12px;
+  border: 1px solid #dbe3ef;
+  background: #fff;
+  padding: 18px;
+  z-index: 1;
+}
+
+.member-confirm-box h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+.member-confirm-box p {
+  margin: 10px 0 0;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.member-confirm-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .member-withdraw-panel {
   border-color: #fecaca;
   background: #fffafa;
@@ -3968,6 +4230,88 @@ button,input,select,textarea { font: inherit; }
   color: #475569;
 }
 
+.change-password-panel {
+  padding: 16px;
+}
+
+.change-password-help {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.change-password-help p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.change-password-form {
+  margin-top: 12px;
+}
+
+.change-password-dl {
+  margin: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.change-password-dl > div {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.change-password-dl > div:last-child {
+  border-bottom: none;
+}
+
+.change-password-dl dt {
+  margin: 0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 12px;
+}
+
+.change-password-dl dd {
+  margin: 0;
+  padding: 10px;
+}
+
+.change-password-dl strong {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.change-password-dl input {
+  width: 100%;
+  border: 1px solid #cfd7e5;
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.change-password-tip {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.change-password-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 @media (max-width: 1024px) {
   .checkout-layout {
     grid-template-columns: 1fr;
@@ -3983,8 +4327,7 @@ button,input,select,textarea { font: inherit; }
   }
 
   .myshop-sidebar {
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 10px;
+    position: static;
   }
 
   .myshop-nav {
@@ -4040,12 +4383,25 @@ button,input,select,textarea { font: inherit; }
     align-items: flex-start;
   }
 
+  .myshop-head-actions {
+    width: 100%;
+  }
+
   .myshop-kpi-grid {
     grid-template-columns: 1fr;
   }
 
   .myshop-order-stage {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .myshop-claim-stage {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .member-edit-table th,
+  .change-password-dl dt {
+    width: 132px;
   }
 }
 
@@ -4056,6 +4412,40 @@ button,input,select,textarea { font: inherit; }
 
   .myshop-order-stage {
     grid-template-columns: 1fr;
+  }
+
+  .myshop-claim-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .member-edit-table th,
+  .member-edit-table td,
+  .change-password-dl dt,
+  .change-password-dl dd {
+    display: block;
+    width: 100%;
+  }
+
+  .change-password-dl > div {
+    grid-template-columns: 1fr;
+  }
+
+  .change-password-actions {
+    flex-direction: column;
+  }
+
+  .change-password-actions .ghost,
+  .change-password-actions .primary {
+    width: 100%;
+  }
+
+  .member-confirm-actions {
+    flex-direction: column;
+  }
+
+  .member-confirm-actions .ghost,
+  .member-confirm-actions .danger {
+    width: 100%;
   }
 
   .myshop-table {
