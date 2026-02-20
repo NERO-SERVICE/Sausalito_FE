@@ -105,6 +105,16 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function toDateText(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}.${mm}.${dd}`;
+}
+
 function formatPercent(value, digits = 1) {
   const safe = Number.isFinite(Number(value)) ? Number(value) : 0;
   return `${safe.toFixed(digits)}%`;
@@ -424,9 +434,17 @@ function render() {
                     : r.image
                       ? [r.image]
                       : [];
+                  const replyDate = r.answeredAt ? toDateText(r.answeredAt) : "";
+                  const replyBlock = r.adminReply
+                    ? `<div class="pd-review-answer">
+                        <strong>관리자 답변</strong>
+                        <p>${escapeHtml(r.adminReply)}</p>
+                        <span>${escapeHtml(r.answeredBy || "관리자")}${replyDate ? ` · ${replyDate}` : ""}</span>
+                      </div>`
+                    : "";
                   return `<article class="pd-review-item">
-                      <div class="pd-review-head"><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${r.user} · ${r.date}</span></div>
-                      <p>${r.text}</p>
+                      <div class="pd-review-head"><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${escapeHtml(r.user)} · ${escapeHtml(r.date)}</span></div>
+                      <p>${escapeHtml(r.text)}</p>
                       ${
                         reviewImages.length
                           ? `<div class="pd-review-thumb-grid">
@@ -439,6 +457,7 @@ function render() {
                             </div>`
                           : ""
                       }
+                      ${replyBlock}
                     </article>`;
                 })
                 .join("")

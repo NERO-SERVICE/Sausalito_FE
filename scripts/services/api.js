@@ -406,9 +406,14 @@ function normalizeReview(raw = {}) {
     productId: Number(raw.productId ?? raw.product_id ?? raw.product?.id ?? 0),
     user: raw.user || raw.user_masked || "익명",
     score: Number(raw.score || 0),
+    title: raw.title || "",
     text: raw.text || raw.content || "",
     date: raw.date || formatDate(raw.created_at),
     helpful: Number(raw.helpful ?? raw.helpful_count ?? 0),
+    isBest: Boolean(raw.is_best ?? raw.isBest),
+    adminReply: raw.admin_reply || raw.adminReply || raw.answer || "",
+    answeredAt: raw.answered_at || raw.answeredAt || raw.admin_replied_at || raw.adminRepliedAt || null,
+    answeredBy: raw.answered_by || raw.answeredBy || "",
     image: primaryImage,
     images,
     createdAt: raw.created_at || null,
@@ -612,7 +617,11 @@ function normalizeAdminReview(raw = {}) {
     title: raw.title || "",
     content: raw.content || "",
     status: raw.status || "",
+    isBest: Boolean(raw.is_best ?? raw.isBest),
     helpfulCount: Number(raw.helpful_count ?? raw.helpfulCount ?? 0),
+    adminReply: raw.admin_reply || raw.adminReply || raw.answer || "",
+    adminRepliedAt: raw.admin_replied_at || raw.adminRepliedAt || raw.answered_at || raw.answeredAt || null,
+    adminRepliedByName: raw.admin_replied_by_name || raw.adminRepliedByName || "",
     createdAt: raw.created_at || raw.createdAt || null,
     images: Array.isArray(raw.images) ? raw.images.filter(Boolean) : [],
   };
@@ -765,7 +774,7 @@ function normalizeAdminManagedUser(raw = {}) {
   };
 }
 
-async function fetchReviewsWithPagination({ productId, sort = "latest", hasImage, pageSize = 100 } = {}) {
+async function fetchReviewsWithPagination({ productId, sort = "latest", hasImage, pageSize = 100, bestOnly } = {}) {
   let page = 1;
   let count = null;
   const merged = [];
@@ -776,6 +785,7 @@ async function fetchReviewsWithPagination({ productId, sort = "latest", hasImage
         product_id: productId,
         sort,
         has_image: typeof hasImage === "boolean" ? String(hasImage) : undefined,
+        best_only: typeof bestOnly === "boolean" ? String(bestOnly) : undefined,
         page,
         page_size: pageSize,
       },
@@ -967,8 +977,13 @@ export async function fetchFeaturedReviews(limit = 6) {
   return extractResults(data).map(normalizeReview).slice(0, limit);
 }
 
-export async function fetchAllReviews() {
-  return fetchReviewsWithPagination({ sort: "latest", pageSize: 100 });
+export async function fetchBestReviews(limit = 12) {
+  const rows = await fetchReviewsWithPagination({ sort: "latest", pageSize: 100, bestOnly: true });
+  return rows.slice(0, limit);
+}
+
+export async function fetchAllReviews({ sort = "latest", bestOnly } = {}) {
+  return fetchReviewsWithPagination({ sort, pageSize: 100, bestOnly });
 }
 
 export async function fetchMyPageDashboard() {
@@ -1300,7 +1315,7 @@ export async function answerAdminInquiry(
   return normalizeAdminInquiry(data || {});
 }
 
-export async function fetchAdminReviews({ status, productId, sort = "latest", page = 1, pageSize = 10, q } = {}) {
+export async function fetchAdminReviews({ status, productId, sort = "latest", page = 1, pageSize = 10, q, bestOnly } = {}) {
   const data = await apiRequest("/admin/reviews", {
     query: {
       status,
@@ -1309,6 +1324,7 @@ export async function fetchAdminReviews({ status, productId, sort = "latest", pa
       page,
       page_size: pageSize,
       q,
+      best_only: typeof bestOnly === "boolean" ? String(bestOnly) : undefined,
     },
   });
 
@@ -1333,6 +1349,19 @@ export async function setAdminReviewVisibility(reviewId, visible) {
   const data = await apiRequest(`/admin/reviews/${reviewId}/visibility`, {
     method: "PATCH",
     body: { visible: Boolean(visible) },
+  });
+  return normalizeAdminReview(data || {});
+}
+
+export async function manageAdminReview(reviewId, { isBest, answer, deleteAnswer } = {}) {
+  const body = {};
+  if (typeof isBest === "boolean") body.is_best = isBest;
+  if (answer !== undefined) body.answer = String(answer ?? "");
+  if (deleteAnswer !== undefined) body.delete_answer = Boolean(deleteAnswer);
+
+  const data = await apiRequest(`/admin/reviews/${reviewId}/manage`, {
+    method: "PATCH",
+    body,
   });
   return normalizeAdminReview(data || {});
 }
