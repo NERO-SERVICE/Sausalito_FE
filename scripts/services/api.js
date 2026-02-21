@@ -412,6 +412,7 @@ function normalizeReview(raw = {}) {
     helpful: Number(raw.helpful ?? raw.helpful_count ?? 0),
     isBest: Boolean(raw.is_best ?? raw.isBest),
     adminReply: raw.admin_reply || raw.adminReply || raw.answer || "",
+    isReportedByMe: Boolean(raw.is_reported_by_me ?? raw.isReportedByMe),
     answeredAt: raw.answered_at || raw.answeredAt || raw.admin_replied_at || raw.adminRepliedAt || null,
     answeredBy: raw.answered_by || raw.answeredBy || "",
     image: primaryImage,
@@ -1918,6 +1919,20 @@ export async function createReview({ productId, score, title, content, images = 
   });
 
   return normalizeReview(data);
+}
+
+export async function reportReview(reviewId, { reason = "ETC", detail = "" } = {}) {
+  if (!reviewId) {
+    throw new Error("신고할 리뷰를 찾을 수 없습니다.");
+  }
+
+  return apiRequest(`/reviews/${reviewId}/report`, {
+    method: "POST",
+    body: {
+      reason,
+      detail: detail || "",
+    },
+  });
 }
 
 export function getApiBaseUrl() {

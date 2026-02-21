@@ -1,7 +1,7 @@
 import {
   fetchProducts,
   fetchHomeBanners,
-  fetchFeaturedReviews,
+  fetchBestReviews,
 } from "../services/api.js";
 import { cartCount } from "../services/cart-service.js";
 import { getUser, syncCurrentUser } from "../services/auth-service.js";
@@ -14,6 +14,7 @@ mountSiteFooter();
 
 const state = {
   products: [],
+  productMap: new Map(),
   banners: [],
   reviews: [],
   heroIndex: 0,
@@ -44,6 +45,28 @@ async function setHeaderState() {
     isAdmin: Boolean(user?.is_staff ?? user?.isStaff),
     cartCountValue: count,
   });
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderStars(score) {
+  const safeScore = Math.max(0, Math.min(5, Number(score || 0)));
+  return `${"★".repeat(safeScore)}${"☆".repeat(5 - safeScore)}`;
+}
+
+function getReviewImage(review) {
+  const imageList = Array.isArray(review.images) ? review.images.filter(Boolean) : [];
+  if (imageList.length) return imageList[0];
+  if (review.image) return review.image;
+  const product = state.productMap.get(Number(review.productId));
+  return resolveProductImage(product?.image, { useFallback: true });
 }
 
 function setHero(index) {
@@ -129,21 +152,25 @@ function renderProductCards(targetEl, products) {
 }
 
 function renderBestReviews() {
+  if (!state.reviews.length) {
+    el.bestReviewList.innerHTML = '<p class="empty">베스트 리뷰가 없습니다.</p>';
+    return;
+  }
+
   el.bestReviewList.innerHTML = state.reviews
     .map((review) => {
-      const product = state.products.find((item) => item.id === review.productId);
+      const reviewImage = getReviewImage(review);
       return `
-        <a class="home-review-card" href="/pages/detail.html?id=${review.productId}">
-          <div class="home-review-head">
-            <strong>${product?.name || "상품"}</strong>
-            <span>${review.user} · ${review.date}</span>
+        <article class="rv-best-card">
+          <a class="rv-best-thumb-link" href="/pages/detail.html?id=${review.productId}">
+            <img class="rv-best-thumb" src="${escapeHtml(reviewImage)}" alt="리뷰 이미지" />
+          </a>
+          <div class="rv-best-body">
+            <p class="rv-best-title">${escapeHtml(review.title || "고객 리뷰")}</p>
+            <p class="rv-best-text">${escapeHtml(review.text || "")}</p>
+            <div class="rv-best-stars" aria-label="별점 ${Number(review.score || 0)}점">${renderStars(review.score)}</div>
           </div>
-          <p>${review.text}</p>
-          <div class="home-review-foot">
-            <b>${"★".repeat(review.score)}${"☆".repeat(5 - review.score)}</b>
-            <span>도움돼요 ${review.helpful}</span>
-          </div>
-        </a>`;
+        </article>`;
     })
     .join("");
 }
@@ -171,10 +198,11 @@ async function init() {
     const [products, banners, reviews] = await Promise.all([
       fetchProducts(),
       fetchHomeBanners(),
-      fetchFeaturedReviews(6),
+      fetchBestReviews(10),
     ]);
 
     state.products = products;
+    state.productMap = new Map(products.map((product) => [Number(product.id), product]));
     state.banners = banners;
     state.reviews = reviews;
 

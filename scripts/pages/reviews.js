@@ -1,5 +1,5 @@
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
-import { fetchAllReviews, fetchProducts } from "../services/api.js";
+import { fetchAllReviews, fetchProducts, reportReview } from "../services/api.js";
 import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
 import { resolveProductImage } from "../store-data.js";
@@ -16,10 +16,13 @@ const state = {
   products: [],
   productMap: new Map(),
   reviews: [],
+  currentUser: null,
   bestPage: 1,
   listPage: 1,
   listSort: "score",
   isPolicyOpen: false,
+  expandedReplyIds: new Set(),
+  reportingReviewIds: new Set(),
 };
 
 const el = {
@@ -90,12 +93,25 @@ function renderStars(score) {
   return `${"★".repeat(safeScore)}${"☆".repeat(5 - safeScore)}`;
 }
 
-function renderAdminReply(review) {
-  if (!review.adminReply) return "";
+function renderAdminReplySection(review, isExpanded) {
+  if (!isExpanded) return "";
+
+  if (!review.adminReply) {
+    return `
+      <div class="rv-reply-wrap">
+        <div class="rv-reply rv-reply-empty">
+          <p>아직 등록된 관리자 답글이 없습니다.</p>
+        </div>
+      </div>
+    `;
+  }
+
   return `
-    <div class="rv-reply">
-      <p>${escapeHtml(review.adminReply)}</p>
-      <small>관리자 올림</small>
+    <div class="rv-reply-wrap">
+      <div class="rv-reply">
+        <p>${escapeHtml(review.adminReply)}</p>
+        <small>관리자 올림</small>
+      </div>
     </div>
   `;
 }
@@ -117,12 +133,41 @@ function renderBestCard(review) {
   `;
 }
 
+function renderActionIcon(type) {
+  if (type === "comment") {
+    return `
+      <svg class="rv-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 6.5h14v9H9.5l-4.5 3V6.5z" />
+      </svg>
+    `;
+  }
+  return `
+    <svg class="rv-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M6.5 4.5v15M6.5 5.5h10l-2.5 3 2.5 3h-10" />
+    </svg>
+  `;
+}
+
 function renderListRow(review) {
+  const reviewId = Number(review.id || 0);
   const product = getProduct(review);
   const productName = product?.name || "상품";
   const productImage = resolveProductImage(product?.image, { useFallback: true });
   const dateText = review.date || toDateText(review.createdAt);
   const images = getReviewImages(review);
+  const isReplyExpanded = state.expandedReplyIds.has(reviewId);
+  const isReporting = state.reportingReviewIds.has(reviewId);
+  const isReported = Boolean(review.isReportedByMe);
+  const hasReply = Boolean(String(review.adminReply || "").trim());
+  const canReport = Boolean(state.currentUser);
+  const reportButton = canReport
+    ? `
+          <button class="rv-action-btn rv-action-btn-report ${isReported ? "is-done" : ""}" type="button" data-action="reportReview" data-review-id="${reviewId}" ${isReported || isReporting ? "disabled" : ""}>
+            ${renderActionIcon("report")}
+            <span class="rv-action-label">${isReporting ? "신고중..." : isReported ? "신고완료" : "신고"}</span>
+          </button>
+      `
+    : "";
 
   return `
     <article class="rv-row">
@@ -142,7 +187,14 @@ function renderListRow(review) {
             .map((image, index) => `<img class="rv-row-image" src="${escapeHtml(image)}" alt="리뷰 이미지 ${index + 1}" />`)
             .join("")}
         </div>
-        ${renderAdminReply(review)}
+        <div class="rv-row-actions">
+          <button class="rv-action-btn rv-action-btn-comment ${isReplyExpanded ? "is-active" : ""} ${hasReply ? "has-reply" : ""}" type="button" data-action="toggleReply" data-review-id="${reviewId}">
+            ${renderActionIcon("comment")}
+            <span class="rv-action-label">댓글</span>
+          </button>
+          ${reportButton}
+        </div>
+        ${renderAdminReplySection(review, isReplyExpanded)}
       </div>
     </article>
   `;
@@ -258,6 +310,7 @@ function render() {
 
 async function syncHeader() {
   const user = (await syncCurrentUser()) || getUser();
+  state.currentUser = user || null;
   let count = 0;
   try {
     count = await cartCount();
@@ -282,7 +335,7 @@ function bind() {
     });
   });
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     const target = event.target.closest("[data-action]");
     if (!target) return;
 
@@ -307,6 +360,45 @@ function bind() {
       if (nextPage === state.listPage) return;
       state.listPage = nextPage;
       renderAllSection();
+      return;
+    }
+    if (action === "toggleReply") {
+      const reviewId = Number(target.dataset.reviewId || 0);
+      if (!reviewId) return;
+      if (state.expandedReplyIds.has(reviewId)) {
+        state.expandedReplyIds.delete(reviewId);
+      } else {
+        state.expandedReplyIds.add(reviewId);
+      }
+      renderAllSection();
+      return;
+    }
+    if (action === "reportReview") {
+      const reviewId = Number(target.dataset.reviewId || 0);
+      if (!reviewId) return;
+
+      if (!state.currentUser) {
+        alert("로그인 후 신고할 수 있습니다.");
+        return;
+      }
+
+      const targetReview = state.reviews.find((item) => Number(item.id) === reviewId);
+      if (!targetReview || targetReview.isReportedByMe || state.reportingReviewIds.has(reviewId)) return;
+      if (!confirm("해당게시물을 신고하시겠습니까?")) return;
+
+      state.reportingReviewIds.add(reviewId);
+      renderAllSection();
+      try {
+        await reportReview(reviewId, { reason: "ETC" });
+        targetReview.isReportedByMe = true;
+        alert("관리자에게 접수되었습니다");
+      } catch (error) {
+        console.error(error);
+        alert(error?.message || "리뷰 신고 처리에 실패했습니다.");
+      } finally {
+        state.reportingReviewIds.delete(reviewId);
+        renderAllSection();
+      }
       return;
     }
     if (action === "openPolicy") {
