@@ -15,12 +15,13 @@
         <p id="myshopSidebarGreeting">고객님의 쇼핑 활동을 확인하세요.</p>
         <nav class="myshop-nav" id="myshopNav">
           <a href="/pages/mypage.html?tab=dashboard" data-section-link="dashboard" class="is-active">마이페이지 홈</a>
-          <a href="/pages/mypage.html?tab=orders" data-section-link="orders">주문내역조회</a>
-          <a href="/pages/mypage.html?tab=claims" data-section-link="claims">취소/반품/교환내역</a>
-          <a href="/pages/mypage.html?tab=coupons" data-section-link="coupons">쿠폰내역</a>
+          <a href="/pages/mypage.html?tab=orders" data-section-link="orders">주문내역</a>
+          <a href="/pages/mypage.html?tab=claims" data-section-link="claims">환불 및 교환</a>
+          <a href="/pages/mypage.html?tab=coupons" data-section-link="coupons">쿠폰</a>
           <a href="/pages/member-edit.html">회원정보수정</a>
           <a href="/pages/change-password.html">비밀번호 변경</a>
         </nav>
+        <button class="myshop-logout-btn" id="myshopLogoutBtn" type="button">로그아웃</button>
       </aside>
 
       <section class="myshop-content">
@@ -61,10 +62,10 @@
         <section class="myshop-section" data-section="orders" hidden>
           <article class="myshop-panel">
             <div class="myshop-panel-head">
-              <h4>주문내역조회</h4>
+              <h4>주문내역</h4>
               <div class="myshop-filter-row">
                 <select id="myshopOrderStatusFilter">
-                  <option value="ALL">주문처리상태 전체</option>
+                  <option value="ALL">전체</option>
                   <option value="PENDING">입금전</option>
                   <option value="PAID">결제완료</option>
                   <option value="PREPARING">배송준비중</option>
@@ -89,10 +90,10 @@
         <section class="myshop-section" data-section="claims" hidden>
           <article class="myshop-panel">
             <div class="myshop-panel-head">
-              <h4>취소/반품/교환내역</h4>
+              <h4>환불 및 교환</h4>
               <div class="myshop-filter-row">
                 <select id="myshopClaimStatusFilter">
-                  <option value="ALL">주문처리상태 전체</option>
+                  <option value="ALL">전체</option>
                   <option value="CANCEL">취소</option>
                   <option value="RETURN">반품/환불</option>
                   <option value="EXCHANGE">교환</option>
@@ -112,7 +113,7 @@
         <section class="myshop-section" data-section="coupons" hidden>
           <article class="myshop-panel">
             <div class="myshop-panel-head">
-              <h4>쿠폰내역</h4>
+              <h4>쿠폰</h4>
             </div>
             <div id="myshopCouponTable"></div>
           </article>

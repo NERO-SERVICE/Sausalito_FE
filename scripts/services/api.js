@@ -510,6 +510,54 @@ function normalizeCoupon(raw = {}) {
   };
 }
 
+function normalizeInquiry(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    title: raw.title || "",
+    content: raw.content || "",
+    status: raw.status || "OPEN",
+    answer: raw.answer || "",
+    answeredAt: raw.answered_at || raw.answeredAt || null,
+    createdAt: raw.created_at || raw.createdAt || null,
+    updatedAt: raw.updated_at || raw.updatedAt || null,
+  };
+}
+
+function normalizeSupportNotice(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    title: raw.title || "",
+    content: raw.content || "",
+    isPinned: Boolean(raw.is_pinned ?? raw.isPinned),
+    publishedAt: raw.published_at || raw.publishedAt || raw.created_at || raw.createdAt || null,
+    createdAt: raw.created_at || raw.createdAt || null,
+  };
+}
+
+function normalizeSupportFaq(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    category: raw.category || "일반",
+    question: raw.question || "",
+    answer: raw.answer || "",
+    sortOrder: Number(raw.sort_order ?? raw.sortOrder ?? 0),
+  };
+}
+
+function normalizePublicInquiry(raw = {}) {
+  return {
+    id: Number(raw.id || 0),
+    title: raw.title || "",
+    content: raw.content || "",
+    category: raw.category || "ETC",
+    status: raw.status || "OPEN",
+    answer: raw.answer || "",
+    answeredAt: raw.answered_at || raw.answeredAt || null,
+    createdAt: raw.created_at || raw.createdAt || null,
+    userName: raw.user_name || raw.userName || "회원",
+  };
+}
+
 function normalizeMyPageDashboard(raw = {}) {
   const shopping = raw.shopping || {};
   const activity = raw.activity || {};
@@ -1162,11 +1210,86 @@ export async function fetchMyBankTransferRequests() {
   return Array.isArray(data) ? data.map(normalizeBankTransferRequest) : [];
 }
 
-export async function createMyInquiry({ title, content }) {
-  return apiRequest("/users/me/inquiries", {
-    method: "POST",
-    body: { title, content },
+export async function fetchSupportNotices({ q, page = 1, pageSize = 10 } = {}) {
+  const data = await apiRequest("/support/notices", {
+    query: {
+      q,
+      page,
+      page_size: pageSize,
+    },
+    auth: false,
+    retryOnAuth: false,
   });
+
+  const items = extractResults(data).map(normalizeSupportNotice);
+  const totalCount = Number(data?.count ?? items.length);
+  const safePageSize = Number(pageSize || 10) || 10;
+  const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
+  const currentPage = Number(page || 1);
+
+  return {
+    items,
+    count: totalCount,
+    page: currentPage,
+    pageSize: safePageSize,
+    totalPages,
+    hasNext: Boolean(data?.next || currentPage < totalPages),
+    hasPrevious: Boolean(data?.previous || currentPage > 1),
+  };
+}
+
+export async function fetchSupportFaqs({ q, category } = {}) {
+  const data = await apiRequest("/support/faqs", {
+    query: {
+      q,
+      category,
+    },
+    auth: false,
+    retryOnAuth: false,
+  });
+  return Array.isArray(data) ? data.map(normalizeSupportFaq) : [];
+}
+
+export async function fetchPublicInquiries({ q, status, page = 1, pageSize = 10 } = {}) {
+  const data = await apiRequest("/support/inquiries", {
+    query: {
+      q,
+      status,
+      page,
+      page_size: pageSize,
+    },
+    auth: false,
+    retryOnAuth: false,
+  });
+
+  const items = extractResults(data).map(normalizePublicInquiry);
+  const totalCount = Number(data?.count ?? items.length);
+  const safePageSize = Number(pageSize || 10) || 10;
+  const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
+  const currentPage = Number(page || 1);
+
+  return {
+    items,
+    count: totalCount,
+    page: currentPage,
+    pageSize: safePageSize,
+    totalPages,
+    hasNext: Boolean(data?.next || currentPage < totalPages),
+    hasPrevious: Boolean(data?.previous || currentPage > 1),
+  };
+}
+
+export async function fetchMyInquiries() {
+  const data = await apiRequest("/users/me/inquiries");
+  return Array.isArray(data) ? data.map(normalizeInquiry) : [];
+}
+
+export async function createMyInquiry({ title, content, category } = {}) {
+  const data = await apiRequest("/users/me/inquiries", {
+    method: "POST",
+    body: { title, content, category },
+  });
+  return normalizeInquiry(data || {});
 }
 
 export async function fetchAdminDashboard() {

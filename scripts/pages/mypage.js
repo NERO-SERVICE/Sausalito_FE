@@ -1,6 +1,6 @@
 import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
-import { getUser, syncCurrentUser } from "../services/auth-service.js";
+import { getUser, logout, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
 import { fetchMyOrders, fetchMyPageDashboard } from "../services/api.js";
 import { formatCurrency } from "../store-data.js";
@@ -14,15 +14,15 @@ const SECTION_META = {
     description: "총 주문/혜택/진행현황을 한눈에 확인하세요.",
   },
   orders: {
-    title: "주문내역조회",
+    title: "주문내역",
     description: "기간별 주문내역과 처리 상태를 조회할 수 있습니다.",
   },
   claims: {
-    title: "취소/반품/교환내역",
-    description: "취소/반품/교환 관련 주문 이력을 확인합니다.",
+    title: "환불 및 교환",
+    description: "취소/환불/교환 관련 주문 이력을 확인합니다.",
   },
   coupons: {
-    title: "쿠폰내역",
+    title: "쿠폰",
     description: "보유 쿠폰의 할인 정보와 사용 가능 기간을 확인하세요.",
   },
 };
@@ -50,6 +50,7 @@ const el = {
   claimRangeFilter: document.getElementById("myshopClaimRangeFilter"),
   claimTable: document.getElementById("myshopClaimTable"),
   couponTable: document.getElementById("myshopCouponTable"),
+  logoutBtn: document.getElementById("myshopLogoutBtn"),
 };
 
 function escapeHtml(value) {
@@ -315,7 +316,7 @@ function renderClaimTable() {
   });
 
   if (!filtered.length) {
-    el.claimTable.innerHTML = '<p class="empty">조회 조건에 맞는 취소/반품/교환내역이 없습니다.</p>';
+    el.claimTable.innerHTML = '<p class="empty">조회 조건에 맞는 환불/교환 내역이 없습니다.</p>';
     return;
   }
 
@@ -431,6 +432,16 @@ el.navLinks.forEach((link) => {
 
 [el.claimStatusFilter, el.claimRangeFilter].forEach((target) => {
   target?.addEventListener("change", renderClaimTable);
+});
+
+el.logoutBtn?.addEventListener("click", async () => {
+  try {
+    await logout();
+  } catch (error) {
+    console.error(error);
+  } finally {
+    location.href = "/pages/home.html";
+  }
 });
 
 (async function init() {

@@ -14,12 +14,13 @@
         <h2>마이페이지</h2>
         <nav class="myshop-nav">
           <a href="/pages/mypage.html?tab=dashboard">마이페이지 홈</a>
-          <a href="/pages/mypage.html?tab=orders">주문내역조회</a>
-          <a href="/pages/mypage.html?tab=claims">취소/반품/교환내역</a>
-          <a href="/pages/mypage.html?tab=coupons">쿠폰내역</a>
+          <a href="/pages/mypage.html?tab=orders">주문내역</a>
+          <a href="/pages/mypage.html?tab=claims">환불 및 교환</a>
+          <a href="/pages/mypage.html?tab=coupons">쿠폰</a>
           <a href="/pages/member-edit.html" class="is-active">회원정보수정</a>
           <a href="/pages/change-password.html">비밀번호 변경</a>
         </nav>
+        <button class="myshop-logout-btn" id="myshopLogoutBtn" type="button">로그아웃</button>
       </aside>
 
       <section class="myshop-content">
@@ -53,19 +54,19 @@
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row">이름 <em class="member-required-chip">필수</em></th>
+                    <th scope="row">주문자명 <em class="member-required-chip">필수</em></th>
                     <td>
                       <input type="text" id="memberEditName" required maxlength="100" />
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row">연락처 <em class="member-required-chip">필수</em></th>
+                    <th scope="row">주문자 연락처 <em class="member-required-chip">필수</em></th>
                     <td>
                       <input type="text" id="memberEditPhone" required maxlength="20" placeholder="01012345678" />
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row">수령인 이름 <em class="member-required-chip">필수</em></th>
+                    <th scope="row">수령인명 <em class="member-required-chip">필수</em></th>
                     <td>
                       <input type="text" id="memberEditRecipient" required maxlength="100" />
                     </td>
@@ -79,13 +80,17 @@
                   <tr>
                     <th scope="row">우편번호 <em class="member-required-chip">필수</em></th>
                     <td>
-                      <input type="text" id="memberEditPostalCode" required maxlength="10" />
+                      <div class="member-address-inline">
+                        <input type="text" id="memberEditPostalCode" required maxlength="10" placeholder="주소검색으로 자동 입력" readonly />
+                        <button class="ghost member-postcode-btn" type="button" id="memberSearchPostcodeBtn">주소검색</button>
+                      </div>
                     </td>
                   </tr>
                   <tr>
                     <th scope="row">도로명 주소 <em class="member-required-chip">필수</em></th>
                     <td>
-                      <input type="text" id="memberEditRoadAddress" required maxlength="255" />
+                      <input type="text" id="memberEditRoadAddress" required maxlength="255" placeholder="주소검색으로 자동 입력" readonly />
+                      <p class="member-address-help">카카오(다음) 우편번호 서비스로 도로명 주소를 빠르게 입력할 수 있습니다.</p>
                     </td>
                   </tr>
                   <tr>

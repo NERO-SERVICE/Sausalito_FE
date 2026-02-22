@@ -17,6 +17,7 @@ const el = {
   oldPassword: document.getElementById("changePasswordOld"),
   newPassword: document.getElementById("changePasswordNew"),
   newPasswordConfirm: document.getElementById("changePasswordNewConfirm"),
+  logoutBtn: document.getElementById("myshopLogoutBtn"),
 };
 
 async function syncHeader() {
@@ -58,6 +59,16 @@ el.form?.addEventListener("submit", async (event) => {
   } catch (error) {
     console.error(error);
     alert(error.message || "비밀번호 변경에 실패했습니다.");
+  }
+});
+
+el.logoutBtn?.addEventListener("click", async () => {
+  try {
+    await logout();
+  } catch (error) {
+    console.error(error);
+  } finally {
+    location.href = "/pages/home.html";
   }
 });
 

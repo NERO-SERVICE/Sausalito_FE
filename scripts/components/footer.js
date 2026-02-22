@@ -12,8 +12,8 @@ export function mountSiteFooter() {
           <a href="/pages/guide.html">이용안내</a>
         </nav>
         <div class="site-footer-info">
-          <p><strong>상호</strong> 주식회사 네로</p>
-          <p><strong>대표</strong> 한동균, 박호연</p>
+          <p><strong>상호명</strong> 주식회사 네로</p>
+          <p><strong>대표자</strong> 한동균, 박호연</p>
           <p><strong>사업자등록번호</strong> 355-86-03876</p>
           <p><strong>통신판매업신고</strong> 제 2026-서울마포-0044호</p>
           <p><strong>주소</strong> 서울특별시 중구 퇴계로36길 2</p>

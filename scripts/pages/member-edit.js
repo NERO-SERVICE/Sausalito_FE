@@ -12,6 +12,9 @@ import {
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "" });
 mountSiteFooter();
 
+const KAKAO_POSTCODE_SCRIPT_URL = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+const KAKAO_POSTCODE_SCRIPT_ID = "memberEditKakaoPostcodeScript";
+
 const state = {
   user: null,
   defaultAddress: null,
@@ -28,8 +31,10 @@ const el = {
   postalCode: document.getElementById("memberEditPostalCode"),
   roadAddress: document.getElementById("memberEditRoadAddress"),
   detailAddress: document.getElementById("memberEditDetailAddress"),
+  searchPostcodeBtn: document.getElementById("memberSearchPostcodeBtn"),
   smsMarketing: document.getElementById("memberEditSmsMarketing"),
   emailMarketing: document.getElementById("memberEditEmailMarketing"),
+  logoutBtn: document.getElementById("myshopLogoutBtn"),
   revealWithdrawBtn: document.getElementById("memberWithdrawRevealBtn"),
   withdrawPanel: document.getElementById("memberWithdrawPanel"),
   withdrawModal: document.getElementById("memberWithdrawConfirmModal"),
@@ -40,6 +45,8 @@ const el = {
   withdrawReason: document.getElementById("memberWithdrawReason"),
   withdrawConfirm: document.getElementById("memberWithdrawConfirm"),
 };
+
+let postcodeScriptPromise = null;
 
 async function syncHeader() {
   let count = 0;
@@ -67,6 +74,71 @@ function renderProfile() {
   el.postalCode.value = state.defaultAddress?.postalCode || "";
   el.roadAddress.value = state.defaultAddress?.roadAddress || "";
   el.detailAddress.value = state.defaultAddress?.detailAddress || "";
+}
+
+function composeRoadAddress(data) {
+  const base = String(data?.roadAddress || data?.address || "").trim();
+  if (!base) return "";
+
+  const extras = [];
+  const legalDong = String(data?.bname || "").trim();
+  if (legalDong && /[동로가]$/.test(legalDong)) extras.push(legalDong);
+
+  const buildingName = String(data?.buildingName || "").trim();
+  if (buildingName && String(data?.apartment || "").toUpperCase() === "Y") {
+    extras.push(buildingName);
+  }
+
+  if (!extras.length) return base;
+  return `${base} (${extras.join(", ")})`;
+}
+
+function loadKakaoPostcodeScript() {
+  if (window.daum?.Postcode) return Promise.resolve();
+  if (postcodeScriptPromise) return postcodeScriptPromise;
+
+  postcodeScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.getElementById(KAKAO_POSTCODE_SCRIPT_ID);
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener("error", () => reject(new Error("주소검색 스크립트를 불러오지 못했습니다.")), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = KAKAO_POSTCODE_SCRIPT_ID;
+    script.src = KAKAO_POSTCODE_SCRIPT_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("주소검색 스크립트를 불러오지 못했습니다."));
+    document.head.appendChild(script);
+  });
+
+  return postcodeScriptPromise;
+}
+
+async function openPostcodeSearch() {
+  await loadKakaoPostcodeScript();
+  if (!window.daum?.Postcode) {
+    throw new Error("주소검색 객체를 찾을 수 없습니다.");
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      new window.daum.Postcode({
+        oncomplete(data) {
+          resolve(data || null);
+        },
+        onclose() {
+          resolve(null);
+        },
+      }).open();
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
 
 function openWithdrawModal() {
@@ -111,7 +183,7 @@ el.profileForm?.addEventListener("submit", async (event) => {
       !payload.roadAddress ||
       !payload.detailAddress
     ) {
-      alert("필수입력사항(이메일/이름/연락처/수령인/주소)을 모두 입력해주세요.");
+      alert("필수입력사항(이메일/주문자명/주문자 연락처/수령인명/주소)을 모두 입력해주세요.");
       return;
     }
 
@@ -150,6 +222,28 @@ el.revealWithdrawBtn?.addEventListener("click", () => {
   openWithdrawModal();
 });
 
+el.searchPostcodeBtn?.addEventListener("click", async () => {
+  el.searchPostcodeBtn.disabled = true;
+  try {
+    const data = await openPostcodeSearch();
+    if (!data) return;
+
+    const zonecode = String(data.zonecode || "").trim();
+    const roadAddress = composeRoadAddress(data);
+
+    el.postalCode.value = zonecode;
+    el.roadAddress.value = roadAddress;
+    el.detailAddress?.focus();
+  } catch (error) {
+    console.error(error);
+    el.postalCode.removeAttribute("readonly");
+    el.roadAddress.removeAttribute("readonly");
+    alert("주소검색 연결에 실패했습니다. 우편번호와 도로명 주소를 직접 입력해주세요.");
+  } finally {
+    el.searchPostcodeBtn.disabled = false;
+  }
+});
+
 el.withdrawModalClose?.addEventListener("click", () => {
   closeWithdrawModal();
 });
@@ -181,6 +275,16 @@ el.withdrawForm?.addEventListener("submit", async (event) => {
   } catch (error) {
     console.error(error);
     alert(error.message || "회원 탈퇴 처리에 실패했습니다.");
+  }
+});
+
+el.logoutBtn?.addEventListener("click", async () => {
+  try {
+    await logout();
+  } catch (error) {
+    console.error(error);
+  } finally {
+    location.href = "/pages/home.html";
   }
 });
 
