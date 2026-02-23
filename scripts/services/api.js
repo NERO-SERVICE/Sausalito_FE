@@ -219,9 +219,12 @@ function normalizeProductDetail(raw = {}) {
     options: Array.isArray(raw.options)
       ? raw.options.map((option) => ({
           id: option.id,
+          durationMonths: Number(option.duration_months ?? option.durationMonths ?? 0),
+          benefitLabel: option.benefit_label || option.benefitLabel || "",
           name: option.name,
           price: Number(option.price || 0),
           stock: Number(option.stock || 0),
+          isActive: Boolean(option.is_active ?? option.isActive ?? true),
         }))
       : [],
     couponBenefit: normalizeCouponBenefit(raw.coupon_benefit || raw.couponBenefit || null, base),
@@ -342,9 +345,12 @@ function normalizeDetailMeta(raw) {
     options: Array.isArray(raw.options)
       ? raw.options.map((option) => ({
           id: option.id,
+          durationMonths: Number(option.duration_months ?? option.durationMonths ?? 0),
+          benefitLabel: option.benefit_label || option.benefitLabel || "",
           name: option.name,
           price: Number(option.price || 0),
           stock: Number(option.stock || 0),
+          isActive: Boolean(option.is_active ?? option.isActive ?? true),
         }))
       : [],
     addOns: Array.isArray(raw.add_ons) ? raw.add_ons : [],
