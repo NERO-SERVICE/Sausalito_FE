@@ -21,8 +21,8 @@ const state = {
   selectedOptionId: null,
   selectedOptionDurationMonths: null,
   reviewPage: 1,
-  activeSection: "section-detail",
-  open: { shipping: false, inquiry: false },
+  activeSection: "section-review",
+  open: { shipping: false, inquiry: false, refund: false },
   policyOpen: false,
   currentUser: null,
 };
@@ -650,10 +650,10 @@ function render() {
           }
         </div>
         <div class="pd-total-box">
-          <p><span>상품 금액(수량 반영)</span><b>${formatCurrency(total)}</b></p>
-          ${couponPreview.bestCoupon ? `<p><span>쿠폰 추가 할인</span><b class="pd-total-discount">-${formatCurrency(couponPreview.bestCoupon.appliedDiscountAmount)}</b></p>` : ""}
-          <p class="final"><span>총 결제예상금액</span><strong>${formatCurrency(finalTotal)}</strong></p>
-          <small>쿠폰 할인은 주문서에서 최종 적용됩니다.</small>
+          <p><span>총 상품금액</span><b>${formatCurrency(total)}</b></p>
+          ${couponPreview.bestCoupon ? `<p><span>쿠폰 할인 적용</span><b class="pd-total-discount">-${formatCurrency(couponPreview.bestCoupon.appliedDiscountAmount)}</b></p>` : ""}
+          <p class="final"><span>총 결제금액</span><strong>${formatCurrency(finalTotal)}</strong></p>
+          <small>쿠폰 할인은 주문서에 최종 반영됩니다.</small>
         </div>
         <section class="pd-free-shipping ${shippingProgress.isFreeShipping ? "is-complete" : ""}">
           <div class="pd-free-shipping-head">
@@ -672,43 +672,18 @@ function render() {
           </p>
         </section>
         <div class="pd-static-cta">
-          <button class="ghost" data-action="addCart" ${hasSelectedBundles ? "" : "disabled"}>장바구니담기</button>
-          <button class="primary" data-action="buyNow" ${hasSelectedBundles ? "" : "disabled"}>바로구매</button>
+          <button class="ghost" data-action="addCart" ${hasSelectedBundles ? "" : "disabled"}>장바구니</button>
+          <button class="primary" data-action="buyNow" ${hasSelectedBundles ? "" : "disabled"}>구매하기</button>
         </div>
       </div>
     </section>
 
     <section class="pd-tabs">
       <div class="pd-tab-head">
-        <button class="pd-tab ${state.activeSection === "section-detail" ? "active" : ""}" data-action="scrollTab" data-target="section-detail">상세정보</button>
         <button class="pd-tab ${state.activeSection === "section-review" ? "active" : ""}" data-action="scrollTab" data-target="section-review">리뷰</button>
+        <button class="pd-tab ${state.activeSection === "section-detail" ? "active" : ""}" data-action="scrollTab" data-target="section-detail">상세정보</button>
+        <button class="pd-tab ${state.activeSection === "section-return" ? "active" : ""}" data-action="scrollTab" data-target="section-return">반품/교환정보</button>
       </div>
-      <section class="pd-section-card pd-section" id="section-detail">
-        <h3 class="pd-section-label">상세정보</h3>
-        <h4>제품 설명</h4><p>${state.product.description}</p>
-        <h4>핵심 성분</h4><ul>${state.product.ingredients.map((i) => `<li>${i}</li>`).join("")}</ul>
-        <h4>섭취 방법</h4><p>${state.product.intake}</p>
-        <div class="pd-accordion">
-          <button class="pd-accordion-head" data-action="toggleOpen" data-key="shipping">배송/교환 <span>${state.open.shipping ? "−" : "+"}</span></button>
-          <div class="pd-accordion-body ${state.open.shipping ? "open" : ""}"><p>출고 1~2일, 수령 2~3일 소요됩니다.</p></div>
-        </div>
-        <div class="pd-accordion">
-          <button class="pd-accordion-head" data-action="toggleOpen" data-key="inquiry">상품문의 <span>${state.open.inquiry ? "−" : "+"}</span></button>
-          <div class="pd-accordion-body ${state.open.inquiry ? "open" : ""}"><p>평일 10:00~18:00, 고객센터를 이용해주세요.</p></div>
-        </div>
-        <section class="pd-payment-policy-box">
-          <h4>결제/환불 안내</h4>
-          <ul>
-            <li>현재 결제수단은 계좌이체입니다.</li>
-            <li>입금 확인 후 결제완료 처리되며, 입금자명은 주문자명과 동일해야 빠르게 확인됩니다.</li>
-            <li>배송/교환/반품 상세정책은 하단 고지 페이지에서 확인할 수 있습니다.</li>
-          </ul>
-          <p>
-            <a href="/pages/guide.html" target="_blank" rel="noopener">이용안내</a>
-            <a href="/pages/commerce-notice.html" target="_blank" rel="noopener">전자상거래 고지</a>
-          </p>
-        </section>
-      </section>
       <section class="pd-section-card pd-section" id="section-review">
         <h3 class="pd-section-label">리뷰</h3>
         <div class="pd-review-links">
@@ -759,6 +734,39 @@ function render() {
           <button class="ghost" data-action="nextReview" ${state.reviewPage >= totalPages ? "disabled" : ""}>다음</button>
         </div>
       </section>
+      <section class="pd-section-card pd-section" id="section-detail">
+        <h3 class="pd-section-label">상세정보</h3>
+        <h4>제품 설명</h4><p>${state.product.description}</p>
+        <h4>핵심 성분</h4><ul>${state.product.ingredients.map((i) => `<li>${i}</li>`).join("")}</ul>
+        <h4>섭취 방법</h4><p>${state.product.intake}</p>
+      </section>
+      <section class="pd-section-card pd-section" id="section-return">
+        <h3 class="pd-section-label">반품/교환정보</h3>
+        <div class="pd-accordion">
+          <button class="pd-accordion-head" data-action="toggleOpen" data-key="shipping">상품 결제 정보 <span>${state.open.shipping ? "−" : "+"}</span></button>
+          <div class="pd-accordion-body ${state.open.shipping ? "open" : ""}"><p>현재 결제수단은 계좌이체이며, 입금 확인 후 결제완료 처리됩니다.</p></div>
+        </div>
+        <div class="pd-accordion">
+          <button class="pd-accordion-head" data-action="toggleOpen" data-key="inquiry">배송 안내 <span>${state.open.inquiry ? "−" : "+"}</span></button>
+          <div class="pd-accordion-body ${state.open.inquiry ? "open" : ""}"><p>출고 1~2일, 수령 2~3일 소요됩니다. 평일 10:00~18:00 고객센터에서 배송 문의를 도와드립니다.</p></div>
+        </div>
+        <div class="pd-accordion">
+          <button class="pd-accordion-head" data-action="toggleOpen" data-key="refund">교환/반품 안내 <span>${state.open.refund ? "−" : "+"}</span></button>
+          <div class="pd-accordion-body ${state.open.refund ? "open" : ""}">
+            <section class="pd-payment-policy-box">
+              <ul>
+                <li>현재 결제수단은 계좌이체입니다.</li>
+                <li>입금 확인 후 결제완료 처리되며, 입금자명은 주문자명과 동일해야 빠르게 확인됩니다.</li>
+                <li>배송/교환/반품 상세정책은 하단 고지 페이지에서 확인할 수 있습니다.</li>
+              </ul>
+              <p>
+                <a href="/pages/guide.html" target="_blank" rel="noopener">이용안내</a>
+                <a href="/pages/commerce-notice.html" target="_blank" rel="noopener">전자상거래 고지</a>
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
     </section>
 
     <div class="pd-policy-modal ${state.policyOpen ? "open" : ""}">
@@ -775,8 +783,8 @@ function render() {
     </div>
 
     <div class="pd-floating-cta">
-      <button class="ghost" data-action="addCart" ${hasSelectedBundles ? "" : "disabled"}>장바구니담기</button>
-      <button class="primary" data-action="buyNow" ${hasSelectedBundles ? "" : "disabled"}>바로구매</button>
+      <button class="ghost" data-action="addCart" ${hasSelectedBundles ? "" : "disabled"}>장바구니</button>
+      <button class="primary" data-action="buyNow" ${hasSelectedBundles ? "" : "disabled"}>구매하기</button>
     </div>
   `;
 
@@ -885,7 +893,7 @@ document.addEventListener("click", async (e) => {
   if (action === "buyNow") {
     const user = state.currentUser || (await syncCurrentUser()) || getUser();
     if (!user) {
-      alert("로그인 후 바로구매가 가능합니다.");
+      alert("로그인 후 구매가 가능합니다.");
       location.href = "/pages/login.html";
       return;
     }

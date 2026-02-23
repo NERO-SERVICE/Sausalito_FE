@@ -3539,7 +3539,7 @@ button,input,select,textarea { font: inherit; }
 .pd-static-cta { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 .pd-tabs { margin-top: 18px; display: grid; gap: 12px; }
-.pd-tab-head { display: grid; grid-template-columns: 1fr 1fr; position: sticky; top: var(--header-height); background: var(--color-hex-fff); z-index: 9; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.pd-tab-head { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); position: sticky; top: var(--header-height); background: var(--color-hex-fff); z-index: 9; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .pd-tab { position: relative; border: none; background: var(--color-hex-fff); padding: 14px 12px; cursor: pointer; font-weight: 600; color: var(--color-hex-475569); }
 .pd-tab::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: transparent; }
 .pd-tab.active { background: var(--color-hex-fff); color: var(--color-text); font-weight: 700; }
