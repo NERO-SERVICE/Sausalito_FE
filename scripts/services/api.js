@@ -2050,6 +2050,24 @@ export async function createReview({ productId, score, title, content, images = 
   return normalizeReview(data);
 }
 
+function normalizeEligibleReviewProduct(raw = {}) {
+  return {
+    productId: Number(raw.product_id ?? raw.productId ?? 0),
+    productName: raw.product_name || raw.productName || "",
+    reviewableOrderItemCount: Number(raw.reviewable_order_item_count ?? raw.reviewableOrderItemCount ?? 0),
+    latestDeliveredAt: raw.latest_delivered_at || raw.latestDeliveredAt || null,
+  };
+}
+
+export async function fetchEligibleReviewProducts() {
+  const data = await apiRequest("/reviews/eligible-products");
+  return Array.isArray(data)
+    ? data
+        .map(normalizeEligibleReviewProduct)
+        .filter((item) => item.productId > 0 && String(item.productName || "").trim())
+    : [];
+}
+
 export async function reportReview(reviewId, { reason = "ETC", detail = "" } = {}) {
   if (!reviewId) {
     throw new Error("신고할 리뷰를 찾을 수 없습니다.");

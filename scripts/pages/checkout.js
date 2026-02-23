@@ -25,13 +25,13 @@ const DEFAULT_ACCOUNT = {
   account_holder: "소살리토",
   guide_message: "입금 후 관리자 확인이 완료되면 결제완료 처리됩니다.",
   verification_notice: "입금자명은 주문자명과 동일하게 입력해 주세요.",
-  cash_receipt_guide: "결제완료 후 현금영수증 발급을 요청할 수 있습니다.",
+  cash_receipt_guide: "결제완료 후 마이페이지 또는 고객센터에서 현금영수증 발급을 요청할 수 있습니다.",
   business_info: {
     name: "주식회사 네로",
-    ceo_name: "한동균, 박호연",
+    ceo_name: "",
     business_no: "123-45-67890",
     ecommerce_no: "2026-서울마포-0001",
-    address: "서울특별시 중구 퇴계로36길 2",
+    address: "",
   },
   support_info: {
     phone: "1588-1234",
@@ -198,13 +198,13 @@ function renderBankAccount() {
   el.bankAccount.innerHTML = `
     <strong>입금 계좌</strong>
     <p>${escapeHtml(account.bank_name)} ${escapeHtml(account.bank_account_no)}</p>
-    <small>예금주 ${escapeHtml(account.account_holder)}</small>
+    <small>예금주: ${escapeHtml(account.account_holder)}</small>
+    <small>사업자정보: ${escapeHtml(business.name)} / ${escapeHtml(business.business_no)} / 통신판매업 ${escapeHtml(business.ecommerce_no)}</small>
+    <small>고객센터: ${escapeHtml(support.hours)}</small>
+    <small>이메일: ${escapeHtml(support.email)}</small>
     <small>${escapeHtml(account.guide_message || DEFAULT_ACCOUNT.guide_message)}</small>
     <small>${escapeHtml(account.verification_notice || DEFAULT_ACCOUNT.verification_notice)}</small>
     <small>${escapeHtml(account.cash_receipt_guide || DEFAULT_ACCOUNT.cash_receipt_guide)}</small>
-    <small>사업자정보: ${escapeHtml(business.name)} / ${escapeHtml(business.business_no)} / 통신판매업 ${escapeHtml(business.ecommerce_no)}</small>
-    <small>고객센터: ${escapeHtml(support.phone)} (${escapeHtml(support.hours)})</small>
-    <small>이메일: ${escapeHtml(support.email)}</small>
   `;
 }
 

@@ -2,7 +2,7 @@ import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
 import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
-import { createReview, fetchProducts } from "../services/api.js";
+import { createReview, fetchEligibleReviewProducts } from "../services/api.js";
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "review" });
 mountSiteFooter();
@@ -12,11 +12,14 @@ const productSelect = document.getElementById("reviewProductSelect");
 const imageInput = document.getElementById("reviewImagesInput");
 const preview = document.getElementById("reviewImagePreview");
 const imageCount = document.getElementById("reviewImageCount");
+const introText = document.querySelector(".review-write-card > p");
+const submitButton = form?.querySelector('button[type="submit"]');
 const presetProductId = Number(new URLSearchParams(location.search).get("productId"));
 const MAX_IMAGE_COUNT = 3;
 
 let selectedImages = [];
 let previewUrls = [];
+let eligibleProducts = [];
 
 async function syncHeader() {
   const user = (await syncCurrentUser()) || getUser();
@@ -139,6 +142,37 @@ preview.addEventListener("click", (event) => {
 
 window.addEventListener("beforeunload", releasePreviewUrls);
 
+function renderEligibleProducts() {
+  if (!productSelect) return;
+
+  if (!eligibleProducts.length) {
+    productSelect.innerHTML = '<option value="">작성 가능한 상품이 없습니다.</option>';
+    productSelect.disabled = true;
+    if (submitButton) submitButton.disabled = true;
+    if (introText) {
+      introText.textContent = "배송완료된 주문 내역이 있는 상품만 리뷰를 작성할 수 있습니다.";
+    }
+    return;
+  }
+
+  const selectedValue =
+    eligibleProducts.find((item) => item.productId === presetProductId)?.productId
+    || eligibleProducts[0].productId;
+
+  productSelect.innerHTML = eligibleProducts
+    .map((item) => {
+      const countSuffix =
+        item.reviewableOrderItemCount > 1 ? ` (작성 가능 ${item.reviewableOrderItemCount}건)` : "";
+      return `<option value="${item.productId}" ${item.productId === selectedValue ? "selected" : ""}>${item.productName}${countSuffix}</option>`;
+    })
+    .join("");
+  productSelect.disabled = false;
+  if (submitButton) submitButton.disabled = false;
+  if (introText) {
+    introText.textContent = "배송완료된 주문건에 대해서만 리뷰를 남길 수 있습니다.";
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -149,12 +183,23 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (!eligibleProducts.length) {
+    alert("작성 가능한 리뷰 주문건이 없습니다.");
+    return;
+  }
+
   const data = Object.fromEntries(new FormData(form).entries());
+  const productId = Number(data.productId || 0);
+  const isEligibleProduct = eligibleProducts.some((item) => item.productId === productId);
+  if (!isEligibleProduct) {
+    alert("배송완료된 주문건이 있는 상품만 선택할 수 있습니다.");
+    return;
+  }
   const files = [...selectedImages];
 
   try {
     await createReview({
-      productId: Number(data.productId),
+      productId,
       score: Number(data.score),
       title: data.title,
       content: data.content,
@@ -183,13 +228,8 @@ form.addEventListener("submit", async (event) => {
       return;
     }
 
-    const products = await fetchProducts();
-    productSelect.innerHTML = products
-      .map(
-        (product) =>
-          `<option value="${product.id}" ${product.id === presetProductId ? "selected" : ""}>${product.name}</option>`,
-      )
-      .join("");
+    eligibleProducts = await fetchEligibleReviewProducts();
+    renderEligibleProducts();
 
     renderPreview();
     await syncHeader();
