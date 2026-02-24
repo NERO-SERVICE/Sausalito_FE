@@ -486,18 +486,8 @@ function getReviewPaged() {
 function renderDetailReviewEmptyState(productId) {
   return `
     <section class="pd-review-empty">
-      <p class="pd-review-empty-kicker">REVIEW READY</p>
-      <h4>첫 리뷰를 기다리고 있어요</h4>
-      <p>배송완료/구매확정 주문건 기준으로 후기를 남기면, 실제 구매 고객들이 더 빠르게 구매를 결정할 수 있어요.</p>
-      <div class="pd-review-empty-chips">
-        <span>실구매 인증 리뷰</span>
-        <span>사진 최대 3장</span>
-        <span>관리자 답변 지원</span>
-      </div>
-      <div class="pd-review-empty-actions">
-        <a class="primary" href="/pages/review-write.html?productId=${productId}">첫 리뷰 작성하기</a>
-        <a class="ghost" href="/pages/reviews.html">리뷰 페이지 보기</a>
-      </div>
+      <p class="pd-review-empty-message">리뷰를 기다리고 있어요</p>
+      <a class="pd-review-empty-btn" href="/pages/review-write.html?productId=${productId}">작성하기</a>
     </section>
   `;
 }
