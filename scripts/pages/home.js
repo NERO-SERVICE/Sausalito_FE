@@ -28,6 +28,7 @@ const el = {
   heroPrev: document.getElementById("heroPrev"),
   heroNext: document.getElementById("heroNext"),
   bestProductGrid: document.getElementById("bestProductGrid"),
+  bestReviewSection: document.getElementById("bestReview"),
   bestReviewList: document.getElementById("bestReviewList"),
 };
 
@@ -153,9 +154,11 @@ function renderProductCards(targetEl, products) {
 
 function renderBestReviews() {
   if (!state.reviews.length) {
-    el.bestReviewList.innerHTML = '<p class="empty">베스트 리뷰가 없습니다.</p>';
+    el.bestReviewList.innerHTML = "";
+    el.bestReviewSection?.classList.add("is-hidden");
     return;
   }
+  el.bestReviewSection?.classList.remove("is-hidden");
 
   el.bestReviewList.innerHTML = state.reviews
     .map((review) => {

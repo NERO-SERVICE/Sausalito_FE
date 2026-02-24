@@ -2030,9 +2030,17 @@ export async function deleteAdminCoupon(couponId) {
   });
 }
 
-export async function createReview({ productId, score, title, content, images = [] }) {
+export async function createReview({ productId = null, orderItemId, score, title, content, images = [] }) {
+  const safeOrderItemId = Number(orderItemId || 0);
+  if (safeOrderItemId <= 0) {
+    throw new Error("리뷰를 작성할 주문건을 선택해주세요.");
+  }
+
   const formData = new FormData();
-  formData.append("product_id", String(productId));
+  formData.append("order_item_id", String(safeOrderItemId));
+  if (Number(productId || 0) > 0) {
+    formData.append("product_id", String(Number(productId)));
+  }
   formData.append("score", String(score));
   formData.append("title", title || "");
   formData.append("content", content || "");
@@ -2050,12 +2058,17 @@ export async function createReview({ productId, score, title, content, images = 
   return normalizeReview(data);
 }
 
-function normalizeEligibleReviewProduct(raw = {}) {
+function normalizeEligibleReviewOrderItem(raw = {}) {
   return {
+    orderItemId: Number(raw.order_item_id ?? raw.orderItemId ?? 0),
+    orderNo: raw.order_no || raw.orderNo || "",
     productId: Number(raw.product_id ?? raw.productId ?? 0),
     productName: raw.product_name || raw.productName || "",
-    reviewableOrderItemCount: Number(raw.reviewable_order_item_count ?? raw.reviewableOrderItemCount ?? 0),
-    latestDeliveredAt: raw.latest_delivered_at || raw.latestDeliveredAt || null,
+    optionName: raw.option_name || raw.optionName || "",
+    quantity: Number(raw.quantity || 0),
+    orderedAt: raw.ordered_at || raw.orderedAt || null,
+    deliveredAt: raw.delivered_at || raw.deliveredAt || null,
+    productOrderStatus: raw.product_order_status || raw.productOrderStatus || "",
   };
 }
 
@@ -2063,8 +2076,8 @@ export async function fetchEligibleReviewProducts() {
   const data = await apiRequest("/reviews/eligible-products");
   return Array.isArray(data)
     ? data
-        .map(normalizeEligibleReviewProduct)
-        .filter((item) => item.productId > 0 && String(item.productName || "").trim())
+        .map(normalizeEligibleReviewOrderItem)
+        .filter((item) => item.orderItemId > 0 && item.productId > 0 && String(item.productName || "").trim())
     : [];
 }
 

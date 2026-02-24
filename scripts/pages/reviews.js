@@ -27,11 +27,14 @@ const state = {
 
 const el = {
   bestSection: document.getElementById("rvBestSection"),
+  middleLinks: document.querySelector(".rv-middle-links"),
+  allSection: document.querySelector(".rv-all-section"),
   bestGrid: document.getElementById("rvBestGrid"),
   bestPrevButton: document.querySelector("[data-action='bestPrev']"),
   bestNextButton: document.querySelector("[data-action='bestNext']"),
   allList: document.getElementById("rvAllList"),
   allPagination: document.getElementById("rvAllPagination"),
+  emptyPage: document.getElementById("rvEmptyPage"),
   sortRadios: [...document.querySelectorAll("input[name='rvSort']")],
   policyModal: document.getElementById("rvPolicyModal"),
 };
@@ -148,6 +151,19 @@ function renderActionIcon(type) {
   `;
 }
 
+function showNoReviewLayout() {
+  el.bestSection?.classList.add("is-hidden");
+  el.middleLinks?.classList.add("is-hidden");
+  el.allSection?.classList.add("is-hidden");
+  el.emptyPage?.classList.remove("is-hidden");
+}
+
+function showReviewLayout() {
+  el.middleLinks?.classList.remove("is-hidden");
+  el.allSection?.classList.remove("is-hidden");
+  el.emptyPage?.classList.add("is-hidden");
+}
+
 function renderListRow(review) {
   const reviewId = Number(review.id || 0);
   const product = getProduct(review);
@@ -205,8 +221,6 @@ function renderBestSection() {
   if (!bestReviews.length) {
     el.bestSection.classList.add("is-hidden");
     el.bestGrid.innerHTML = "";
-    if (el.bestPrevButton) el.bestPrevButton.disabled = true;
-    if (el.bestNextButton) el.bestNextButton.disabled = true;
     return;
   }
   el.bestSection.classList.remove("is-hidden");
@@ -281,7 +295,7 @@ function renderAllSection() {
   const source = state.listSort === "score" ? sortByScore(state.reviews) : sortByLatest(state.reviews);
 
   if (!source.length) {
-    el.allList.innerHTML = '<p class="empty">리뷰가 없습니다.</p>';
+    el.allList.innerHTML = "";
     if (el.allPagination) el.allPagination.innerHTML = "";
     return;
   }
@@ -301,6 +315,12 @@ function renderPolicyModal() {
 }
 
 function render() {
+  if (!state.reviews.length) {
+    showNoReviewLayout();
+    renderPolicyModal();
+    return;
+  }
+  showReviewLayout();
   renderSortToggle();
   renderBestSection();
   syncAllImageSizeWithBest();
@@ -428,6 +448,7 @@ async function init() {
     bind();
   } catch (error) {
     console.error(error);
+    showReviewLayout();
     if (el.bestSection) el.bestSection.classList.add("is-hidden");
     el.allList.innerHTML = '<p class="empty">리뷰 데이터를 불러오지 못했습니다.</p>';
   }

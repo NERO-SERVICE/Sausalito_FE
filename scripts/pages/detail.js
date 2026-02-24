@@ -21,7 +21,7 @@ const state = {
   selectedOptionId: null,
   selectedOptionDurationMonths: null,
   reviewPage: 1,
-  activeSection: "section-review",
+  activeSection: "section-detail",
   open: { shipping: false, inquiry: false, refund: false },
   policyOpen: false,
   currentUser: null,
@@ -483,6 +483,25 @@ function getReviewPaged() {
   return { totalPages, list: state.reviews.slice(start, start + PER_PAGE) };
 }
 
+function renderDetailReviewEmptyState(productId) {
+  return `
+    <section class="pd-review-empty">
+      <p class="pd-review-empty-kicker">REVIEW READY</p>
+      <h4>첫 리뷰를 기다리고 있어요</h4>
+      <p>배송완료/구매확정 주문건 기준으로 후기를 남기면, 실제 구매 고객들이 더 빠르게 구매를 결정할 수 있어요.</p>
+      <div class="pd-review-empty-chips">
+        <span>실구매 인증 리뷰</span>
+        <span>사진 최대 3장</span>
+        <span>관리자 답변 지원</span>
+      </div>
+      <div class="pd-review-empty-actions">
+        <a class="primary" href="/pages/review-write.html?productId=${productId}">첫 리뷰 작성하기</a>
+        <a class="ghost" href="/pages/reviews.html">리뷰 페이지 보기</a>
+      </div>
+    </section>
+  `;
+}
+
 function setTab(sectionId) {
   state.activeSection = sectionId;
   document.querySelectorAll(".pd-tab").forEach((tab) => {
@@ -680,10 +699,16 @@ function render() {
 
     <section class="pd-tabs">
       <div class="pd-tab-head">
-        <button class="pd-tab ${state.activeSection === "section-review" ? "active" : ""}" data-action="scrollTab" data-target="section-review">리뷰</button>
         <button class="pd-tab ${state.activeSection === "section-detail" ? "active" : ""}" data-action="scrollTab" data-target="section-detail">상세정보</button>
+        <button class="pd-tab ${state.activeSection === "section-review" ? "active" : ""}" data-action="scrollTab" data-target="section-review">리뷰</button>
         <button class="pd-tab ${state.activeSection === "section-return" ? "active" : ""}" data-action="scrollTab" data-target="section-return">반품/교환정보</button>
       </div>
+      <section class="pd-section-card pd-section" id="section-detail">
+        <h3 class="pd-section-label">상세정보</h3>
+        <h4>제품 설명</h4><p>${state.product.description}</p>
+        <h4>핵심 성분</h4><ul>${state.product.ingredients.map((i) => `<li>${i}</li>`).join("")}</ul>
+        <h4>섭취 방법</h4><p>${state.product.intake}</p>
+      </section>
       <section class="pd-section-card pd-section" id="section-review">
         <h3 class="pd-section-label">리뷰</h3>
         <div class="pd-review-links">
@@ -726,19 +751,17 @@ function render() {
                     </article>`;
                 })
                 .join("")
-            : "<p>리뷰가 없습니다.</p>"
+            : renderDetailReviewEmptyState(state.product.id)
         }
-        <div class="pd-review-pagination">
-          <button class="ghost" data-action="prevReview" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
-          <span>${state.reviewPage} / ${totalPages}</span>
-          <button class="ghost" data-action="nextReview" ${state.reviewPage >= totalPages ? "disabled" : ""}>다음</button>
-        </div>
-      </section>
-      <section class="pd-section-card pd-section" id="section-detail">
-        <h3 class="pd-section-label">상세정보</h3>
-        <h4>제품 설명</h4><p>${state.product.description}</p>
-        <h4>핵심 성분</h4><ul>${state.product.ingredients.map((i) => `<li>${i}</li>`).join("")}</ul>
-        <h4>섭취 방법</h4><p>${state.product.intake}</p>
+        ${
+          list.length
+            ? `<div class="pd-review-pagination">
+                <button class="ghost" data-action="prevReview" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
+                <span>${state.reviewPage} / ${totalPages}</span>
+                <button class="ghost" data-action="nextReview" ${state.reviewPage >= totalPages ? "disabled" : ""}>다음</button>
+              </div>`
+            : ""
+        }
       </section>
       <section class="pd-section-card pd-section" id="section-return">
         <h3 class="pd-section-label">반품/교환정보</h3>

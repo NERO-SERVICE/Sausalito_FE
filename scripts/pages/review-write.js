@@ -8,7 +8,7 @@ const headerRefs = mountSiteHeader({ showCart: true, currentNav: "review" });
 mountSiteFooter();
 
 const form = document.getElementById("reviewWriteForm");
-const productSelect = document.getElementById("reviewProductSelect");
+const orderItemSelect = document.getElementById("reviewOrderItemSelect");
 const imageInput = document.getElementById("reviewImagesInput");
 const preview = document.getElementById("reviewImagePreview");
 const imageCount = document.getElementById("reviewImageCount");
@@ -19,7 +19,7 @@ const MAX_IMAGE_COUNT = 3;
 
 let selectedImages = [];
 let previewUrls = [];
-let eligibleProducts = [];
+let eligibleOrderItems = [];
 
 async function syncHeader() {
   const user = (await syncCurrentUser()) || getUser();
@@ -142,34 +142,47 @@ preview.addEventListener("click", (event) => {
 
 window.addEventListener("beforeunload", releasePreviewUrls);
 
-function renderEligibleProducts() {
-  if (!productSelect) return;
+function toDateText(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}.${mm}.${dd}`;
+}
 
-  if (!eligibleProducts.length) {
-    productSelect.innerHTML = '<option value="">작성 가능한 상품이 없습니다.</option>';
-    productSelect.disabled = true;
+function renderEligibleProducts() {
+  if (!orderItemSelect) return;
+
+  if (!eligibleOrderItems.length) {
+    orderItemSelect.innerHTML = '<option value="">작성 가능한 주문상품이 없습니다.</option>';
+    orderItemSelect.disabled = true;
     if (submitButton) submitButton.disabled = true;
     if (introText) {
-      introText.textContent = "배송완료된 주문 내역이 있는 상품만 리뷰를 작성할 수 있습니다.";
+      introText.textContent = "상품주문상태가 배송완료 또는 구매확정인 주문상품 건마다 리뷰를 1회 작성할 수 있습니다.";
     }
     return;
   }
 
   const selectedValue =
-    eligibleProducts.find((item) => item.productId === presetProductId)?.productId
-    || eligibleProducts[0].productId;
+    eligibleOrderItems.find((item) => item.productId === presetProductId)?.orderItemId
+    || eligibleOrderItems[0].orderItemId;
 
-  productSelect.innerHTML = eligibleProducts
+  orderItemSelect.innerHTML = eligibleOrderItems
     .map((item) => {
-      const countSuffix =
-        item.reviewableOrderItemCount > 1 ? ` (작성 가능 ${item.reviewableOrderItemCount}건)` : "";
-      return `<option value="${item.productId}" ${item.productId === selectedValue ? "selected" : ""}>${item.productName}${countSuffix}</option>`;
+      const orderLabel = item.orderNo ? `[${item.orderNo}] ` : "";
+      const optionLabel = item.optionName ? ` / ${item.optionName}` : "";
+      const qtyLabel = item.quantity > 1 ? ` x${item.quantity}` : "";
+      const orderedAt = toDateText(item.orderedAt);
+      const dateLabel = orderedAt ? ` · ${orderedAt} 주문` : "";
+      return `<option value="${item.orderItemId}" ${item.orderItemId === selectedValue ? "selected" : ""}>${orderLabel}${item.productName}${optionLabel}${qtyLabel}${dateLabel}</option>`;
     })
     .join("");
-  productSelect.disabled = false;
+  orderItemSelect.disabled = false;
   if (submitButton) submitButton.disabled = false;
   if (introText) {
-    introText.textContent = "배송완료된 주문건에 대해서만 리뷰를 남길 수 있습니다.";
+    introText.textContent = "배송완료/구매확정 상태의 주문상품 건마다 리뷰를 작성할 수 있습니다.";
   }
 }
 
@@ -183,23 +196,24 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (!eligibleProducts.length) {
+  if (!eligibleOrderItems.length) {
     alert("작성 가능한 리뷰 주문건이 없습니다.");
     return;
   }
 
   const data = Object.fromEntries(new FormData(form).entries());
-  const productId = Number(data.productId || 0);
-  const isEligibleProduct = eligibleProducts.some((item) => item.productId === productId);
-  if (!isEligibleProduct) {
-    alert("배송완료된 주문건이 있는 상품만 선택할 수 있습니다.");
+  const orderItemId = Number(data.orderItemId || 0);
+  const selectedOrderItem = eligibleOrderItems.find((item) => item.orderItemId === orderItemId);
+  if (!selectedOrderItem) {
+    alert("배송완료 또는 구매확정 상태의 주문상품을 선택해주세요.");
     return;
   }
   const files = [...selectedImages];
 
   try {
     await createReview({
-      productId,
+      orderItemId,
+      productId: selectedOrderItem.productId,
       score: Number(data.score),
       title: data.title,
       content: data.content,
@@ -228,7 +242,7 @@ form.addEventListener("submit", async (event) => {
       return;
     }
 
-    eligibleProducts = await fetchEligibleReviewProducts();
+    eligibleOrderItems = await fetchEligibleReviewProducts();
     renderEligibleProducts();
 
     renderPreview();
