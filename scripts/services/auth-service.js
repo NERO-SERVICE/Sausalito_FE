@@ -1,8 +1,11 @@
 import { STORAGE_KEYS, readJson, writeJson } from "./storage.js";
 import {
+  apiGetKakaoAuthorizeUrl,
+  apiKakaoCallback,
   apiFetchMe,
   apiLogin,
   apiLogout,
+  apiRegister,
   clearStoredTokens,
   getStoredTokens,
   setStoredTokens,
@@ -22,6 +25,66 @@ export function isAuthenticated() {
 
 export async function login({ email, password }) {
   const data = await apiLogin({ email, password });
+  const tokens = data?.tokens || null;
+  const user = data?.user || null;
+
+  setStoredTokens(tokens);
+  writeJson(STORAGE_KEYS.user, user);
+
+  return user;
+}
+
+export async function register({
+  email,
+  password,
+  passwordConfirm,
+  name,
+  phone,
+  recipient,
+  recipientPhone = "",
+  postalCode,
+  roadAddress,
+  detailAddress = "",
+  agreeTerms,
+  agreePrivacy,
+  agreeAgeOver14,
+  agreeHealthFunctionalFood,
+  agreeSmsMarketing = false,
+  agreeEmailMarketing = false,
+}) {
+  const data = await apiRegister({
+    email,
+    password,
+    passwordConfirm,
+    name,
+    phone,
+    recipient,
+    recipientPhone,
+    postalCode,
+    roadAddress,
+    detailAddress,
+    agreeTerms,
+    agreePrivacy,
+    agreeAgeOver14,
+    agreeHealthFunctionalFood,
+    agreeSmsMarketing,
+    agreeEmailMarketing,
+  });
+  const tokens = data?.tokens || null;
+  const user = data?.user || null;
+
+  setStoredTokens(tokens);
+  writeJson(STORAGE_KEYS.user, user);
+
+  return user;
+}
+
+export async function requestKakaoAuthorizeUrl({ redirectUri, state } = {}) {
+  return apiGetKakaoAuthorizeUrl({ redirectUri, state });
+}
+
+export async function loginWithKakaoCode({ code, redirectUri, state } = {}) {
+  const data = await apiKakaoCallback({ code, redirectUri, state });
   const tokens = data?.tokens || null;
   const user = data?.user || null;
 

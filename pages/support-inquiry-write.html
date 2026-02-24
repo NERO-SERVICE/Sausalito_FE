@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
+    <title>소살리토 | 문의하기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="myshop-shell support-shell">
+      <aside class="myshop-sidebar support-sidebar">
+        <h2>고객지원</h2>
+        <p>공지사항, 자주 묻는 질문, 1:1 문의를 한 곳에서 확인하세요.</p>
+        <nav class="myshop-nav">
+          <a href="/pages/support.html?tab=notice">공지사항</a>
+          <a href="/pages/support.html?tab=faq">FAQ</a>
+          <a href="/pages/support.html?tab=qna" class="is-active">Q&amp;A</a>
+        </nav>
+      </aside>
+
+      <section class="myshop-content support-content">
+        <div class="mypage-path">
+          <span>홈</span>
+          <span>고객지원</span>
+          <span>문의하기</span>
+        </div>
+
+        <header class="myshop-content-head">
+          <div>
+            <h3>문의하기</h3>
+            <p>주문/배송/환불 문의는 주문번호를 함께 남겨주세요.</p>
+          </div>
+        </header>
+
+        <section class="myshop-panel">
+          <form class="support-inquiry-form" id="supportWriteForm">
+            <label>
+              <span>문의 카테고리</span>
+              <select id="supportWriteCategory">
+                <option value="DELIVERY">배송</option>
+                <option value="RETURN_REFUND">반품/환불</option>
+                <option value="PAYMENT">결제</option>
+                <option value="ORDER">주문</option>
+                <option value="PRODUCT">상품</option>
+                <option value="ETC" selected>기타</option>
+              </select>
+            </label>
+            <label>
+              <span>문의 제목</span>
+              <input type="text" id="supportWriteTitle" maxlength="120" required />
+            </label>
+            <label>
+              <span>문의 내용</span>
+              <textarea id="supportWriteContent" rows="8" maxlength="3000" required></textarea>
+            </label>
+            <div class="support-form-actions">
+              <a class="ghost" href="/pages/support.html?tab=qna">목록으로</a>
+              <button class="primary" type="submit" id="supportWriteSubmit">문의 등록</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+    <script type="module" src="../scripts/pages/support-inquiry-write.js"></script>
+  </body>
+</html>

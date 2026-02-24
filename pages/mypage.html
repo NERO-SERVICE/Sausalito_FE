@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
+    <title>소살리토 | 마이페이지</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="myshop-shell">
+      <aside class="myshop-sidebar">
+        <h2>마이페이지</h2>
+        <p id="myshopSidebarGreeting">고객님의 쇼핑 활동을 확인하세요.</p>
+        <nav class="myshop-nav" id="myshopNav">
+          <a href="/pages/mypage.html?tab=dashboard" data-section-link="dashboard" class="is-active">마이페이지 홈</a>
+          <a href="/pages/mypage.html?tab=orders" data-section-link="orders">주문내역</a>
+          <a href="/pages/mypage.html?tab=claims" data-section-link="claims">환불 및 교환</a>
+          <a href="/pages/mypage.html?tab=coupons" data-section-link="coupons">쿠폰</a>
+          <a href="/pages/member-edit.html">회원정보수정</a>
+          <a href="/pages/change-password.html">비밀번호 변경</a>
+        </nav>
+        <button class="myshop-logout-btn" id="myshopLogoutBtn" type="button">로그아웃</button>
+      </aside>
+
+      <section class="myshop-content">
+        <div class="mypage-path">
+          <span>홈</span>
+          <span>마이페이지</span>
+        </div>
+
+        <header class="myshop-content-head">
+          <div>
+            <h3 id="myshopSectionTitle">마이페이지 홈</h3>
+            <p id="myshopSectionDescription">회원님의 주문/혜택 정보를 확인하세요.</p>
+          </div>
+          <div class="myshop-head-actions">
+            <a class="ghost" href="/pages/member-edit.html">회원정보수정</a>
+            <a class="ghost" href="/pages/change-password.html">비밀번호 변경</a>
+          </div>
+        </header>
+
+        <section class="myshop-section" data-section="dashboard">
+          <article class="myshop-panel myshop-panel-emphasis">
+            <div class="myshop-panel-head">
+              <h4>쇼핑 혜택 요약</h4>
+            </div>
+            <div class="myshop-kpi-grid" id="myshopKpi"></div>
+          </article>
+
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>나의 주문처리 현황</h4>
+              <p class="myshop-panel-meta">최근 3개월 기준</p>
+            </div>
+            <div class="myshop-order-stage" id="myshopOrderStage"></div>
+            <div class="myshop-claim-stage" id="myshopClaimStage"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-section="orders" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>주문내역</h4>
+              <div class="myshop-filter-row">
+                <select id="myshopOrderStatusFilter">
+                  <option value="ALL">전체</option>
+                  <option value="PENDING">입금전</option>
+                  <option value="PAID">결제완료</option>
+                  <option value="PREPARING">배송준비중</option>
+                  <option value="SHIPPED">배송중</option>
+                  <option value="DELIVERED">배송완료</option>
+                  <option value="FAILED">결제실패</option>
+                  <option value="CANCELED">주문취소</option>
+                  <option value="REFUNDED">환불완료</option>
+                </select>
+                <select id="myshopOrderRangeFilter">
+                  <option value="today">오늘</option>
+                  <option value="1m">1개월</option>
+                  <option value="3m">3개월</option>
+                  <option value="6m" selected>6개월</option>
+                </select>
+              </div>
+            </div>
+            <div id="myshopOrderTable"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-section="claims" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>환불 및 교환</h4>
+              <div class="myshop-filter-row">
+                <select id="myshopClaimStatusFilter">
+                  <option value="ALL">전체</option>
+                  <option value="CANCEL">취소</option>
+                  <option value="RETURN">반품/환불</option>
+                  <option value="EXCHANGE">교환</option>
+                </select>
+                <select id="myshopClaimRangeFilter">
+                  <option value="today">오늘</option>
+                  <option value="1m">1개월</option>
+                  <option value="3m">3개월</option>
+                  <option value="6m" selected>6개월</option>
+                </select>
+              </div>
+            </div>
+            <div id="myshopClaimTable"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-section="coupons" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head">
+              <h4>쿠폰</h4>
+            </div>
+            <div id="myshopCouponTable"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+    <script type="module" src="../scripts/pages/mypage.js"></script>
+  </body>
+</html>

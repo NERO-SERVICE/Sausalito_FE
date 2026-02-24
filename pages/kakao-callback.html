@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
+    <title>소살리토 | 카카오 회원가입 처리</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="signup-callback-main">
+      <section class="signup-callback-card">
+        <h2>카카오 회원가입 처리 중</h2>
+        <p id="kakaoCallbackMessage">카카오 인증 정보를 확인하고 있습니다. 잠시만 기다려주세요.</p>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+
+    <script type="module" src="../scripts/pages/kakao-callback.js"></script>
+  </body>
+</html>

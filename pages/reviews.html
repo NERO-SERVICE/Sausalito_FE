@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
     <title>소살리토 | 리뷰</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,26 +19,59 @@
   <body>
     <div id="siteHeaderMount"></div>
 
-    <main class="review-main">
-      <section class="review-head">
-        <h2>PHOTO REVIEW</h2>
-        <p>소살리토 고객의 실제 후기</p>
+    <main class="review-main rv-main">
+      <section class="rv-best-section" id="rvBestSection">
+        <div class="rv-section-head rv-section-head-center">
+          <h3>베스트 리뷰</h3>
+        </div>
+        <div class="rv-best-slider">
+          <button class="rv-best-nav" type="button" data-action="bestPrev" aria-label="이전 베스트 리뷰">‹</button>
+          <div class="rv-best-grid" id="rvBestGrid"></div>
+          <button class="rv-best-nav" type="button" data-action="bestNext" aria-label="다음 베스트 리뷰">›</button>
+        </div>
       </section>
 
-      <section class="review-toolbar">
-        <select id="reviewProductFilter">
-          <option value="all">전체 상품</option>
-        </select>
-        <select id="reviewSortSelect">
-          <option value="latest">최신순</option>
-          <option value="helpful">도움순</option>
-          <option value="score">평점순</option>
-        </select>
+      <div class="pd-review-links rv-middle-links">
+        <button class="text-btn pd-policy-link" type="button" data-action="openPolicy">운영정책</button>
+        <a class="text-btn pd-write-link" href="/pages/review-write.html">리뷰작성</a>
+      </div>
+
+      <section class="rv-all-section">
+        <div class="rv-section-head rv-all-head">
+          <h3>전체 리뷰</h3>
+          <div class="rv-sort-toggle" role="radiogroup" aria-label="정렬">
+            <input type="radio" name="rvSort" id="rvSortScore" value="score" checked />
+            <label for="rvSortScore">별점순</label>
+            <input type="radio" name="rvSort" id="rvSortLatest" value="latest" />
+            <label for="rvSortLatest">최신순</label>
+          </div>
+        </div>
+        <div class="rv-all-list" id="rvAllList"></div>
+        <div class="rv-pagination rv-all-pagination" id="rvAllPagination"></div>
       </section>
 
-      <section class="review-grid" id="reviewGrid"></section>
-      <div class="review-pagination" id="reviewPagination"></div>
+      <section class="rv-empty-page is-hidden" id="rvEmptyPage">
+        <div class="rv-empty-page-center">
+          <p>첫 번째 리뷰를 남겨주세요</p>
+          <a class="rv-empty-page-write" href="/pages/review-write.html">리뷰 작성하기</a>
+        </div>
+        <button class="rv-empty-page-policy" type="button" data-action="openPolicy">운영정책</button>
+      </section>
     </main>
+
+    <div class="pd-policy-modal" id="rvPolicyModal">
+      <div class="pd-policy-backdrop" data-action="closePolicy"></div>
+      <div class="pd-policy-dialog">
+        <h4>리뷰 운영정책</h4>
+        <ul>
+          <li>상품과 무관한 내용, 욕설, 광고성 문구는 사전 고지 없이 숨김 처리될 수 있습니다.</li>
+          <li>개인정보(연락처, 계좌, 주소 등)는 리뷰 본문에 작성하지 마세요.</li>
+          <li>배송/교환/환불 문의는 1:1 문의를 이용해주세요.</li>
+          <li>관리자 답변은 운영시간 내 순차적으로 등록됩니다.</li>
+        </ul>
+        <button class="primary" type="button" data-action="closePolicy">확인</button>
+      </div>
+    </div>
 
     <div id="siteFooterMount"></div>
 

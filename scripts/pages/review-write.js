@@ -2,21 +2,24 @@ import { mountSiteHeader, syncSiteHeader } from "../components/header.js";
 import { mountSiteFooter } from "../components/footer.js";
 import { getUser, syncCurrentUser } from "../services/auth-service.js";
 import { cartCount } from "../services/cart-service.js";
-import { createReview, fetchProducts } from "../services/api.js";
+import { createReview, fetchEligibleReviewProducts } from "../services/api.js";
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "review" });
 mountSiteFooter();
 
 const form = document.getElementById("reviewWriteForm");
-const productSelect = document.getElementById("reviewProductSelect");
+const orderItemSelect = document.getElementById("reviewOrderItemSelect");
 const imageInput = document.getElementById("reviewImagesInput");
 const preview = document.getElementById("reviewImagePreview");
 const imageCount = document.getElementById("reviewImageCount");
+const introText = document.querySelector(".review-write-card > p");
+const submitButton = form?.querySelector('button[type="submit"]');
 const presetProductId = Number(new URLSearchParams(location.search).get("productId"));
 const MAX_IMAGE_COUNT = 3;
 
 let selectedImages = [];
 let previewUrls = [];
+let eligibleOrderItems = [];
 
 async function syncHeader() {
   const user = (await syncCurrentUser()) || getUser();
@@ -28,7 +31,8 @@ async function syncHeader() {
   }
 
   syncSiteHeader(headerRefs, {
-    userName: user?.name || null,
+    userName: user?.name || user?.email || null,
+    isAdmin: Boolean(user?.is_staff ?? user?.isStaff),
     cartCountValue: count,
   });
 }
@@ -138,6 +142,50 @@ preview.addEventListener("click", (event) => {
 
 window.addEventListener("beforeunload", releasePreviewUrls);
 
+function toDateText(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}.${mm}.${dd}`;
+}
+
+function renderEligibleProducts() {
+  if (!orderItemSelect) return;
+
+  if (!eligibleOrderItems.length) {
+    orderItemSelect.innerHTML = '<option value="">작성 가능한 주문상품이 없습니다.</option>';
+    orderItemSelect.disabled = true;
+    if (submitButton) submitButton.disabled = true;
+    if (introText) {
+      introText.textContent = "상품주문상태가 배송완료 또는 구매확정인 주문상품 건마다 리뷰를 1회 작성할 수 있습니다.";
+    }
+    return;
+  }
+
+  const selectedValue =
+    eligibleOrderItems.find((item) => item.productId === presetProductId)?.orderItemId
+    || eligibleOrderItems[0].orderItemId;
+
+  orderItemSelect.innerHTML = eligibleOrderItems
+    .map((item) => {
+      const orderLabel = item.orderNo ? `[${item.orderNo}] ` : "";
+      const optionLabel = item.optionName ? ` / ${item.optionName}` : "";
+      const qtyLabel = item.quantity > 1 ? ` x${item.quantity}` : "";
+      const orderedAt = toDateText(item.orderedAt);
+      const dateLabel = orderedAt ? ` · ${orderedAt} 주문` : "";
+      return `<option value="${item.orderItemId}" ${item.orderItemId === selectedValue ? "selected" : ""}>${orderLabel}${item.productName}${optionLabel}${qtyLabel}${dateLabel}</option>`;
+    })
+    .join("");
+  orderItemSelect.disabled = false;
+  if (submitButton) submitButton.disabled = false;
+  if (introText) {
+    introText.textContent = "배송완료/구매확정 상태의 주문상품 건마다 리뷰를 작성할 수 있습니다.";
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -148,12 +196,24 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (!eligibleOrderItems.length) {
+    alert("작성 가능한 리뷰 주문건이 없습니다.");
+    return;
+  }
+
   const data = Object.fromEntries(new FormData(form).entries());
+  const orderItemId = Number(data.orderItemId || 0);
+  const selectedOrderItem = eligibleOrderItems.find((item) => item.orderItemId === orderItemId);
+  if (!selectedOrderItem) {
+    alert("배송완료 또는 구매확정 상태의 주문상품을 선택해주세요.");
+    return;
+  }
   const files = [...selectedImages];
 
   try {
     await createReview({
-      productId: Number(data.productId),
+      orderItemId,
+      productId: selectedOrderItem.productId,
       score: Number(data.score),
       title: data.title,
       content: data.content,
@@ -182,13 +242,8 @@ form.addEventListener("submit", async (event) => {
       return;
     }
 
-    const products = await fetchProducts();
-    productSelect.innerHTML = products
-      .map(
-        (product) =>
-          `<option value="${product.id}" ${product.id === presetProductId ? "selected" : ""}>${product.name}</option>`,
-      )
-      .join("");
+    eligibleOrderItems = await fetchEligibleReviewProducts();
+    renderEligibleProducts();
 
     renderPreview();
     await syncHeader();

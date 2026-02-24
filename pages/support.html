@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
+    <title>소살리토 | 고객지원</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="myshop-shell support-shell">
+      <aside class="myshop-sidebar support-sidebar">
+        <h2>고객지원</h2>
+        <p>공지사항, FAQ, Q&A를 한 곳에서 확인하세요.</p>
+        <nav class="myshop-nav" id="supportNav">
+          <a href="/pages/support.html?tab=notice" data-support-tab="notice" class="is-active">공지사항</a>
+          <a href="/pages/support.html?tab=faq" data-support-tab="faq">FAQ</a>
+          <a href="/pages/support.html?tab=qna" data-support-tab="qna">Q&amp;A</a>
+        </nav>
+      </aside>
+
+      <section class="myshop-content support-content">
+        <div class="mypage-path">
+          <span>홈</span>
+          <span>고객지원</span>
+        </div>
+
+        <header class="myshop-content-head">
+          <div>
+            <h3 id="supportSectionTitle">공지사항</h3>
+            <p id="supportSectionDescription">서비스 운영 공지와 쇼핑몰 소식을 확인하세요.</p>
+          </div>
+        </header>
+
+        <section class="myshop-section" data-support-panel="notice">
+          <article class="myshop-panel">
+            <div class="myshop-panel-head support-head-inline">
+              <h4>공지사항</h4>
+              <label class="support-search-field" for="supportNoticeSearch">
+                <span class="blind">공지사항 검색</span>
+                <input id="supportNoticeSearch" type="search" placeholder="제목/내용 검색" />
+              </label>
+            </div>
+            <div id="supportNoticeList" class="support-list"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-support-panel="faq" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head support-head-inline">
+              <h4>FAQ</h4>
+              <div class="support-filter-inline">
+                <select id="supportFaqCategory">
+                  <option value="ALL">전체</option>
+                  <option value="주문/결제">주문/결제</option>
+                  <option value="배송">배송</option>
+                  <option value="교환/환불">교환/환불</option>
+                  <option value="회원">회원</option>
+                </select>
+                <label class="support-search-field" for="supportFaqSearch">
+                  <span class="blind">FAQ 검색</span>
+                  <input id="supportFaqSearch" type="search" placeholder="질문/답변 검색" />
+                </label>
+              </div>
+            </div>
+            <div id="supportFaqList" class="support-list"></div>
+          </article>
+        </section>
+
+        <section class="myshop-section" data-support-panel="qna" hidden>
+          <article class="myshop-panel">
+            <div class="myshop-panel-head support-head-inline">
+              <h4>Q&amp;A</h4>
+              <div class="support-filter-inline">
+                <label class="support-search-field" for="supportQnaSearch">
+                  <span class="blind">Q&amp;A 검색</span>
+                  <input id="supportQnaSearch" type="search" placeholder="제목/내용 검색" />
+                </label>
+                <button class="primary" type="button" id="supportInquiryWriteBtn">문의하기</button>
+              </div>
+            </div>
+            <div id="supportQnaList" class="support-list"></div>
+            <div class="support-pagination" id="supportQnaPagination"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+    <script type="module" src="../scripts/pages/support.js"></script>
+  </body>
+</html>

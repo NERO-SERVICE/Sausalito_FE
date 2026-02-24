@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
+    <title>소살리토 | 회원가입</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Pretendard:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="signup-main">
+      <section class="signup-card">
+        <header class="signup-head">
+          <h2>회원가입</h2>
+          <p>일반 쇼핑몰 회원가입 형식으로 필수 정보를 입력하고, 약관 동의 후 가입을 완료할 수 있습니다.</p>
+        </header>
+
+        <section class="signup-section">
+          <h3>간편 회원가입</h3>
+          <p>카카오 계정으로 3초 만에 회원가입을 진행할 수 있어요.</p>
+          <button class="signup-kakao-btn" type="button" id="kakaoSignupBtn" aria-label="카카오로 간편 회원가입">
+            <picture>
+              <source media="(min-width: 420px)" srcset="../dist/assets/kakao_login/start/kakao_login_large_wide.png" />
+              <source media="(min-width: 360px)" srcset="../dist/assets/kakao_login/start/kakao_login_medium_wide.png" />
+              <source media="(min-width: 320px)" srcset="../dist/assets/kakao_login/start/kakao_login_large_narrow.png" />
+              <img src="../dist/assets/kakao_login/start/kakao_login_medium_narrow.png" alt="카카오로 간편 회원가입" loading="lazy" decoding="async" />
+            </picture>
+          </button>
+        </section>
+
+        <section class="signup-section">
+          <div class="signup-section-head">
+            <h3>일반 회원가입</h3>
+            <button class="ghost signup-toggle-btn" type="button" id="openNormalSignupBtn">일반 회원가입 입력하기</button>
+          </div>
+          <p class="signup-required-guide">'필수' 표시 항목은 반드시 입력/동의해야 가입이 완료됩니다.</p>
+
+          <form id="signupForm" class="signup-join-form" hidden>
+            <div class="signup-form-table">
+              <label class="signup-form-row">
+                <span class="signup-form-th">이메일(아이디) <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="email" name="email" placeholder="example@domain.com" autocomplete="email" required />
+                </span>
+              </label>
+              <label class="signup-form-row">
+                <span class="signup-form-th">연락처 <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="tel" name="phone" placeholder="01012345678" autocomplete="tel" required />
+                </span>
+              </label>
+              <label class="signup-form-row">
+                <span class="signup-form-th">비밀번호 <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="password" name="password" placeholder="영문/숫자/특수문자 포함 8자 이상" minlength="8" autocomplete="new-password" required />
+                </span>
+              </label>
+              <label class="signup-form-row">
+                <span class="signup-form-th">비밀번호 확인 <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="password" name="passwordConfirm" placeholder="비밀번호 재입력" minlength="8" autocomplete="new-password" required />
+                </span>
+              </label>
+              <label class="signup-form-row">
+                <span class="signup-form-th">주문자 이름 <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="text" name="name" placeholder="홍길동" maxlength="100" required />
+                </span>
+              </label>
+              <label class="signup-form-row">
+                <span class="signup-form-th">수령인 이름 <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="text" name="recipient" placeholder="홍길동" maxlength="100" required />
+                </span>
+              </label>
+              <label class="signup-form-row">
+                <span class="signup-form-th">수령인 연락처 <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="tel" name="recipientPhone" placeholder="01012345678" maxlength="20" required />
+                </span>
+              </label>
+              <div class="signup-form-row">
+                <span class="signup-form-th">우편번호 <em class="signup-required-chip">필수</em></span>
+                <div class="signup-form-td signup-inline-group">
+                  <input type="text" name="postalCode" id="signupPostalCode" placeholder="주소검색으로 자동 입력" maxlength="10" readonly required />
+                  <button class="ghost signup-postcode-btn" type="button" id="searchPostcodeBtn">주소검색</button>
+                </div>
+              </div>
+              <div class="signup-form-row">
+                <span class="signup-form-th">도로명 주소 <em class="signup-required-chip">필수</em></span>
+                <div class="signup-form-td">
+                  <input type="text" name="roadAddress" id="signupRoadAddress" placeholder="주소검색으로 자동 입력" maxlength="255" readonly required />
+                </div>
+              </div>
+              <label class="signup-form-row">
+                <span class="signup-form-th">상세 주소 <em class="signup-required-chip">필수</em></span>
+                <span class="signup-form-td">
+                  <input type="text" name="detailAddress" id="signupDetailAddress" placeholder="동/호수 및 상세 위치" maxlength="255" required />
+                </span>
+              </label>
+            </div>
+
+            <section class="signup-agreement-box">
+              <label class="signup-agreement-all">
+                <input type="checkbox" id="agreeAllTerms" />
+                <span>아래 약관에 모두 동의합니다. (선택 동의 포함)</span>
+              </label>
+
+              <ul class="signup-agreement-list">
+                <li class="signup-agreement-item">
+                  <label class="signup-agreement-label">
+                    <span>
+                      <input type="checkbox" name="agreeTerms" data-term-checkbox="true" data-required-term="true" required />
+                      [필수] 이용약관 동의
+                    </span>
+                  </label>
+                  <details class="signup-agreement-detail">
+                    <summary>약관 보기</summary>
+                    <div class="signup-agreement-content">
+                      <p>본 약관은 회원의 쇼핑몰 서비스 이용 조건, 주문/결제/배송/취소/환불 절차, 회원과 회사의 권리·의무를 규정합니다.</p>
+                      <p>회사는 전자상거래 관련 법령을 준수하며, 청약철회·환불 등 소비자 보호 규정을 따릅니다.</p>
+                      <p>회원은 계정정보를 안전하게 관리해야 하며, 타인 도용/부정사용 발생 시 즉시 고객센터로 통지해야 합니다.</p>
+                    </div>
+                  </details>
+                </li>
+                <li class="signup-agreement-item">
+                  <label class="signup-agreement-label">
+                    <span>
+                      <input type="checkbox" name="agreePrivacy" data-term-checkbox="true" data-required-term="true" required />
+                      [필수] 개인정보 수집 및 이용 동의
+                    </span>
+                  </label>
+                  <details class="signup-agreement-detail">
+                    <summary>약관 보기</summary>
+                    <div class="signup-agreement-content">
+                      <p>수집항목: 이름, 이메일, 연락처, 배송지 정보</p>
+                      <p>수집목적: 회원 식별, 주문/배송 처리, 고객상담, 서비스 품질 개선</p>
+                      <p>보유기간: 회원 탈퇴 후 관련 법령에서 정한 기간까지 보관 후 파기</p>
+                      <p>동의를 거부할 권리가 있으며, 거부 시 회원가입 및 주문 서비스 이용이 제한될 수 있습니다.</p>
+                    </div>
+                  </details>
+                </li>
+                <li class="signup-agreement-item">
+                  <label class="signup-agreement-label">
+                    <span>
+                      <input type="checkbox" name="agreeAgeOver14" data-term-checkbox="true" data-required-term="true" required />
+                      [필수] 만 14세 이상입니다
+                    </span>
+                  </label>
+                </li>
+                <li class="signup-agreement-item">
+                  <label class="signup-agreement-label">
+                    <span>
+                      <input type="checkbox" name="agreeHealthFunctionalFood" data-term-checkbox="true" data-required-term="true" required />
+                      [필수] 건강기능식품 구매/섭취 안내 확인
+                    </span>
+                  </label>
+                  <details class="signup-agreement-detail">
+                    <summary>안내 보기</summary>
+                    <div class="signup-agreement-content">
+                      <p>건강기능식품은 질병의 예방 및 치료를 위한 의약품이 아닙니다.</p>
+                      <p>제품별 섭취량·섭취방법·주의사항을 반드시 확인하고 섭취해야 합니다.</p>
+                      <p>특이체질, 알레르기, 임신·수유 중이거나 의약품 복용 중인 경우 전문가와 상담 후 섭취하시기 바랍니다.</p>
+                    </div>
+                  </details>
+                </li>
+                <li class="signup-agreement-item">
+                  <label class="signup-agreement-label">
+                    <span>
+                      <input type="checkbox" name="agreeSmsMarketing" data-term-checkbox="true" />
+                      [선택] SMS 마케팅 정보 수신 동의
+                    </span>
+                  </label>
+                </li>
+                <li class="signup-agreement-item">
+                  <label class="signup-agreement-label">
+                    <span>
+                      <input type="checkbox" name="agreeEmailMarketing" data-term-checkbox="true" />
+                      [선택] 이메일 마케팅 정보 수신 동의
+                    </span>
+                  </label>
+                </li>
+              </ul>
+            </section>
+
+            <button class="primary signup-submit" type="submit">일반 회원가입 완료</button>
+            <p class="signup-address-guide">
+              주소검색은 카카오(다음) 우편번호 서비스를 사용합니다. 네트워크 정책에 따라 팝업 허용이 필요할 수 있습니다.
+            </p>
+          </form>
+        </section>
+
+        <p class="signup-notice" id="signupNotice" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+
+    <script type="module" src="../scripts/pages/signup.js"></script>
+  </body>
+</html>

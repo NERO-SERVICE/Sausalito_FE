@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/dist/assets/favicon/sausalito_favicon.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
     <title>소살리토 | 로그인</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,14 +19,37 @@
   <body>
     <div id="siteHeaderMount"></div>
 
-    <main class="container">
-      <section class="card auth-card">
-        <h2>로그인</h2>
-        <form id="loginForm" class="form-grid">
-          <input type="email" name="email" placeholder="이메일" required />
-          <input type="password" name="password" placeholder="비밀번호" required />
-          <button class="primary" type="submit">로그인</button>
-        </form>
+    <main class="auth-main">
+      <section class="auth-card">
+        <section class="auth-step auth-step-quick">
+          <h2>3초 간편 로그인</h2>
+          <p>카카오 계정으로 빠르게 로그인하고 바로 주문을 시작하세요.</p>
+          <button class="auth-kakao-btn" id="kakaoQuickLoginBtn" type="button" aria-label="카카오로 3초 간편 로그인">
+            <picture>
+              <source media="(min-width: 420px)" srcset="../dist/assets/kakao_login/login/kakao_login_large_wide.png" />
+              <source media="(min-width: 360px)" srcset="../dist/assets/kakao_login/login/kakao_login_medium_wide.png" />
+              <source media="(min-width: 320px)" srcset="../dist/assets/kakao_login/login/kakao_login_large_narrow.png" />
+              <img src="../dist/assets/kakao_login/login/kakao_login_medium_narrow.png" alt="카카오로 3초 간편 로그인" loading="lazy" decoding="async" />
+            </picture>
+          </button>
+        </section>
+
+        <section class="auth-step">
+          <h3>로그인</h3>
+          <form id="loginForm" class="form-grid">
+            <input type="email" name="email" placeholder="이메일" autocomplete="email" required />
+            <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required />
+            <button class="primary" type="submit">로그인</button>
+          </form>
+        </section>
+
+        <section class="auth-step auth-step-signup">
+          <h3>회원가입</h3>
+          <p>처음 방문하셨다면 회원가입 후 주문/배송 조회를 이용할 수 있어요.</p>
+          <a class="primary auth-signup-link" href="/pages/signup.html">회원가입 하러가기</a>
+        </section>
+
+        <p class="auth-notice" id="loginNotice" aria-live="polite"></p>
       </section>
     </main>
 

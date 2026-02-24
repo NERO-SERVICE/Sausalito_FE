@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/sausalito_favicon-DPL8eyQ_.svg?v=roundrect1" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/assets/sausalito_favicon-DPL8eyQ_.svg?v=roundrect1" />
+    <link rel="apple-touch-icon" href="/assets/sausalito_favicon-DPL8eyQ_.svg?v=roundrect1" />
+    <meta name="theme-color" content="#54A1E7" />
+    <title>소살리토 | 회원정보수정</title>
+    <script type="module" crossorigin src="/assets/memberEdit-BmmwBa5w.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/footer-DJUg1RIv.js">
+    <link rel="modulepreload" crossorigin href="/assets/cart-service-C1TscT8r.js">
+    <link rel="stylesheet" crossorigin href="/assets/footer-BUmiWATx.css">
+  </head>
+  <body>
+    <div id="siteHeaderMount"></div>
+
+    <main class="myshop-shell member-edit-shell">
+      <aside class="myshop-sidebar">
+        <h2>마이페이지</h2>
+        <nav class="myshop-nav">
+          <a href="/pages/mypage.html?tab=dashboard">마이페이지 홈</a>
+          <a href="/pages/mypage.html?tab=orders">주문내역</a>
+          <a href="/pages/mypage.html?tab=claims">환불 및 교환</a>
+          <a href="/pages/mypage.html?tab=coupons">쿠폰</a>
+          <a href="/pages/member-edit.html" class="is-active">회원정보수정</a>
+          <a href="/pages/change-password.html">비밀번호 변경</a>
+        </nav>
+        <button class="myshop-logout-btn" id="myshopLogoutBtn" type="button">로그아웃</button>
+      </aside>
+
+      <section class="myshop-content">
+        <div class="mypage-path">
+          <span>홈</span>
+          <span>마이페이지</span>
+          <span>회원정보수정</span>
+        </div>
+
+        <header class="myshop-content-head">
+          <div>
+            <h3>회원정보수정</h3>
+            <p>주문/배송에 필요한 회원 기본정보를 관리합니다.</p>
+          </div>
+        </header>
+
+        <section class="myshop-panel member-profile-panel">
+          <div class="member-panel-title">
+            <h4>기본정보</h4>
+            <p class="member-required-guide">필수입력사항</p>
+          </div>
+
+          <form id="memberProfileForm" class="member-edit-form">
+            <div class="member-edit-table-wrap">
+              <table class="member-edit-table">
+                <tbody>
+                  <tr>
+                    <th scope="row">이메일</th>
+                    <td>
+                      <input type="email" id="memberEditEmail" required />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">주문자명 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditName" required maxlength="100" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">주문자 연락처 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditPhone" required maxlength="20" placeholder="01012345678" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">수령인명 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditRecipient" required maxlength="100" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">수령인 연락처 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditRecipientPhone" required maxlength="20" placeholder="01012345678" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">우편번호 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <div class="member-address-inline">
+                        <input type="text" id="memberEditPostalCode" required maxlength="10" placeholder="주소검색으로 자동 입력" readonly />
+                        <button class="ghost member-postcode-btn" type="button" id="memberSearchPostcodeBtn">주소검색</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">도로명 주소 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditRoadAddress" required maxlength="255" placeholder="주소검색으로 자동 입력" readonly />
+                      <p class="member-address-help">카카오(다음) 우편번호 서비스로 도로명 주소를 빠르게 입력할 수 있습니다.</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">상세 주소 <em class="member-required-chip">필수</em></th>
+                    <td>
+                      <input type="text" id="memberEditDetailAddress" required maxlength="255" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">SMS 수신동의</th>
+                    <td>
+                      <label class="member-inline-checkbox">
+                        <input type="checkbox" id="memberEditSmsMarketing" />
+                        <span>이벤트/혜택 SMS 수신 동의</span>
+                      </label>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">이메일 수신동의</th>
+                    <td>
+                      <label class="member-inline-checkbox">
+                        <input type="checkbox" id="memberEditEmailMarketing" />
+                        <span>이벤트/혜택 이메일 수신 동의</span>
+                      </label>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="member-edit-action-row">
+              <button type="button" id="memberWithdrawRevealBtn" class="member-withdraw-trigger">회원탈퇴</button>
+              <button class="primary" type="submit">회원정보수정</button>
+            </div>
+          </form>
+        </section>
+
+        <div id="memberWithdrawConfirmModal" class="member-confirm-modal" hidden>
+          <div class="member-confirm-backdrop" id="memberWithdrawModalClose"></div>
+          <div class="member-confirm-box" role="dialog" aria-modal="true" aria-labelledby="memberWithdrawConfirmTitle">
+            <h4 id="memberWithdrawConfirmTitle">회원탈퇴 안내</h4>
+            <p>회원을 정말 탈퇴하시겠습니까?</p>
+            <div class="member-confirm-actions">
+              <button type="button" class="ghost" id="memberWithdrawCancelBtn">취소</button>
+              <button type="button" class="danger" id="memberWithdrawApproveBtn">확인</button>
+            </div>
+          </div>
+        </div>
+
+        <section class="myshop-panel member-withdraw-panel" id="memberWithdrawPanel" hidden>
+          <h4>회원 탈퇴 진행</h4>
+          <p class="member-withdraw-copy">탈퇴 시 계정은 비활성화되며 보유 혜택 정보가 삭제될 수 있습니다.</p>
+          <form id="memberWithdrawForm" class="member-edit-form">
+            <label>
+              <span>비밀번호 확인</span>
+              <input type="password" id="memberWithdrawPassword" required />
+            </label>
+            <label>
+              <span>탈퇴 사유 (선택)</span>
+              <textarea id="memberWithdrawReason" rows="4" maxlength="500"></textarea>
+            </label>
+            <label class="member-withdraw-check">
+              <input type="checkbox" id="memberWithdrawConfirm" />
+              <span>안내사항을 확인했고, 회원 탈퇴에 동의합니다.</span>
+            </label>
+            <div class="member-edit-submit">
+              <button class="danger" type="submit">회원 탈퇴</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <div id="siteFooterMount"></div>
+  </body>
+</html>
