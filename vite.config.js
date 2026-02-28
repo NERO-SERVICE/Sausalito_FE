@@ -9,8 +9,6 @@ export default defineConfig(({ mode }) => {
   );
 
   return {
-    // Keep static source assets under ./dist/assets and copy them as-is at build time.
-    publicDir: "dist",
     server: {
       proxy: {
         "/api": {
