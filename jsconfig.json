@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": [
+    "scripts/**/*.js",
+    "vite.config.js",
+    "netlify/functions/**/*.mjs"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ]
+}

@@ -1,0 +1,71 @@
+name: Frontend CI/CD
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Netlify Functions syntax
+        run: |
+          node --check netlify/functions/api-proxy.mjs
+          node --check netlify/functions/media-proxy.mjs
+
+      - name: Build
+        run: npm run build
+
+  deploy_netlify:
+    name: Trigger Netlify Deploy
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate required secret
+        env:
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          : "${NETLIFY_BUILD_HOOK_URL:?NETLIFY_BUILD_HOOK_URL is required}"
+          case "${NETLIFY_BUILD_HOOK_URL}" in
+            https://api.netlify.com/build_hooks/*) ;;
+            *)
+              echo "::error::NETLIFY_BUILD_HOOK_URL must be a Netlify build hook URL."
+              exit 1
+              ;;
+          esac
+
+      - name: Trigger build hook
+        env:
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          response="$(curl -fsSL -X POST "${NETLIFY_BUILD_HOOK_URL}")"
+          echo "Netlify build hook triggered."
+          echo "${response}"

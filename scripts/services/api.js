@@ -1,6 +1,24 @@
 import { STORAGE_KEYS, readJson, writeJson } from "./storage.js";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/v1").replace(/\/$/, "");
+function resolveDefaultApiBasePath() {
+  return "/api/v1";
+}
+
+function resolveApiBasePath() {
+  const configuredPath = String(import.meta.env.VITE_API_BASE_PATH || "").trim();
+  if (!configuredPath) {
+    return resolveDefaultApiBasePath();
+  }
+
+  // Security: disallow absolute URL to avoid exposing backend origin in client bundle.
+  if (!configuredPath.startsWith("/")) {
+    return resolveDefaultApiBasePath();
+  }
+
+  return configuredPath;
+}
+
+const API_BASE_URL = resolveApiBasePath().replace(/\/$/, "");
 
 let refreshPromise = null;
 
@@ -28,7 +46,7 @@ export function clearStoredTokens() {
 
 function buildUrl(path, query = {}) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(`${API_BASE_URL}${normalizedPath}`);
+  const url = new URL(`${API_BASE_URL}${normalizedPath}`, window.location.origin);
 
   Object.entries(query).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
@@ -990,7 +1008,7 @@ export async function fetchReviewsByProduct(id) {
   return fetchReviewsWithPagination({ productId: id, sort: "latest", pageSize: 100 });
 }
 
-export async function fetchHomeBanners(limit = 20) {
+export async function fetchHomeBanners(limit) {
   return apiRequest("/banners/home", {
     query: {
       limit,
