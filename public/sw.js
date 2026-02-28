@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v20260228-1";
+const CACHE_VERSION = "v20260228-2";
 const IMAGE_CACHE = `sausalito-image-cache-${CACHE_VERSION}`;
 const ASSET_CACHE = `sausalito-asset-cache-${CACHE_VERSION}`;
 const ACTIVE_CACHES = new Set([IMAGE_CACHE, ASSET_CACHE]);
@@ -28,8 +28,9 @@ function isCacheableResponse(response) {
 }
 
 function isImageRequest(request) {
-  if (request.destination === "image") return true;
   const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  if (request.destination === "image") return true;
   return /\.(png|jpe?g|webp|gif|svg|avif|ico)$/i.test(url.pathname) || url.pathname.startsWith("/media/");
 }
 
@@ -44,9 +45,13 @@ async function staleWhileRevalidate(request, cacheName) {
   const cached = await cache.match(request);
 
   const networkFetchPromise = fetch(request)
-    .then((response) => {
+    .then(async (response) => {
       if (isCacheableResponse(response)) {
-        cache.put(request, response.clone());
+        try {
+          await cache.put(request, response.clone());
+        } catch {
+          // ignore cache write failures and still return network response
+        }
       }
       return response;
     })
@@ -69,7 +74,11 @@ async function cacheFirst(request, cacheName) {
   try {
     const response = await fetch(request);
     if (isCacheableResponse(response)) {
-      cache.put(request, response.clone());
+      try {
+        await cache.put(request, response.clone());
+      } catch {
+        // ignore cache write failures and still return network response
+      }
     }
     return response;
   } catch {
