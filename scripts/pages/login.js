@@ -29,6 +29,19 @@ function getKakaoRedirectUri() {
   return `${window.location.origin}${KAKAO_CALLBACK_PATH}`;
 }
 
+function setKakaoState(value) {
+  try {
+    window.sessionStorage.setItem(KAKAO_STATE_STORAGE_KEY, value);
+  } catch {
+    // ignore
+  }
+  try {
+    window.localStorage.setItem(KAKAO_STATE_STORAGE_KEY, value);
+  } catch {
+    // ignore
+  }
+}
+
 (async function init() {
   const user = (await syncCurrentUser()) || getUser();
   if (user) {
@@ -41,7 +54,7 @@ kakaoQuickLoginBtn?.addEventListener("click", async () => {
   setNotice("");
   try {
     const state = generateKakaoState();
-    sessionStorage.setItem(KAKAO_STATE_STORAGE_KEY, state);
+    setKakaoState(state);
     const { authorizeUrl } = await requestKakaoAuthorizeUrl({
       redirectUri: getKakaoRedirectUri(),
       state,

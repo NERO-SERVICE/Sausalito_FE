@@ -15,6 +15,7 @@ const ALLOWED_REQUEST_HEADERS = new Set([
   "accept",
   "accept-language",
   "authorization",
+  "cookie",
   "content-type",
   "idempotency-key",
   "if-match",
@@ -112,6 +113,19 @@ function sanitizeResponseHeaderEntries(entries) {
     filtered[lowerKey] = value;
   }
   return filtered;
+}
+
+function extractSetCookieHeaders(headers) {
+  if (!headers) return [];
+  if (typeof headers.getSetCookie === "function") {
+    try {
+      return headers.getSetCookie().filter(Boolean);
+    } catch {
+      // ignore and fallback
+    }
+  }
+  const raw = headers.get("set-cookie");
+  return raw ? [raw] : [];
 }
 
 function rewriteLocationHeader(rawLocation, backendOrigin, requestHost) {
@@ -264,6 +278,7 @@ export async function handler(event) {
   }
 
   const responseHeaders = sanitizeResponseHeaderEntries(upstreamResponse.headers.entries());
+  const setCookieHeaders = extractSetCookieHeaders(upstreamResponse.headers);
   responseHeaders["cache-control"] = "no-store";
   if (responseHeaders.location) {
     responseHeaders.location = rewriteLocationHeader(
@@ -281,18 +296,32 @@ export async function handler(event) {
     responseType.includes("application/xml")
   ) {
     const rawBody = await upstreamResponse.text();
-    return {
+    const response = {
       statusCode: upstreamResponse.status,
       headers: responseHeaders,
       body: rewriteBodyBackendOrigin(rawBody, backendOrigin, event.headers?.host),
     };
+    if (setCookieHeaders.length) {
+      delete response.headers["set-cookie"];
+      response.multiValueHeaders = {
+        "set-cookie": setCookieHeaders,
+      };
+    }
+    return response;
   }
 
   const rawBody = Buffer.from(await upstreamResponse.arrayBuffer());
-  return {
+  const response = {
     statusCode: upstreamResponse.status,
     headers: responseHeaders,
     body: rawBody.toString("base64"),
     isBase64Encoded: true,
   };
+  if (setCookieHeaders.length) {
+    delete response.headers["set-cookie"];
+    response.multiValueHeaders = {
+      "set-cookie": setCookieHeaders,
+    };
+  }
+  return response;
 }

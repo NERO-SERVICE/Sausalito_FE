@@ -46,6 +46,8 @@ export default defineConfig(({ mode }) => {
           kakaoCallback: resolve(__dirname, "pages/kakao-callback.html"),
           cart: resolve(__dirname, "pages/cart.html"),
           mypage: resolve(__dirname, "pages/mypage.html"),
+          support: resolve(__dirname, "pages/support.html"),
+          supportInquiryWrite: resolve(__dirname, "pages/support-inquiry-write.html"),
           memberEdit: resolve(__dirname, "pages/member-edit.html"),
           changePassword: resolve(__dirname, "pages/change-password.html"),
         },

@@ -23,6 +23,33 @@ function getRedirectUri() {
   return `${window.location.origin}/pages/kakao-callback.html`;
 }
 
+function getStoredKakaoState() {
+  try {
+    const value = window.sessionStorage.getItem(KAKAO_STATE_STORAGE_KEY);
+    if (value) return value;
+  } catch {
+    // ignore
+  }
+  try {
+    return window.localStorage.getItem(KAKAO_STATE_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function clearStoredKakaoState() {
+  try {
+    window.sessionStorage.removeItem(KAKAO_STATE_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+  try {
+    window.localStorage.removeItem(KAKAO_STATE_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 (async function init() {
   const user = (await syncCurrentUser()) || getUser();
   if (user) {
@@ -48,7 +75,7 @@ function getRedirectUri() {
     return;
   }
 
-  const storedState = sessionStorage.getItem(KAKAO_STATE_STORAGE_KEY) || "";
+  const storedState = getStoredKakaoState();
   if (storedState && storedState !== state) {
     setMessage("보안 검증(state) 값이 일치하지 않습니다. 다시 시도해주세요.", { isError: true });
     return;
@@ -60,7 +87,7 @@ function getRedirectUri() {
       redirectUri: getRedirectUri(),
       state,
     });
-    sessionStorage.removeItem(KAKAO_STATE_STORAGE_KEY);
+    clearStoredKakaoState();
     setMessage("카카오 회원가입이 완료되었습니다. 잠시 후 홈으로 이동합니다.");
     window.location.href = "/pages/home.html";
   } catch (error) {

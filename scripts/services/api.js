@@ -990,7 +990,10 @@ export async function fetchProducts({ q, sort, minPrice, maxPrice } = {}) {
 
 export async function fetchProductById(id) {
   if (!id) return null;
-  const data = await apiRequest(`/products/${id}`);
+  const data = await apiRequest(`/products/${id}`, {
+    auth: false,
+    retryOnAuth: false,
+  });
   return normalizeProductDetail(data);
 }
 
