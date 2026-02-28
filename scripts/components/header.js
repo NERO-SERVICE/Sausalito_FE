@@ -1,5 +1,5 @@
-const MAIN_LOGO_SRC = "../dist/assets/logo/main_logo.svg";
-const MAIN_LOGO_FALLBACKS = ["/dist/assets/logo/main_logo.svg", "dist/assets/logo/main_logo.svg"];
+const MAIN_LOGO_SRC = "/assets/logo/main_logo.svg";
+const MAIN_LOGO_FALLBACKS = [];
 
 export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
   const mount = document.getElementById("siteHeaderMount");
