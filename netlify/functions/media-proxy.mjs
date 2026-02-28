@@ -42,6 +42,36 @@ function sanitizeSplat(rawValue) {
   return normalized;
 }
 
+function resolveSplat(event) {
+  const fromPathParam = String(event.pathParameters?.splat || "").trim();
+  if (fromPathParam) {
+    return fromPathParam;
+  }
+
+  const rawPath = String(event.path || "").replace(/^\/+/, "");
+  if (!rawPath) {
+    return "";
+  }
+
+  const functionPrefix = ".netlify/functions/media-proxy/";
+  const mediaPrefix = "media/";
+
+  if (rawPath.startsWith(functionPrefix)) {
+    return rawPath.slice(functionPrefix.length);
+  }
+  if (rawPath === ".netlify/functions/media-proxy") {
+    return "";
+  }
+  if (rawPath.startsWith(mediaPrefix)) {
+    return rawPath.slice(mediaPrefix.length);
+  }
+  if (rawPath === "media") {
+    return "";
+  }
+
+  return rawPath;
+}
+
 function sanitizeRequestHeaderEntries(entries) {
   const filtered = {};
   for (const [key, value] of entries) {
@@ -125,8 +155,7 @@ export async function handler(event) {
     };
   }
 
-  const fallbackSplat = (event.path || "").replace(/^\/\.netlify\/functions\/media-proxy\/?/, "");
-  const rawSplat = event.pathParameters?.splat || fallbackSplat;
+  const rawSplat = resolveSplat(event);
   const splat = sanitizeSplat(rawSplat);
   if (splat === null) {
     return {
