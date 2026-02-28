@@ -14,6 +14,12 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 .blind {
   position: absolute;
   width: 1px;
@@ -31,10 +37,95 @@ body {
   background: var(--bg);
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
   padding-top: var(--header-height);
+  min-height: 100dvh;
 }
 
 h1,h2,h3,h4 { margin: 0; font-family: "Montserrat", sans-serif; letter-spacing: -0.02em; }
 button,input,select,textarea { font: inherit; }
+img,
+picture,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+img {
+  height: auto;
+}
+main,
+section,
+article,
+.container,
+.home-inner,
+.myshop-shell,
+.checkout-main,
+.pd-wrapper,
+.card {
+  min-width: 0;
+}
+.container *,
+.myshop-shell *,
+.checkout-main * {
+  min-width: 0;
+}
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+img.smart-img {
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+  will-change: opacity;
+}
+
+img.smart-img.is-loading {
+  background: linear-gradient(100deg, var(--color-hex-e2e8f0) 20%, var(--color-hex-f8fafc) 50%, var(--color-hex-e2e8f0) 80%);
+  background-size: 200% 100%;
+  animation: smartImageShimmer 1.2s ease-in-out infinite;
+}
+
+img.smart-img.is-ready {
+  opacity: 1;
+  animation: none;
+}
+
+.img-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.img-shell.is-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: smartImageSweep 1.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes smartImageShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@keyframes smartImageSweep {
+  100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  img.smart-img {
+    transition: none;
+  }
+
+  img.smart-img.is-loading,
+  .img-shell.is-loading::after {
+    animation: none;
+  }
+}
 
 .site-header {
   position: fixed;

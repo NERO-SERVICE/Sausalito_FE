@@ -13,6 +13,9 @@ const HOP_BY_HOP_HEADERS = new Set([
 
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const REQUEST_TIMEOUT_MS = 20000;
+const BROWSER_MEDIA_CACHE_SECONDS = 60 * 60 * 24 * 30; // 30 days
+const EDGE_MEDIA_CACHE_SECONDS = 60 * 60 * 24 * 365; // 1 year
+const STALE_WHILE_REVALIDATE_SECONDS = 60 * 60 * 24; // 1 day
 
 function normalizeBackendOrigin(rawValue) {
   const value = String(rawValue || "").trim();
@@ -98,6 +101,27 @@ function sanitizeResponseHeaderEntries(entries) {
     filtered[lowerKey] = value;
   }
   return filtered;
+}
+
+function isCacheableMediaResponse(statusCode, contentType) {
+  if (statusCode < 200 || statusCode >= 300) return false;
+  const normalizedType = String(contentType || "").toLowerCase();
+  return (
+    normalizedType.startsWith("image/")
+    || normalizedType.startsWith("video/")
+    || normalizedType.startsWith("audio/")
+    || normalizedType.includes("font/")
+  );
+}
+
+function applyMediaCacheHeaders(headers) {
+  const browserPolicy =
+    `public, max-age=${BROWSER_MEDIA_CACHE_SECONDS}, stale-while-revalidate=${STALE_WHILE_REVALIDATE_SECONDS}`;
+  const edgePolicy =
+    `public, max-age=${EDGE_MEDIA_CACHE_SECONDS}, stale-while-revalidate=${STALE_WHILE_REVALIDATE_SECONDS}`;
+  headers["cache-control"] = browserPolicy;
+  headers["cdn-cache-control"] = edgePolicy;
+  headers["netlify-cdn-cache-control"] = edgePolicy;
 }
 
 function rewriteLocationHeader(rawLocation, backendOrigin, requestHost) {
@@ -227,6 +251,11 @@ export async function handler(event) {
     );
   }
   const responseType = upstreamResponse.headers.get("content-type") || "";
+  if (isCacheableMediaResponse(upstreamResponse.status, responseType)) {
+    applyMediaCacheHeaders(responseHeaders);
+  } else if (upstreamResponse.status >= 400) {
+    responseHeaders["cache-control"] = "no-store";
+  }
 
   if (
     responseType.startsWith("text/") ||

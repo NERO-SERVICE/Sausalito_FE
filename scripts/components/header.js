@@ -1,7 +1,10 @@
+import { initClientRuntime } from "../services/client-runtime.js";
+
 const MAIN_LOGO_SRC = "/assets/logo/main_logo.svg";
 const MAIN_LOGO_FALLBACKS = [];
 
 export function mountSiteHeader({ showCart = true, currentNav = "" } = {}) {
+  initClientRuntime();
   const mount = document.getElementById("siteHeaderMount");
   if (!mount) return { accountLink: null, accountLabel: null, cartCount: null };
 
