@@ -5,14 +5,47 @@ export const STORAGE_KEYS = {
   tokens: "sausalito_tokens",
 };
 
-export function readJson(key, fallback) {
+function getBrowserStorages() {
+  const storages = [];
   try {
-    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+    if (window.localStorage) {
+      storages.push(window.localStorage);
+    }
   } catch {
-    return fallback;
+    // ignore
   }
+  try {
+    if (window.sessionStorage && window.sessionStorage !== window.localStorage) {
+      storages.push(window.sessionStorage);
+    }
+  } catch {
+    // ignore
+  }
+  return storages;
+}
+
+export function readJson(key, fallback) {
+  const storages = getBrowserStorages();
+  for (const storage of storages) {
+    try {
+      const raw = storage.getItem(key);
+      if (raw === null) continue;
+      return JSON.parse(raw);
+    } catch {
+      // ignore and continue other storage
+    }
+  }
+  return fallback;
 }
 
 export function writeJson(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  const payload = JSON.stringify(value);
+  const storages = getBrowserStorages();
+  for (const storage of storages) {
+    try {
+      storage.setItem(key, payload);
+    } catch {
+      // ignore and continue other storage
+    }
+  }
 }
