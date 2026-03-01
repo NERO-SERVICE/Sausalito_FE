@@ -63,9 +63,13 @@ function renderStars(score) {
 }
 
 function getReviewImage(review) {
-  const imageList = Array.isArray(review.images) ? review.images.filter(Boolean) : [];
+  const imageList = Array.isArray(review.images)
+    ? review.images
+      .map((image) => resolveProductImage(image, { useFallback: false }))
+      .filter(Boolean)
+    : [];
   if (imageList.length) return imageList[0];
-  if (review.image) return review.image;
+  if (review.image) return resolveProductImage(review.image, { useFallback: false });
   const product = state.productMap.get(Number(review.productId));
   return resolveProductImage(product?.image, { useFallback: true });
 }

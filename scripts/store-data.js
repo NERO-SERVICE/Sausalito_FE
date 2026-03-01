@@ -31,11 +31,49 @@ const BANNER_PLACEHOLDER_SVG = [
 
 export const BANNER_IMAGE_PLACEHOLDER = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(BANNER_PLACEHOLDER_SVG)}`;
 
+const MOBILE_IMAGE_BREAKPOINT = 480;
+
+function isMobileViewport() {
+  if (typeof window === "undefined") return false;
+  if (typeof window.matchMedia === "function") {
+    return window.matchMedia(`(max-width: ${MOBILE_IMAGE_BREAKPOINT}px)`).matches;
+  }
+  return Number(window.innerWidth || 0) <= MOBILE_IMAGE_BREAKPOINT;
+}
+
+function deriveMobileVariantPath(url) {
+  const source = String(url || "").trim();
+  if (!source) return "";
+  const [basePath, query = ""] = source.split("?");
+  if (basePath.includes("__w480.")) return source;
+  const swapped = basePath.replace("__w1920.", "__w480.");
+  if (!swapped || swapped === basePath) return source;
+  return query ? `${swapped}?${query}` : swapped;
+}
+
+export function resolveResponsiveImageUrl(url) {
+  const source = String(url || "").trim();
+  if (!source) return "";
+  if (!isMobileViewport()) return source;
+  return deriveMobileVariantPath(source);
+}
+
 function getImagePathList(image) {
   if (!image) return [];
-  if (typeof image === "string") return [image];
+  if (typeof image === "string") {
+    const responsive = resolveResponsiveImageUrl(image);
+    return responsive && responsive !== image ? [responsive, image] : [image];
+  }
   if (typeof image !== "object") return [];
-  return [image.gif, image.webp, image.png, image.jpg, image.jpeg].filter(Boolean);
+
+  const preferredMobile = isMobileViewport();
+  const mobile = image.mobile || image.mobile_url || image.image_mobile || "";
+  const desktop = image.desktop || image.desktop_url || image.image_desktop || "";
+
+  const rows = preferredMobile
+    ? [mobile, desktop, image.gif, image.webp, image.png, image.jpg, image.jpeg]
+    : [desktop, mobile, image.gif, image.webp, image.png, image.jpg, image.jpeg];
+  return rows.filter((item) => typeof item === "string" && item.trim());
 }
 
 export function resolveProductImage(image, { useFallback = true } = {}) {

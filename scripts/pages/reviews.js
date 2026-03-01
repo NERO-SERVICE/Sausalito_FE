@@ -83,9 +83,13 @@ function getProduct(review) {
 }
 
 function getReviewImages(review) {
-  const images = Array.isArray(review.images) ? review.images.filter(Boolean) : [];
+  const images = Array.isArray(review.images)
+    ? review.images
+      .map((image) => resolveProductImage(image, { useFallback: false }))
+      .filter(Boolean)
+    : [];
   if (images.length) return images.slice(0, 3);
-  if (review.image) return [review.image];
+  if (review.image) return [resolveProductImage(review.image, { useFallback: false })];
   const product = getProduct(review);
   if (!product) return [];
   return [resolveProductImage(product.image, { useFallback: true })];
