@@ -32,6 +32,10 @@ const BANNER_PLACEHOLDER_SVG = [
 export const BANNER_IMAGE_PLACEHOLDER = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(BANNER_PLACEHOLDER_SVG)}`;
 
 const MOBILE_IMAGE_BREAKPOINT = 480;
+const RESPONSIVE_FALLBACK_FLAG = "responsiveFallbackApplied";
+const SIGNED_URL_PATTERN = /(X-Amz-Signature|X-Amz-Credential|X-Goog-Signature|X-Goog-Algorithm|AWSAccessKeyId=|Signature=)/i;
+const MOBILE_SUFFIX_PATTERN = /_+w480\./;
+const DESKTOP_SUFFIX_PATTERN = /_+w1920\./;
 
 function isMobileViewport() {
   if (typeof window === "undefined") return false;
@@ -45,15 +49,60 @@ function deriveMobileVariantPath(url) {
   const source = String(url || "").trim();
   if (!source) return "";
   const [basePath, query = ""] = source.split("?");
-  if (basePath.includes("__w480.")) return source;
-  const swapped = basePath.replace("__w1920.", "__w480.");
+  if (MOBILE_SUFFIX_PATTERN.test(basePath)) return source;
+  const swapped = basePath.replace(DESKTOP_SUFFIX_PATTERN, "__w480.");
   if (!swapped || swapped === basePath) return source;
   return query ? `${swapped}?${query}` : swapped;
+}
+
+function deriveDesktopVariantPath(url) {
+  const source = String(url || "").trim();
+  if (!source) return "";
+  const [basePath, query = ""] = source.split("?");
+  if (DESKTOP_SUFFIX_PATTERN.test(basePath)) return source;
+  const swapped = basePath.replace(MOBILE_SUFFIX_PATTERN, "__w1920.");
+  if (!swapped || swapped === basePath) return source;
+  return query ? `${swapped}?${query}` : swapped;
+}
+
+function isSignedUrl(url) {
+  return SIGNED_URL_PATTERN.test(String(url || ""));
+}
+
+function installResponsiveImageErrorFallback() {
+  if (typeof document === "undefined") return;
+  if (window[RESPONSIVE_FALLBACK_FLAG]) return;
+
+  document.addEventListener(
+    "error",
+    (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement)) return;
+      if (target.dataset.responsiveFallbackTried === "1") return;
+
+      const currentSrc = String(target.currentSrc || target.src || "").trim();
+      if (!currentSrc || !MOBILE_SUFFIX_PATTERN.test(currentSrc)) return;
+
+      const desktopSrc = deriveDesktopVariantPath(currentSrc);
+      if (!desktopSrc || desktopSrc === currentSrc) return;
+
+      target.dataset.responsiveFallbackTried = "1";
+      target.src = desktopSrc;
+    },
+    true,
+  );
+
+  window[RESPONSIVE_FALLBACK_FLAG] = true;
+}
+
+if (typeof window !== "undefined") {
+  installResponsiveImageErrorFallback();
 }
 
 export function resolveResponsiveImageUrl(url) {
   const source = String(url || "").trim();
   if (!source) return "";
+  if (isSignedUrl(source)) return source;
   if (!isMobileViewport()) return source;
   return deriveMobileVariantPath(source);
 }
