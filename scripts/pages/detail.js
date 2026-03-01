@@ -25,6 +25,16 @@ const state = {
   open: { shipping: false, inquiry: false, refund: false },
   policyOpen: false,
   currentUser: null,
+  loading: {
+    product: true,
+    meta: true,
+    reviews: true,
+  },
+  errors: {
+    product: false,
+    meta: false,
+    reviews: false,
+  },
 };
 
 const headerRefs = mountSiteHeader({ showCart: true, currentNav: "shop" });
@@ -496,6 +506,107 @@ function renderDetailReviewEmptyState(productId) {
   `;
 }
 
+function renderDetailReviewLoadingState() {
+  return `
+    <section class="pd-review-loading" aria-live="polite">
+      <p class="ux-load-hint pd-loading-hint">리뷰 텍스트를 준비하고 있습니다. 이미지는 곧 표시됩니다</p>
+      <article class="pd-review-item is-skeleton" aria-hidden="true">
+        <div class="pd-review-head">
+          <div class="ux-skeleton ux-skeleton-line is-short"></div>
+          <div class="ux-skeleton ux-skeleton-line is-short"></div>
+        </div>
+        <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+        <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+        <div class="pd-review-thumb-grid">
+          <div class="pd-review-thumb ux-skeleton"></div>
+        </div>
+      </article>
+      <article class="pd-review-item is-skeleton" aria-hidden="true">
+        <div class="pd-review-head">
+          <div class="ux-skeleton ux-skeleton-line is-short"></div>
+          <div class="ux-skeleton ux-skeleton-line is-short"></div>
+        </div>
+        <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+        <div class="ux-skeleton ux-skeleton-line is-mid"></div>
+      </article>
+    </section>
+  `;
+}
+
+function renderDetailReviewList(list = []) {
+  return list
+    .map((review) => {
+      const reviewImages = Array.isArray(review.images) && review.images.length
+        ? review.images.slice(0, 3).map((image) => resolveProductImage(image, { useFallback: false }))
+        : review.image
+          ? [resolveProductImage(review.image, { useFallback: false })]
+          : [];
+      const replyDate = review.answeredAt ? toDateText(review.answeredAt) : "";
+      const replyBlock = review.adminReply
+        ? `<div class="pd-review-answer">
+              <strong>관리자 답변</strong>
+              <p>${escapeHtml(review.adminReply)}</p>
+              <span>${escapeHtml(review.answeredBy || "관리자")}${replyDate ? ` · ${replyDate}` : ""}</span>
+            </div>`
+        : "";
+      return `<article class="pd-review-item">
+          <div class="pd-review-head"><strong class="pd-review-stars">${"★".repeat(review.score)}${"☆".repeat(5 - review.score)}</strong><span>${escapeHtml(review.user)} · ${escapeHtml(review.date)}</span></div>
+          <p>${escapeHtml(review.text)}</p>
+          ${
+            reviewImages.length
+              ? `<div class="pd-review-thumb-grid">
+                  ${reviewImages
+                    .map(
+                      (reviewImage, index) =>
+                        `<img class="pd-review-thumb" src="${reviewImage}" alt="리뷰 이미지 ${index + 1}" loading="lazy" decoding="async" />`,
+                    )
+                    .join("")}
+                </div>`
+              : ""
+          }
+          ${replyBlock}
+        </article>`;
+    })
+    .join("");
+}
+
+function renderLoadingSkeleton() {
+  el.root.innerHTML = `
+    <section class="pd-top pd-top-skeleton" aria-busy="true">
+      <div class="pd-media">
+        <div class="pd-media-stage">
+          <div class="pd-skeleton-media ux-skeleton"></div>
+        </div>
+      </div>
+      <div class="pd-info">
+        <p class="ux-load-hint pd-loading-hint">상품 정보를 먼저 보여드리는 중입니다</p>
+        <div class="pd-skeleton-lines">
+          <div class="ux-skeleton ux-skeleton-line is-mid"></div>
+          <div class="ux-skeleton ux-skeleton-line is-title"></div>
+          <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+          <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+          <div class="ux-skeleton ux-skeleton-line is-short"></div>
+        </div>
+      </div>
+    </section>
+    <section class="pd-tabs pd-tabs-skeleton" aria-hidden="true">
+      <div class="pd-tab-head">
+        <button class="pd-tab active" type="button" disabled>상세정보</button>
+        <button class="pd-tab" type="button" disabled>리뷰</button>
+        <button class="pd-tab" type="button" disabled>반품/교환정보</button>
+      </div>
+      <section class="pd-section-card">
+        <div class="pd-skeleton-lines">
+          <div class="ux-skeleton ux-skeleton-line is-title"></div>
+          <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+          <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+          <div class="ux-skeleton ux-skeleton-line is-mid"></div>
+        </div>
+      </section>
+    </section>
+  `;
+}
+
 function setTab(sectionId) {
   state.activeSection = sectionId;
   document.querySelectorAll(".pd-tab").forEach((tab) => {
@@ -517,8 +628,15 @@ function initSpy() {
 }
 
 function render() {
+  if (state.loading.product) {
+    renderLoadingSkeleton();
+    return;
+  }
+
   if (!state.product) {
-    el.root.innerHTML = '<p class="empty">상품을 찾을 수 없습니다.</p>';
+    el.root.innerHTML = state.errors.product
+      ? '<p class="empty">상품 데이터를 불러오지 못했습니다.</p>'
+      : '<p class="empty">상품을 찾을 수 없습니다.</p>';
     return;
   }
 
@@ -553,12 +671,29 @@ function render() {
     ? (state.reviews.reduce((s, r) => s + r.score, 0) / state.reviews.length).toFixed(1)
     : Number(state.product.rating || 0).toFixed(1);
   const { list, totalPages } = getReviewPaged();
+  const metaLoadingHint = state.loading.meta
+    ? '<p class="ux-load-hint pd-loading-hint">할인/배송 정보를 계산 중입니다</p>'
+    : "";
+  const reviewContent = state.loading.reviews
+    ? renderDetailReviewLoadingState()
+    : state.errors.reviews
+      ? '<p class="empty">리뷰 데이터를 불러오지 못했습니다.</p>'
+      : list.length
+        ? renderDetailReviewList(list)
+        : renderDetailReviewEmptyState(state.product.id);
+  const reviewPagination = !state.loading.reviews && !state.errors.reviews && list.length
+    ? `<div class="pd-review-pagination">
+        <button class="ghost" data-action="prevReview" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
+        <span>${state.reviewPage} / ${totalPages}</span>
+        <button class="ghost" data-action="nextReview" ${state.reviewPage >= totalPages ? "disabled" : ""}>다음</button>
+      </div>`
+    : "";
 
   el.root.innerHTML = `
     <section class="pd-top">
       <div class="pd-media">
         <div class="pd-media-stage">
-          <img src="${currentImage}" alt="${state.product.name}" />
+          <img src="${currentImage}" alt="${state.product.name}" loading="eager" decoding="async" />
           ${
             hasMultipleImages
               ? `<button class="pd-gallery-nav prev" data-action="prevImage">‹</button>
@@ -571,7 +706,7 @@ function render() {
             ? `<div class="pd-gallery-thumbs" style="--pd-thumb-columns: ${Math.min(images.length, 4)};">
           ${images
             .map(
-              (img, idx) => `<button class="pd-gallery-thumb ${idx === state.imageIndex ? "active" : ""}" data-action="selectImage" data-index="${idx}"><img src="${img}" alt="thumb"/></button>`,
+              (img, idx) => `<button class="pd-gallery-thumb ${idx === state.imageIndex ? "active" : ""}" data-action="selectImage" data-index="${idx}"><img src="${img}" alt="thumb" loading="lazy" decoding="async"/></button>`,
             )
             .join("")}
         </div>`
@@ -584,6 +719,7 @@ function render() {
         <p class="pd-one-line">${state.product.oneLine || state.product.description}</p>
         <div class="pd-rating">★ ${reviewAvg} (${state.product.reviews})</div>
         <div class="pd-price"><small>${formatCurrency(state.product.originalPrice)}</small><div><span>${discountRate}%</span><strong>${formatCurrency(state.product.price)}</strong></div></div>
+        ${metaLoadingHint}
         ${renderCouponBenefitBlock(couponPreview)}
         <div class="pd-shipping-row">
           <span>배송비</span>
@@ -709,53 +845,8 @@ function render() {
           <button class="text-btn pd-policy-link" data-action="openPolicy">운영정책</button>
           <a class="text-btn pd-write-link" href="/pages/review-write.html?productId=${state.product.id}">리뷰작성</a>
         </div>
-        ${
-          list.length
-            ? list
-                .map((r) => {
-                  const reviewImages = Array.isArray(r.images) && r.images.length
-                    ? r.images.slice(0, 3).map((image) => resolveProductImage(image, { useFallback: false }))
-                    : r.image
-                      ? [resolveProductImage(r.image, { useFallback: false })]
-                      : [];
-                  const replyDate = r.answeredAt ? toDateText(r.answeredAt) : "";
-                  const replyBlock = r.adminReply
-                    ? `<div class="pd-review-answer">
-                        <strong>관리자 답변</strong>
-                        <p>${escapeHtml(r.adminReply)}</p>
-                        <span>${escapeHtml(r.answeredBy || "관리자")}${replyDate ? ` · ${replyDate}` : ""}</span>
-                      </div>`
-                    : "";
-                  return `<article class="pd-review-item">
-                      <div class="pd-review-head"><strong class="pd-review-stars">${"★".repeat(r.score)}${"☆".repeat(5 - r.score)}</strong><span>${escapeHtml(r.user)} · ${escapeHtml(r.date)}</span></div>
-                      <p>${escapeHtml(r.text)}</p>
-                      ${
-                        reviewImages.length
-                          ? `<div class="pd-review-thumb-grid">
-                              ${reviewImages
-                                .map(
-                                  (reviewImage, index) =>
-                                    `<img class="pd-review-thumb" src="${reviewImage}" alt="리뷰 이미지 ${index + 1}" />`,
-                                )
-                                .join("")}
-                            </div>`
-                          : ""
-                      }
-                      ${replyBlock}
-                    </article>`;
-                })
-                .join("")
-            : renderDetailReviewEmptyState(state.product.id)
-        }
-        ${
-          list.length
-            ? `<div class="pd-review-pagination">
-                <button class="ghost" data-action="prevReview" ${state.reviewPage <= 1 ? "disabled" : ""}>이전</button>
-                <span>${state.reviewPage} / ${totalPages}</span>
-                <button class="ghost" data-action="nextReview" ${state.reviewPage >= totalPages ? "disabled" : ""}>다음</button>
-              </div>`
-            : ""
-        }
+        ${reviewContent}
+        ${reviewPagination}
       </section>
       <section class="pd-section-card pd-section" id="section-return">
         <h3 class="pd-section-label">반품/교환정보</h3>
@@ -960,34 +1051,92 @@ document.addEventListener("click", async (e) => {
 });
 
 async function init() {
-  try {
-    state.product = await fetchProductById(id);
-    state.meta = await fetchProductDetailMeta(id);
-    state.reviews = await fetchReviewsByProduct(id);
-    const initialOptions = buildSelectableOptions();
-    const initialOption = initialOptions.find((option) => option.isActive && Number(option.stock || 0) > 0)
-      || initialOptions[0]
-      || null;
-    state.selectedOptionId = initialOption?.id ?? null;
-    state.selectedOptionDurationMonths = initialOption?.durationMonths ?? null;
+  initMobilePullBack();
+  render();
 
-    const currentUser = (await syncCurrentUser()) || getUser();
-    state.currentUser = currentUser || null;
-    if (currentUser) {
-      try {
-        await trackRecentProduct(id);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    initMobilePullBack();
-    await setHeader();
+  if (!Number.isFinite(id) || id <= 0) {
+    state.loading.product = false;
+    state.errors.product = true;
     render();
-  } catch (error) {
-    console.error(error);
-    el.root.innerHTML = '<p class="empty">상품 데이터를 불러오지 못했습니다.</p>';
+    return;
   }
+
+  const headerTask = setHeader().catch((error) => {
+    console.error(error);
+  });
+
+  const userTask = (async () => {
+    try {
+      const currentUser = (await syncCurrentUser()) || getUser();
+      state.currentUser = currentUser || null;
+      return state.currentUser;
+    } catch (error) {
+      console.error(error);
+      state.currentUser = getUser() || null;
+      return state.currentUser;
+    }
+  })();
+
+  const productTask = fetchProductById(id)
+    .then((product) => {
+      state.product = product;
+      const initialOptions = buildSelectableOptions();
+      const initialOption = initialOptions.find((option) => option.isActive && Number(option.stock || 0) > 0)
+        || initialOptions[0]
+        || null;
+      state.selectedOptionId = initialOption?.id ?? null;
+      state.selectedOptionDurationMonths = initialOption?.durationMonths ?? null;
+      return product;
+    })
+    .catch((error) => {
+      console.error(error);
+      state.errors.product = true;
+      state.product = null;
+      return null;
+    })
+    .finally(() => {
+      state.loading.product = false;
+      render();
+    });
+
+  const metaTask = fetchProductDetailMeta(id)
+    .then((meta) => {
+      state.meta = meta;
+    })
+    .catch((error) => {
+      console.error(error);
+      state.errors.meta = true;
+      state.meta = null;
+    })
+    .finally(() => {
+      state.loading.meta = false;
+      if (state.product) render();
+    });
+
+  const reviewTask = fetchReviewsByProduct(id)
+    .then((reviews) => {
+      state.reviews = Array.isArray(reviews) ? reviews : [];
+    })
+    .catch((error) => {
+      console.error(error);
+      state.errors.reviews = true;
+      state.reviews = [];
+    })
+    .finally(() => {
+      state.loading.reviews = false;
+      if (state.product) render();
+    });
+
+  const trackTask = Promise.all([productTask, userTask]).then(async ([product, currentUser]) => {
+    if (!product || !currentUser) return;
+    try {
+      await trackRecentProduct(id);
+    } catch (error) {
+      console.error(error);
+    }
+  });
+
+  await Promise.allSettled([headerTask, userTask, productTask, metaTask, reviewTask, trackTask]);
 }
 
 init();

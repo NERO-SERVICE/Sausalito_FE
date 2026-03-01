@@ -23,9 +23,18 @@ const state = {
   isPolicyOpen: false,
   expandedReplyIds: new Set(),
   reportingReviewIds: new Set(),
+  loading: {
+    products: true,
+    reviews: true,
+  },
+  errors: {
+    products: false,
+    reviews: false,
+  },
 };
 
 const el = {
+  main: document.querySelector(".rv-main"),
   bestSection: document.getElementById("rvBestSection"),
   middleLinks: document.querySelector(".rv-middle-links"),
   allSection: document.querySelector(".rv-all-section"),
@@ -38,6 +47,91 @@ const el = {
   sortRadios: [...document.querySelectorAll("input[name='rvSort']")],
   policyModal: document.getElementById("rvPolicyModal"),
 };
+
+function ensurePageLoadHint() {
+  if (!el.main) return null;
+  let hint = document.getElementById("reviewsPageLoadHint");
+  if (hint) return hint;
+
+  hint = document.createElement("p");
+  hint.id = "reviewsPageLoadHint";
+  hint.className = "ux-load-hint ux-page-load";
+  hint.setAttribute("aria-live", "polite");
+  el.main.prepend(hint);
+  return hint;
+}
+
+function updatePageLoadHint() {
+  const hint = ensurePageLoadHint();
+  if (!hint) return;
+
+  if (state.loading.reviews || state.loading.products) {
+    hint.textContent = "리뷰 본문을 먼저 표시하고 있습니다. 이미지는 곧 순차적으로 나타납니다";
+    hint.classList.remove("is-hidden", "is-error");
+    return;
+  }
+
+  if (state.errors.reviews || state.errors.products) {
+    hint.textContent = "일부 리뷰 데이터를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요";
+    hint.classList.remove("is-hidden");
+    hint.classList.add("is-error");
+    return;
+  }
+
+  hint.classList.add("is-hidden");
+}
+
+function renderBestLoadingSkeleton(count = 5) {
+  el.bestSection?.classList.remove("is-hidden");
+  el.bestGrid.innerHTML = Array.from({ length: count })
+    .map(
+      () => `
+        <article class="rv-best-card is-skeleton" aria-hidden="true">
+          <div class="rv-best-thumb-link ux-skeleton"></div>
+          <div class="rv-best-body">
+            <div class="ux-skeleton ux-skeleton-line is-mid"></div>
+            <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+            <div class="ux-skeleton ux-skeleton-line is-short"></div>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  if (el.bestPrevButton) el.bestPrevButton.disabled = true;
+  if (el.bestNextButton) el.bestNextButton.disabled = true;
+}
+
+function renderAllLoadingSkeleton(count = 3) {
+  showReviewLayout();
+  el.allList.innerHTML = Array.from({ length: count })
+    .map(
+      () => `
+        <article class="rv-row is-skeleton" aria-hidden="true">
+          <div class="rv-row-left">
+            <div class="ux-skeleton ux-skeleton-line is-mid"></div>
+            <div class="ux-skeleton ux-skeleton-line is-short"></div>
+          </div>
+          <div class="rv-row-right">
+            <div class="ux-skeleton ux-skeleton-line is-short"></div>
+            <div class="rv-product-line is-list">
+              <div class="rv-product-thumb ux-skeleton"></div>
+              <div class="ux-skeleton ux-skeleton-line is-mid"></div>
+            </div>
+            <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+            <div class="ux-skeleton ux-skeleton-line is-wide"></div>
+            <div class="rv-row-images">
+              <div class="rv-row-image ux-skeleton"></div>
+              <div class="rv-row-image ux-skeleton"></div>
+            </div>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  if (el.allPagination) el.allPagination.innerHTML = "";
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -129,7 +223,13 @@ function renderBestCard(review) {
   return `
     <article class="rv-best-card">
       <a class="rv-best-thumb-link" href="/pages/detail.html?id=${review.productId}">
-        <img class="rv-best-thumb" src="${escapeHtml(reviewImage)}" alt="리뷰 이미지" />
+        <img
+          class="rv-best-thumb"
+          src="${escapeHtml(reviewImage)}"
+          alt="리뷰 이미지"
+          loading="lazy"
+          decoding="async"
+        />
       </a>
       <div class="rv-best-body">
         <p class="rv-best-title">${escapeHtml(review.title || "고객 리뷰")}</p>
@@ -198,13 +298,19 @@ function renderListRow(review) {
       <div class="rv-row-right">
         <div class="rv-row-stars">${renderStars(review.score)}</div>
         <a class="rv-product-line is-list" href="/pages/detail.html?id=${review.productId}">
-          <img class="rv-product-thumb" src="${escapeHtml(productImage)}" alt="${escapeHtml(productName)}" />
+          <img
+            class="rv-product-thumb"
+            src="${escapeHtml(productImage)}"
+            alt="${escapeHtml(productName)}"
+            loading="lazy"
+            decoding="async"
+          />
           <span>${escapeHtml(productName)}</span>
         </a>
         <p class="rv-row-text">${escapeHtml(review.text || "")}</p>
         <div class="rv-row-images">
           ${images
-            .map((image, index) => `<img class="rv-row-image" src="${escapeHtml(image)}" alt="리뷰 이미지 ${index + 1}" />`)
+            .map((image, index) => `<img class="rv-row-image" src="${escapeHtml(image)}" alt="리뷰 이미지 ${index + 1}" loading="lazy" decoding="async" />`)
             .join("")}
         </div>
         <div class="rv-row-actions">
@@ -221,6 +327,11 @@ function renderListRow(review) {
 }
 
 function renderBestSection() {
+  if (state.loading.reviews) {
+    renderBestLoadingSkeleton();
+    return;
+  }
+
   const bestReviews = sortByLatest(state.reviews.filter((review) => review.isBest));
   if (!bestReviews.length) {
     el.bestSection.classList.add("is-hidden");
@@ -296,6 +407,11 @@ function renderAllPagination(totalPages) {
 }
 
 function renderAllSection() {
+  if (state.loading.reviews) {
+    renderAllLoadingSkeleton();
+    return;
+  }
+
   const source = state.listSort === "score" ? sortByScore(state.reviews) : sortByLatest(state.reviews);
 
   if (!source.length) {
@@ -319,6 +435,27 @@ function renderPolicyModal() {
 }
 
 function render() {
+  updatePageLoadHint();
+
+  if (state.loading.reviews) {
+    showReviewLayout();
+    renderSortToggle();
+    renderBestSection();
+    syncAllImageSizeWithBest();
+    renderAllSection();
+    renderPolicyModal();
+    return;
+  }
+
+  if (state.errors.reviews) {
+    showReviewLayout();
+    if (el.bestSection) el.bestSection.classList.add("is-hidden");
+    el.allList.innerHTML = '<p class="empty">리뷰 데이터를 불러오지 못했습니다.</p>';
+    if (el.allPagination) el.allPagination.innerHTML = "";
+    renderPolicyModal();
+    return;
+  }
+
   if (!state.reviews.length) {
     showNoReviewLayout();
     renderPolicyModal();
@@ -442,20 +579,48 @@ function bind() {
 }
 
 async function init() {
-  try {
-    const [products, reviews] = await Promise.all([fetchProducts(), fetchAllReviews({ sort: "latest" })]);
-    state.products = products;
-    state.productMap = new Map(products.map((product) => [Number(product.id), product]));
-    state.reviews = Array.isArray(reviews) ? reviews : [];
-    await syncHeader();
-    render();
-    bind();
-  } catch (error) {
+  bind();
+  render();
+
+  const headerTask = syncHeader().catch((error) => {
     console.error(error);
-    showReviewLayout();
-    if (el.bestSection) el.bestSection.classList.add("is-hidden");
-    el.allList.innerHTML = '<p class="empty">리뷰 데이터를 불러오지 못했습니다.</p>';
-  }
+  });
+
+  const productTask = fetchProducts()
+    .then((products) => {
+      state.products = Array.isArray(products) ? products : [];
+      state.productMap = new Map(state.products.map((product) => [Number(product.id), product]));
+    })
+    .catch((error) => {
+      console.error(error);
+      state.errors.products = true;
+      state.products = [];
+      state.productMap = new Map();
+    })
+    .finally(() => {
+      state.loading.products = false;
+      if (!state.loading.reviews) {
+        render();
+      } else {
+        updatePageLoadHint();
+      }
+    });
+
+  const reviewTask = fetchAllReviews({ sort: "latest" })
+    .then((reviews) => {
+      state.reviews = Array.isArray(reviews) ? reviews : [];
+    })
+    .catch((error) => {
+      console.error(error);
+      state.errors.reviews = true;
+      state.reviews = [];
+    })
+    .finally(() => {
+      state.loading.reviews = false;
+      render();
+    });
+
+  await Promise.allSettled([headerTask, productTask, reviewTask]);
 }
 
 init();
