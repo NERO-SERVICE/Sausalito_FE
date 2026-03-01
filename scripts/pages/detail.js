@@ -469,8 +469,12 @@ function renderCouponBenefitBlock(preview) {
 
 function getImages() {
   const base = resolveProductImage(state.product.image, { useFallback: false });
-  const fromProduct = Array.isArray(state.product.images) ? state.product.images : [];
-  const extra = Array.isArray(state.meta?.detailImages) ? state.meta.detailImages : [];
+  const fromProduct = Array.isArray(state.product.images)
+    ? state.product.images.map((image) => resolveProductImage(image, { useFallback: false }))
+    : [];
+  const extra = Array.isArray(state.meta?.detailImages)
+    ? state.meta.detailImages.map((image) => resolveProductImage(image, { useFallback: false }))
+    : [];
   const uploaded = [...new Set([base, ...fromProduct, ...extra].filter((image) => typeof image === "string" && image.trim()))];
   if (uploaded.length) return uploaded;
   return [resolveProductImage(null)];
@@ -710,9 +714,9 @@ function render() {
             ? list
                 .map((r) => {
                   const reviewImages = Array.isArray(r.images) && r.images.length
-                    ? r.images.slice(0, 3)
+                    ? r.images.slice(0, 3).map((image) => resolveProductImage(image, { useFallback: false }))
                     : r.image
-                      ? [r.image]
+                      ? [resolveProductImage(r.image, { useFallback: false })]
                       : [];
                   const replyDate = r.answeredAt ? toDateText(r.answeredAt) : "";
                   const replyBlock = r.adminReply
